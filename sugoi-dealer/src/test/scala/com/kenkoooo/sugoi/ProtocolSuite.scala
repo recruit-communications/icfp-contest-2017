@@ -9,7 +9,7 @@ class ProtocolSuite extends FunSuite with Matchers {
     val url = getClass.getClassLoader.getResource("sample.json").toURI.toURL
     val mapper = new ObjectMapper()
     mapper.registerModule(DefaultScalaModule)
-    val map = mapper.readValue[Map](url, classOf[Map])
+    val map = mapper.readValue[LambdaMap](url, classOf[LambdaMap])
 
     map.sites.length shouldBe 8
     map.rivers.length shouldBe 12

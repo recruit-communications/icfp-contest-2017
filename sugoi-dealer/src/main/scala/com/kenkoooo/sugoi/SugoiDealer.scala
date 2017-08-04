@@ -18,55 +18,75 @@ object SugoiDealer extends Logging {
 
   def main(args: Array[String]): Unit = {
     val filepath = args(0)
-    val map = mapper.readValue[Map](new File(filepath), classOf[Map])
+    val map = mapper.readValue[LambdaMap](new File(filepath), classOf[LambdaMap])
     val programs = for (i: Int <- 1 until args.length) yield new AiProgram(args(i), i)
+    setup(programs, map)
     play(programs, map)
   }
 
-  def play(programs: Seq[AiProgram], map: Map): Unit = {
+  /**
+    * セットアップをする
+    *
+    * @param programs AI たち
+    * @param map      マップ
+    */
+  private def setup(programs: Seq[AiProgram], map: LambdaMap): Unit = {
     programs.foreach(program => {
-      val setupInput = mapper.writeValueAsString(new SetupToPunter(program.punter, programs.size, map))
+      val setupInput = mapper.writeValueAsString(SetupToPunter(program.punter, programs.size, map))
       val (setupOutput, code) = program.put(setupInput, 10)
       if (code != 0) program.penaltyCount += 1
       val output = mapper.readValue[SetupToServer](setupOutput, classOf[SetupToServer])
       program.state = output.state
     })
 
-    val deque = new ArrayBuffer[Move]()
-
-    programs.foreach { p => deque.append(new PassMove(new Pass(p.punter))) }
-    while (true) {
-      // TODO ループが終わるようにする
-      programs.foreach(p => {
-        val input = mapper.writeValueAsString(new PlayToPunter(new PreviousMoves(deque.toArray)))
-        deque.remove(0)
-
-        val (playOutput, code) = p.put(input, 2)
-
-        if (p.penaltyCount >= 10 || code != 0) {
-          p.penaltyCount += 1
-          deque.append(new PassMove(new Pass(p.punter)))
-        } else if (isClaim(playOutput)) {
-          val output = mapper.readValue[ClaimMoveMoveWithState](playOutput, classOf[ClaimMoveMoveWithState])
-          p.state = output.state
-          deque.append(new ClaimMove(output.claim))
-
-          // TODO スコアを得る
-        } else {
-          val output = mapper.readValue[PassMoveMoveWithState](playOutput, classOf[PassMoveMoveWithState])
-          p.state = output.state
-          deque.append(new PassMove(output.pass))
-        }
-      })
-    }
   }
 
-  private def isClaim(output: String): Boolean = {
-    try {
-      mapper.readValue[ClaimMoveMoveWithState](output, classOf[ClaimMoveMoveWithState])
-      true
-    } catch {
-      case _: Throwable => false
+  /**
+    * ゲームをプレイさせる
+    *
+    * @param programs AI たち
+    * @param map      マップ
+    */
+  private def play(programs: Seq[AiProgram], map: LambdaMap): Unit = {
+    val graph = new Graph(map)
+    val deque = new ArrayBuffer[Move]()
+    programs.foreach { p => deque.append(PassMove(Pass(p.punter))) }
+
+    while (graph.remainEdgeCount > 0) {
+      def playOneTurn(p: AiProgram): Unit = {
+        val playToPunterString = mapper.writeValueAsString(PlayToPunter(PreviousMoves(deque.toArray), p.state))
+        deque.remove(0)
+
+        // play
+        val (playOutput, code) = p.put(playToPunterString, 2)
+
+        if (p.penaltyCount >= 10 || code != 0) {
+          // failed
+          p.penaltyCount += 1
+          deque.append(PassMove(Pass(p.punter)))
+          return
+        }
+        val moveFromPunter = mapper.readValue[MoveFromPunter](playOutput, classOf[MoveFromPunter])
+        p.state = moveFromPunter.state
+
+        if (moveFromPunter.claim == null) {
+          deque.append(PassMove(moveFromPunter.pass))
+          return
+        }
+
+        val source = moveFromPunter.claim.source
+        val target = moveFromPunter.claim.source
+        if (graph.isUsed(source, target)) {
+          logger.error(s"$source -- $target is already used!!!")
+          deque.append(PassMove(Pass(p.punter)))
+        } else {
+          logger.info(s"$source -- $target")
+          graph.addEdge(source, target, p.punter)
+          deque.append(ClaimMove(moveFromPunter.claim))
+        }
+      }
+
+      programs.foreach(p => playOneTurn(p))
     }
   }
 }

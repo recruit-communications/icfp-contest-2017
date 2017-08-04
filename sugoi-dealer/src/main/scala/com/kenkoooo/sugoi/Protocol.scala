@@ -2,43 +2,37 @@ package com.kenkoooo.sugoi
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 
-class SetupToPunter(val punter: Int, val punters: Int, val map: Map)
+case class SetupToPunter(punter: Int, punters: Int, map: LambdaMap)
 
-class SetupToServer(val ready: Int, val state: String)
+case class SetupToServer(ready: Int, state: String)
 
-class River(val source: Int, val target: Int)
+case class River(source: Int, target: Int)
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-class Site(val id: Int)
+case class Site(id: Int)
 
-class Map(val sites: Array[Site], val rivers: Array[River], val mines: Array[Int])
+case class LambdaMap(sites: Array[Site], rivers: Array[River], mines: Array[Int])
 
-class PlayToPunter(val move: PreviousMoves)
+case class PlayToPunter(move: PreviousMoves, state: String)
 
-class PreviousMoves(val moves: Array[Move])
+case class PreviousMoves(moves: Array[Move])
 
 trait Move
 
-trait MoveWithState {
-  def state: String
-}
+case class ClaimMove(claim: Claim) extends Move
 
-class ClaimMove(val claim: Claim) extends Move
+case class Claim(punter: Int, source: Int, target: Int)
 
-class ClaimMoveMoveWithState(val claim: Claim, val state: String) extends MoveWithState
+case class PassMove(pass: Pass) extends Move
 
-class Claim(val punter: Int, val source: Int, val target: Int)
+case class Pass(punter: Int)
 
-class PassMove(val pass: Pass) extends Move
+case class MoveFromPunter(claim: Claim, pass: Pass, state: String)
 
-class PassMoveMoveWithState(val pass: Pass, val state: String) extends MoveWithState
+case class ScoreToPunter(stop: Stop, state: String)
 
-class Pass(val punter: Int)
+case class Stop(moves: Array[Move], scores: Array[Score])
 
-class ScoreToPunter(val stop: Stop, val state: String)
+case class Score(punter: Int, score: Int)
 
-class Stop(val moves: Array[Move], val scores: Array[Score])
-
-class Score(val punter: Int, val score: Int)
-
-class TimeoutToPunter(val timeout: Int)
+case class TimeoutToPunter(timeout: Int)

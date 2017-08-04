@@ -11,19 +11,27 @@ class River(val source: Int, val target: Int)
 @JsonIgnoreProperties(ignoreUnknown = true)
 class Site(val id: Int)
 
-class Map(val sites: Array[Site],val rivers: Array[River],val mines: Array[Int])
+class Map(val sites: Array[Site], val rivers: Array[River], val mines: Array[Int])
 
-class PlayToPunter(val move: Moves, val state: String)
+class PlayToPunter(val move: PreviousMoves)
 
-class Moves(val moves: Array[Move])
+class PreviousMoves(val moves: Array[Move])
 
 trait Move
 
-class ClaimMove(val claim: Claim, val state: String) extends Move
+trait MoveWithState {
+  def state: String
+}
+
+class ClaimMove(val claim: Claim) extends Move
+
+class ClaimMoveMoveWithState(val claim: Claim, val state: String) extends MoveWithState
 
 class Claim(val punter: Int, val source: Int, val target: Int)
 
-class PassMove(val pass: Pass, val state: String) extends Move
+class PassMove(val pass: Pass) extends Move
+
+class PassMoveMoveWithState(val pass: Pass, val state: String) extends MoveWithState
 
 class Pass(val punter: Int)
 

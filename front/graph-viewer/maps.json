@@ -1,0 +1,88 @@
+{
+    "maps": [
+        {
+            "filename": "../maps/sample.json",
+            "name": "O: Sample from the Task Description",
+            "num_edges": 12,
+            "num_nodes": 8
+        },
+        {
+            "filename": "../maps/circle.json",
+            "name": "O: Circle",
+            "num_edges": 65,
+            "num_nodes": 27
+        },
+        {
+            "filename": "../maps/lambda.json",
+            "name": "O: Lambda",
+            "num_edges": 60,
+            "num_nodes": 38
+        },
+        {
+            "filename": "../maps/Sierpinski-triangle.json",
+            "name": "O: Sierpinski triangle",
+            "num_edges": 81,
+            "num_nodes": 42
+        },
+        {
+            "filename": "../maps/randomSparse.json",
+            "name": "O: Random2",
+            "num_edges": 123,
+            "num_nodes": 86
+        },
+        {
+            "filename": "../maps/randomMedium.json",
+            "name": "O: Random1",
+            "num_edges": 187,
+            "num_nodes": 97
+        },
+        {
+            "filename": "../maps/tube.json",
+            "name": "O: London Tube",
+            "num_edges": 386,
+            "num_nodes": 301
+        },
+        {
+            "filename": "../maps/boston-sparse.json",
+            "name": "O: Boston",
+            "num_edges": 945,
+            "num_nodes": 488
+        },
+        {
+            "filename": "../maps/edinburgh-sparse.json",
+            "name": "O: Edinburgh",
+            "num_edges": 1751,
+            "num_nodes": 961
+        },
+        {
+            "filename": "../maps/gothenburg-sparse.json",
+            "name": "O: Gothenburg",
+            "num_edges": 2234,
+            "num_nodes": 1175
+        },
+        {
+            "filename": "../maps/oxford-center-sparse.json",
+            "name": "O: Oxford City Centre",
+            "num_edges": 2020,
+            "num_nodes": 1425
+        },
+        {
+            "filename": "../maps/nara-sparse.json",
+            "name": "O: Nara",
+            "num_edges": 2197,
+            "num_nodes": 1560
+        },
+        {
+            "filename": "../maps/van-city-sparse.json",
+            "name": "O: Vancouver",
+            "num_edges": 3601,
+            "num_nodes": 1986
+        },
+        {
+            "filename": "../maps/oxford2-sparse-2.json",
+            "name": "O: Oxford",
+            "num_edges": 3632,
+            "num_nodes": 2389
+        }
+    ]
+}

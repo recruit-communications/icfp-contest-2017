@@ -1,15 +1,17 @@
+package com.kenkoooo.sugoi
+
 import java.util.concurrent.TimeUnit
 
 import org.apache.logging.log4j.scala.Logging
 
 import scala.collection.mutable.ArrayBuffer
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{Future, _}
-import ExecutionContext.Implicits.global
 import scala.sys.process.{Process, ProcessIO}
 
 object SugoiDealer extends Logging {
   def main(args: Array[String]): Unit = {
-    new AiProgram(Array("sleep", "10"), 2).put("")
+    logger.info("sugoooi")
   }
 }
 

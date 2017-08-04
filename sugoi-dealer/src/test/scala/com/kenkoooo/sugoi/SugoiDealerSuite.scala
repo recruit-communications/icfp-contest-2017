@@ -1,3 +1,5 @@
+package com.kenkoooo.sugoi
+
 import org.scalatest.{FunSuite, Matchers}
 
 class SugoiDealerSuite extends FunSuite with Matchers {

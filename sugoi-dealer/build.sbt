@@ -14,3 +14,5 @@ libraryDependencies ++= Seq(
 )
 
 parallelExecution := false
+
+mainClass in (Compile, run) := Some("com.kenkoooo.sugoi.SugoiDealer")

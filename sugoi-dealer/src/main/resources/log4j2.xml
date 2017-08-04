@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="WARN">
+  <Properties>
+    <Property name="logLayout">
+      %d{yyy/MM/dd HH:mm:ss.SSS} [${hostName}] %-5level - [%class] %msg%n
+    </Property>
+  </Properties>
+
+  <!--ログの保存場所や表示形式の定義-->
+  <Appenders>
+
+    <!--標準出力-->
+    <Console name="Console" target="SYSTEM_OUT">
+      <PatternLayout pattern="${logLayout}"/>
+    </Console>
+
+    <!--メインのアプリのログ-->
+    <RollingFile name="WorkingLog" fileName="app.log"
+      filePattern="/var/log/flare/app-%d{yyyy-MM-dd}-%i.log">
+      <PatternLayout pattern="${logLayout}"/>
+      <Policies>
+        <SizeBasedTriggeringPolicy size="250 MB"/>
+        <TimeBasedTriggeringPolicy/>
+      </Policies>
+    </RollingFile>
+  </Appenders>
+
+  <!--実際のロガーの情報-->
+  <Loggers>
+    <!--メインのログ-->
+    <Root level="debug">
+      <AppenderRef ref="WorkingLog"/>
+      <AppenderRef ref="Console"/>
+    </Root>
+  </Loggers>
+</Configuration>

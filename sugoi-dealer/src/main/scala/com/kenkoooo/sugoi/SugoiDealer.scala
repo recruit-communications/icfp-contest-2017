@@ -1,7 +1,10 @@
 package com.kenkoooo.sugoi
 
+import java.io.File
 import java.util.concurrent.TimeUnit
 
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import org.apache.logging.log4j.scala.Logging
 
 import scala.collection.mutable.ArrayBuffer
@@ -11,10 +14,13 @@ import scala.sys.process.{Process, ProcessIO}
 
 object SugoiDealer extends Logging {
   def main(args: Array[String]): Unit = {
-    val mapFilepath = args(0)
-    val punterNum = args.length - 1
-    val x = for (i: Int <- 1 until args.length) yield new AiProgram(args(i))
-    x.foreach(p => logger.info(p.command))
+    val mapper = new ObjectMapper()
+    mapper.registerModule(DefaultScalaModule)
+    val filepath = args(0)
+    val map = mapper.readValue[Map](new File(filepath), classOf[Map])
+    
+
+    val programs = for (i: Int <- 1 until args.length) yield new AiProgram(args(i))
   }
 }
 

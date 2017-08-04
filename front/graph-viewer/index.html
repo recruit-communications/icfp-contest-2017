@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Map Viewer</title>
+    <link rel="stylesheet" href="../js-core/bootstrap.min.css">
+    <link rel="stylesheet" href="viewer.css">
+  </head>
+
+  <body>
+    <div class="container-fluid">
+        <h1>&#955; Map Viewer | <a href="../puntfx/index.html">&#955; PunterFX</a> | <a href="../battle-viewer">&#955; Battle Viewer</a></h1>
+      <fieldset>
+        <legend>Game Information</legend>
+        <div id="dropdown">
+          <select id="maps-select" class="form-control">
+          </select>
+
+          <a id="download-link" href="#">Download</a>
+        </div>
+      </fieldset>
+      <div>
+        <p></p>
+        <p>Punter数 (2 ~ 20) <input type="number" value="3" max="20" min="2" name="num_punters" id="num_punters" >
+        <button id="update_num" onclick="updateNumPunters()">更新！</button>
+        </p>
+      </div>
+    </div>
+    <div class="container-fluid">
+      <fieldset>
+        <legend>Canvas</legend>
+        <div class="container-fluid" id="cy"></div>
+        <div id="loading">
+          <span class="fa fa-refresh fa-spin"></span>
+        </div>
+      </fieldset>
+    </div>
+    <!--- load scripts -->
+    <script src="../js-core/jquery.min.js"></script>
+    <script src="../js-core/bootstrap.min.js"></script>
+    <script src="../js-core/fastclick.min.js"></script>
+    <script src="../js-core/cytoscape.min.js"></script>
+    <script src="../js-core/bluebird.min.js"></script>
+    <script src="../js-core/js-core.js"></script>
+    <script src="viewer.js"></script>
+    </body>
+</html>

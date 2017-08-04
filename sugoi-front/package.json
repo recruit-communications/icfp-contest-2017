@@ -1,0 +1,12 @@
+{
+  "name": "icfp-contest-2017",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "https://github.com/kenkoooo/icfp-contest-2017",
+  "author": "mokemoko <mokemoko331@gmail.com>",
+  "license": "MIT",
+  "dependencies": {
+    "aws-sdk": "^2.94.0",
+    "express": "^4.15.3"
+  }
+}

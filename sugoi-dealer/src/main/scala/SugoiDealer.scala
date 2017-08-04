@@ -9,7 +9,7 @@ import scala.sys.process.{Process, ProcessIO}
 
 object SugoiDealer extends Logging {
   def main(args: Array[String]): Unit = {
-    logger.debug("debug")
+    new AiProgram(Array("sleep", "10"), 2).put("")
   }
 }
 

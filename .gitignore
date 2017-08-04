@@ -1,4 +1,6 @@
-sugoi-dealer/.idea/
+*/.idea/
 sugoi-dealer/target/
 sugoi-dealer/project/target/
 sugoi-dealer/*.log
+*.class
+*~

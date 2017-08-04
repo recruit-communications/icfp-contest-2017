@@ -11,11 +11,14 @@ import scala.sys.process.{Process, ProcessIO}
 
 object SugoiDealer extends Logging {
   def main(args: Array[String]): Unit = {
-    logger.info("sugoooi")
+    val mapFilepath = args(0)
+    val punterNum = args.length - 1
+    val x = for (i: Int <- 1 until args.length) yield new AiProgram(args(i))
+    x.foreach(p => logger.info(p.command))
   }
 }
 
-class AiProgram(val command: Array[String]) extends Logging {
+class AiProgram(val command: String) extends Logging {
 
   /**
     * give the program the string as the standard input
@@ -39,7 +42,7 @@ class AiProgram(val command: Array[String]) extends Logging {
         src.close()
       },
       _.close())
-    val process = Process(command).run(io)
+    val process = Process(Array(command)).run(io)
     val future = Future(blocking(process.exitValue()))
 
     val result = try {

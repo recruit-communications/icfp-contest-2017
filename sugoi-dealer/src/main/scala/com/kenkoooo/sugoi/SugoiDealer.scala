@@ -48,11 +48,11 @@ object SugoiDealer extends Logging {
     * @param map      マップ
     */
   private def play(programs: Seq[AiProgram], map: LambdaMap): Unit = {
-    val graph = new Graph(map)
+    val gameState = new GameState(map, programs.length)
     val deque = new ArrayBuffer[Move]()
     programs.foreach { p => deque.append(PassMove(Pass(p.punter))) }
 
-    while (graph.remainEdgeCount > 0) {
+    while (gameState.remainEdgeCount > 0) {
       def playOneTurn(p: AiProgram): Unit = {
         val playToPunterString = mapper.writeValueAsString(PlayToPunter(PreviousMoves(deque.toArray), p.state))
         deque.remove(0)
@@ -76,12 +76,12 @@ object SugoiDealer extends Logging {
 
         val source = moveFromPunter.claim.source
         val target = moveFromPunter.claim.source
-        if (graph.isUsed(source, target)) {
+        if (gameState.isUsed(source, target)) {
           logger.error(s"$source -- $target is already used!!!")
           deque.append(PassMove(Pass(p.punter)))
         } else {
           logger.info(s"$source -- $target")
-          graph.addEdge(source, target, p.punter)
+          gameState.addEdge(source, target, p.punter)
           deque.append(ClaimMove(moveFromPunter.claim))
         }
       }

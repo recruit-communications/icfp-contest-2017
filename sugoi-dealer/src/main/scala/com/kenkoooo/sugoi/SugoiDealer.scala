@@ -15,7 +15,7 @@ object SugoiDealer extends Logging {
   }
 }
 
-class AiProgram(val command: Array[String], timeoutSeconds: Long) extends Logging {
+class AiProgram(val command: Array[String]) extends Logging {
 
   /**
     * give the program the string as the standard input
@@ -23,7 +23,7 @@ class AiProgram(val command: Array[String], timeoutSeconds: Long) extends Loggin
     * @param input a string given to the program via stdin
     * @return the output string and exit code
     */
-  def put(input: String): (String, Int) = {
+  def put(input: String, timeoutSeconds: Long): (String, Int) = {
     val buffer = new ArrayBuffer[String]()
     val io = new ProcessIO(
       in => {

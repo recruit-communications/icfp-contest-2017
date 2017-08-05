@@ -1,7 +1,7 @@
 #!/usr/local/bin/python3
 # -*- coding: utf-8 -*- 
 
-# battlesディレクトリにあるjsonデータを読み込み、頂点数、辺数などを数えて
+# battlesディレクトリにある各行がjsonからなるデータを読み込み、頂点数、辺数などを数えて
 # battle.jsがマップ情報を読み込めるjson形式にまとめて出力する.
 # jsonが不正な形式の場合無視する
 
@@ -13,15 +13,16 @@ official_data = {
  
 battles = {"battles":[]}
 for file_name in os.listdir("./"):
-    if not file_name.endswith(".json"): continue
+    if not (file_name.endswith(".json") or file_name.endswith(".txt")): continue
     with open(file_name) as f:
+        line = f.readline().strip()[5:]
         try:
-            jsn = json.load(f)
-            num_nodes = len(jsn["settings"]["map"]["sites"])
-            num_edges = len(jsn["settings"]["map"]["rivers"])
-            num_punters = jsn["settings"]["punters"]
+            jsn = eval(line)
+            num_nodes = len(jsn["map"]["sites"])
+            num_edges = len(jsn["map"]["rivers"])
+            num_punters = jsn["punters"]
         except:
-            print(file_name + " is invalid json format")
+            print(file_name + " has invalid json format header line")
             continue
             
         if file_name in official_data:
@@ -49,3 +50,4 @@ battles["battles"].sort(key = lambda x:x["num_nodes"])
 with open("../battle-viewer/battles.json", "w") as f:
     json.dump(battles, f, ensure_ascii=False, indent=4, sort_keys=True, separators=(',', ': '))
 
+print("../battle-viewer/battles.json is created")

@@ -191,6 +191,12 @@ vector<vector<int>> mine_dists(const Game& game) {
 }
 
 pair<int, int> create_move(const Game& game) {
+	vector<int> orders(game.N);
+	for (int i = 0; i < game.N; ++i) {
+		for (const Edge& e : game.edges[i]) {
+			if (e.owner == NOT_OWNED) orders[i]++;
+		}
+	}
 	vector<i64> node_score(game.N);
 	vector<int> reachable(game.N);
 	vector<bool> candidate(game.N);
@@ -267,6 +273,7 @@ void move() {
 	}
 	cout << game.serialize() << "\n";
 	pair<int, int> res = create_move(game);
+	cout << game.I << " ";
 	cout << res.first << " " << res.second << endl;
 	debug("move:%d\n", get_elapsed_msec());
 }

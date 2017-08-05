@@ -142,7 +142,7 @@ function round(number, decimalPlace) {
 }
 
 function makeJsonFormat() {
-  json = {"sites":[], "rivers":[], "mines":[]};
+  let json = {"sites":[], "rivers":[], "mines":[]};
   cy_json = cy.json();
 
   for (let node of cy_json.elements.nodes) {

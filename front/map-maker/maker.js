@@ -65,19 +65,19 @@ function clickNode(nodeMeta, shiftKey) {
     select = nodeId;
     // shiftKeyが押されている場合は、selectが変わるだけ
     if (!shiftKey) {
-      eles.push({doing:"add", addNode:false, source:pre_select, ele:cy.add([
+      eles.push({mode:line, doing:"add", addNode:false, source:pre_select, ele:cy.add([
         {group: "edges", data: {source:pre_select, target:select}}
       ])});
     }
   } else if (mode == mine) {
     if (!cy.$id(nodeId).hasClass(mine)) {
-      eles.push({doing:"add", ele:cy.$id(nodeId).addClass(mine)});
+      eles.push({mode:mine, doing:"add", id:nodeId, ele:cy.$id(nodeId).addClass(mine)});
     } else {
-      eles.push({doing:"remove", ele:cy.$id(nodeId).removeClass(mine)});
+      eles.push({mode:mine, doing:"remove", id:nodeId, ele:cy.$id(nodeId).removeClass(mine)});
     }
   } else if (mode == remove) {
     if (nodeId > 0) {
-      eles.push({doing:"remove", ele:cy.remove(nodeMeta)});
+      eles.push({mode:remove, doing:"remove", ele:cy.remove(nodeMeta)});
       select = 0;
     }
   }
@@ -86,7 +86,12 @@ function clickNode(nodeMeta, shiftKey) {
 function undoCanvas() {
   if (eles.length > 0) {
     let ele = eles.pop();
-    if (ele.doing == "add") {
+    if (ele.mode == mine) {
+      if (ele.doing == "add")
+        cy.$id(ele.id).removeClass(mine);
+      else
+        cy.$id(ele.id).addClass(mine);
+    } else if (ele.doing == "add") {
       cy.remove(ele.ele);
 
       if (ele.source != undefined) {

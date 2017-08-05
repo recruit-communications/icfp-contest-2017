@@ -26,7 +26,7 @@ object SugoiDealer extends Logging with BattleLogging {
     val filepath = args(0)
     val map = mapper.readValue[LambdaMap](new File(filepath), classOf[LambdaMap])
     logger.info("lambda map loaded")
-    val programs = for (i: Int <- 1 until args.length) yield new PunterProgram(args(i), i, i == 1)
+    val programs = for (i: Int <- 1 until args.length) yield new PunterProgram(args(i), i - 1, i - 1 == 0)
     val futures = setup(programs, map)
 
     val gameState = new GameState(map, programs.length, futures)
@@ -90,7 +90,7 @@ object SugoiDealer extends Logging with BattleLogging {
       }
 
       val source = moveFromPunter.claim.source
-      val target = moveFromPunter.claim.source
+      val target = moveFromPunter.claim.target
       if (gameState.isUsed(source, target)) {
         logger.error(s"$source -- $target is already used!!!")
         deque.append(PassMove(Pass(p.punter)))
@@ -157,18 +157,14 @@ class PunterProgram(cmd: String, val punter: Int, battler: Boolean = false) exte
       val name = SugoiMapper.mapper.readValue(handshakeFromPunter, classOf[HandShakeFromPunter]).me
       val handShakeFromServer = SugoiMapper.mapper.writeValueAsString(HandShakeFromServer(name)) + "\n"
 
-      os.write(handShakeFromServer.getBytes.length.toString.getBytes)
-      os.write(":".getBytes)
-      os.write(handShakeFromServer.getBytes)
+      os.write(s"${handShakeFromServer.length}:$handShakeFromServer".getBytes)
       os.flush()
 
       logRecv(handShakeFromServer)
       logger.info(s"handshake to punter: ${handShakeFromServer.length}:$handShakeFromServer")
 
       val commandFromServer = command + "\n"
-      os.write(commandFromServer.getBytes.length.toString.getBytes)
-      os.write(":".getBytes)
-      os.write(commandFromServer.getBytes)
+      os.write(s"${commandFromServer.length}:$commandFromServer".getBytes())
       os.flush()
 
       logRecv(commandFromServer)

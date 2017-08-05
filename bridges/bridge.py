@@ -23,9 +23,9 @@ class OfflineBridge:
         print('SEND', d)
         bytes = d.encode()
         n = len(bytes)
-        sys.stdout.write(str(n).encode())
-        sys.stdout.write(':'.encode())
-        sys.stdout.write(bytes)
+        sys.stdout.buffer.write(str(n).encode())
+        sys.stdout.buffer.write(':'.encode())
+        sys.stdout.buffer.write(bytes)
 
     def read_json(self):
         while 1:

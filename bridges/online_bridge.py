@@ -5,6 +5,15 @@ import subprocess
 import shlex
 
 
+def compress(sorted_site_ids):
+    """
+    >>> conv = compress([1, 3, 6, 10])
+    >>> conv
+    {1: 0, 3: 1, 6: 2, 10: 3}
+    """
+    return {sid: i for i, sid in enumerate(sorted_site_ids)}
+
+
 class OnlineBridge:
     def __init__(self, host, port):
         self.telnet = telnetlib.Telnet(host, port)
@@ -75,7 +84,7 @@ class OnlineBridge:
         G.sort()
         return G
 
-    def sendmove(self, s, t):
+    def sendmove(self, s, t, state, sorted_site_ids):
         if s == -1 or t == -1:
             self.send_json({'pass': {'punter': self.punter_id}})
         else:
@@ -85,7 +94,6 @@ class OnlineBridge:
 class Process:
     def __init__(self, cmd):
         self.cmdline = shlex.split(cmd)
-        self.state = ''
 
     def exec(self, input):
         proc = subprocess.Popen(self.cmdline, stdout=subprocess.PIPE, stdin=subprocess.PIPE)
@@ -100,32 +108,46 @@ class Process:
         m = len(ma['rivers'])
         k = len(ma['mines'])
 
+        site_ids = []
+        for site in ma['sites']:
+            site_ids.append(site['id'])
+        site_ids.sort()
+        conv = compress(site_ids)
+
         S = []
         T = []
         for r in ma['rivers']:
-            s = r['source']
-            t = r['target']
+            s = conv[r['source']]
+            t = conv[r['target']]
             S.append(s)
             T.append(t)
-        M = ma['mines']
+        M = [conv[m] for m in ma['mines']]
 
         lines = ['I', ' '.join(map(str, [num_players, punter_id])), ' '.join(map(str, [n, m, k]))]
         for i in range(m):
             lines.append(' '.join(map(str, [S[i], T[i]])))
         lines.append(' '.join(map(str, M)))
         txt = '\n'.join(lines)
-        self.state = self.exec(txt)
+        sorted_site_ids = site_ids
+        return self.exec(txt), sorted_site_ids
 
-    def G(self, G):
-        lines = ['G', self.state]
+    def G(self, G, state, sorted_site_ids):
+        conv = compress(sorted_site_ids)
+        lines = ['G', state]
         for g in G:
-            lines.append(' '.join(map(str, g[1:])))
+            if g[1] == -1:
+                lines.append('-1 -1')
+            else:
+                lines.append(' '.join(map(str, [conv[g[1]], conv[g[2]]])))
         txt = '\n'.join(lines)
         recv = self.exec(txt)
         l1, l2 = recv.split('\n')
         s, t = map(int, l2.split(' '))
-        self.state = l1
-        return s, t
+        if s != -1:
+            s = sorted_site_ids[s]
+            t = sorted_site_ids[t]
+        new_state = l1
+        return s, t, new_state
 
 
 def main():
@@ -140,15 +162,15 @@ def main():
     bridge.handshake(name)
     bridge.setup()
 
-    proc.I(bridge.punters, bridge.punter_id, bridge.map)
+    state, sorted_site_ids = proc.I(bridge.punters, bridge.punter_id, bridge.map)
     bridge.ready()
 
     while 1:
         G = bridge.recmove()
         if G is None:
             break
-        s, t = proc.G(G)
-        bridge.sendmove(s, t)
+        s, t, state = proc.G(G, state, sorted_site_ids)
+        bridge.sendmove(s, t, state, sorted_site_ids)
     bridge.close()
 
 

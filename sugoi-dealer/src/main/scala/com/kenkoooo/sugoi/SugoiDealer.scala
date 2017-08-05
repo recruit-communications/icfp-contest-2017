@@ -32,15 +32,17 @@ object SugoiDealer extends Logging {
     * @param programs AI programs
     * @param map      map
     */
-  private def setup(programs: Seq[PunterProgram], map: LambdaMap): Unit = {
+  private def setup(programs: Seq[PunterProgram], map: LambdaMap): ArrayBuffer[Array[LambdaFuture]] = {
+    val futureBuffer = new ArrayBuffer[Array[LambdaFuture]]()
     programs.foreach(program => {
-      val setupInput = mapper.writeValueAsString(SetupToPunter(program.punter, programs.size, map))
+      val setupInput = mapper.writeValueAsString(SetupToPunter(program.punter, programs.size, map, LambdaSettings(true)))
       val (setupOutput, code) = program.putCommand(setupInput, 10)
       if (code != 0) program.penaltyCount += 1
       val output = mapper.readValue[SetupToServer](setupOutput, classOf[SetupToServer])
       program.state = output.state
+      futureBuffer.append(output.futures)
     })
-
+    futureBuffer
   }
 
   /**
@@ -118,7 +120,7 @@ class PunterProgram(cmd: String, val punter: Int) extends Logging {
     * @return response string and exit code
     */
   private def execute(command: String): (String, Long) = {
-    val pb = new ProcessBuilder(Array(cmd).toList.asJava)
+    val pb = new ProcessBuilder(cmd.split("\\s").toList.asJava)
     val proc = pb.start()
     val os = proc.getOutputStream
     val reader = new SugoiInputReader(proc.getInputStream)
@@ -128,17 +130,22 @@ class PunterProgram(cmd: String, val punter: Int) extends Logging {
 
       logger.info(s"handshake from punter: $handshakeFromPunter")
       val name = SugoiMapper.mapper.readValue(handshakeFromPunter, classOf[HandShakeFromPunter]).me
-      val handShakeFromServer = SugoiMapper.mapper.writeValueAsBytes(HandShakeFromServer(name))
+      val handShakeFromServer = SugoiMapper.mapper.writeValueAsString(HandShakeFromServer(name)) + "\n"
 
       os.write(handShakeFromServer.length)
       os.write(":".getBytes)
-      os.write(handShakeFromServer)
+      os.write(handShakeFromServer.getBytes)
       os.flush()
 
-      os.write(command.getBytes.length)
+      logger.info(s"handshake to punter: ${handShakeFromServer.length}:$handShakeFromServer")
+
+      val commandFromServer = command + "\n"
+      os.write(commandFromServer.length)
       os.write(":".getBytes)
-      os.write(command.getBytes)
+      os.write(commandFromServer.getBytes)
       os.flush()
+
+      logger.info(s"command to punter: ${commandFromServer.length}:$commandFromServer")
 
       val fromPunter = reader.next()
       logger.info(s"command from punter: $fromPunter")

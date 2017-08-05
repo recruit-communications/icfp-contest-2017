@@ -4,6 +4,7 @@ import java.io.{File, InputStream, InputStreamReader}
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
+import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.scala.Logging
 
 import scala.collection.JavaConverters._
@@ -15,6 +16,7 @@ import scala.language.postfixOps
 
 object SugoiDealer extends Logging {
   val mapper: ObjectMapper = SugoiMapper.mapper
+  val battleLogger = LogManager.getLogger("BattleLog")
 
   def main(args: Array[String]): Unit = {
     logger.info("sugoi-dealer is starting...")
@@ -26,6 +28,11 @@ object SugoiDealer extends Logging {
 
     val gameState = new GameState(map, programs.length, futures)
     play(programs, gameState)
+
+    gameState.calcScore().foreach(v => {
+      val (punter, score) = v
+      logger.info(s"Player: $punter, Score: $score")
+    })
   }
 
   /**

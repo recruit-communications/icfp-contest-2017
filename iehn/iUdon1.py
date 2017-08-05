@@ -13,7 +13,7 @@ def I(): return int(sys.stdin.readline())
 def F(): return float(sys.stdin.readline())
 def S(): return input()
 
-DEBUG = True
+DEBUG = False
 
 def pe(*a, **b):
     if not DEBUG:
@@ -153,7 +153,7 @@ def play():
         pf('-1 -1')
 
 def init():
-    pf('iUdon2')
+    pf('iUdon1')
 
 def main():
     t = input()

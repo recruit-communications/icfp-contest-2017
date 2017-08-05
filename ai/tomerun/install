@@ -1,4 +1,4 @@
 #!/bin/sh
 
 name="\"nihonbashi\""
-g++-7 -O2 -std=c++14 main.cpp -o nihonbashi -DPLAYER_NAME="$name"
+g++ -O2 -std=c++14 main.cpp -o nihonbashi -DPLAYER_NAME="$name"

@@ -115,38 +115,9 @@ struct Game {
 		return ss.str();
 	}
 
-	void init() { // TODO: remove
-		// values.resize(N);
-		// vi visited(N, 0);
-		// vi q;
-		// q.reserve(N);
-		// for (int i = 0; i < K; ++i) {
-		// 	q.clear();
-		// 	q.push_back(mines[i]);
-		// 	visited[mines[i]] |= (1 << i);
-		// 	int dist = 1;
-		// 	int dist_end = q.size();
-		// 	for (int j = 0; j < q.size(); ++j) {
-		// 		if (j == dist_end) {
-		// 			++dist;
-		// 			dist_end = q.size();
-		// 		}
-		// 		int s = q[j];
-		// 		for (const Edge& e : edges[s]) {
-		// 			int t = e.to;
-		// 			if (visited[t] & (1 << i)) continue;
-		// 			visited[t] |= (1 << i);
-		// 			values[t] += SCORE_SCALE / (dist + 2);
-		// 			q.push_back(t);
-		// 		}
-		// 	}
-		// }
-	}
-
 	void use(int s, int t, int owner) {
 		if (s == -1) return;
 		for (int flip = 0; flip < 2; ++flip) {
-			// TODO: binary search?
 			vector<Edge>& es = edges[s];
 			for (int i = 0; i < es.size(); ++i) {
 				if (es[i].to == t && es[i].owner == NOT_OWNED) {
@@ -185,71 +156,68 @@ struct Game {
 			}
 		}
 	}
-};
 
-pair<int, int> create_move(const Game& game) {
-	vector<int> orders(game.N);
-	for (int i = 0; i < game.N; ++i) {
-		for (const Edge& e : game.edges[i]) {
-			if (e.owner == NOT_OWNED) orders[i]++;
-		}
-	}
-	vector<i64> node_score(game.N);
-	vector<int> reachable(game.N); // i-th bit of reachable[j] := vertex j is reachable from mine i
-	vector<bool> candidate_to(game.N);
-	for (int i = 0; i < game.K; ++i) {
-		vector<int> q = {game.mines[i]};
-		reachable[q[0]] |= (1 << i);
-		int dist = 1;
-		int dist_end = q.size();
-		for (int j = 0; j < q.size(); ++j) {
-			if (j == dist_end) {
-				++dist;
-				dist_end = q.size();
+	pair<int, int> create_move() const {
+		vector<int> orders(N);
+		for (int i = 0; i < N; ++i) {
+			for (const Edge& e : edges[i]) {
+				if (e.owner == NOT_OWNED) orders[i]++;
 			}
-			for (const Edge& e : game.edges[q[j]]) {
-				if (e.owner == NOT_OWNED && (reachable[e.to] & (1 << i)) == 0) {
-					candidate_to[q[j]] = true;
-				} else if (e.owner == game.I && (reachable[e.to] & (1 << i)) == 0) {
-					q.push_back(e.to);
-					reachable[e.to] |= (1 << i);
-					node_score[e.to] += dist * SCORE_SCALE;
+		}
+
+		vector<int> reachable(N); // i-th bit of reachable[j] := vertex j is reachable from mine i
+		vector<bool> candidate_to(N);
+		for (int i = 0; i < K; ++i) {
+			vector<int> q = {mines[i]};
+			reachable[q[0]] |= (1 << i);
+			for (int j = 0; j < q.size(); ++j) {
+				for (const Edge& e : edges[q[j]]) {
+					if (e.owner == NOT_OWNED && (reachable[e.to] & (1 << i)) == 0) {
+						candidate_to[q[j]] = true;
+					} else if (e.owner == I && (reachable[e.to] & (1 << i)) == 0) {
+						q.push_back(e.to);
+						reachable[e.to] |= (1 << i);
+					}
 				}
 			}
 		}
-	}
-	int cur_order = 0;
-	for (int i = 0; i < game.N; ++i) {
-		if (candidate_to[i]) cur_order += orders[i];
-	}
-	const int order_div = cur_order <= game.C ? 1 : cur_order <= game.C * 2 ? 2 : 5;
-	int bestValue = -1;
-	pair<int, int> res(-1, -1);
-	for (int i = 0; i < game.N; ++i) {
-		if (!candidate_to[i]) continue;
-		for (const Edge& e : game.edges[i]) {
-			if (e.owner != NOT_OWNED) continue;
-			if (reachable[i] == reachable[e.to]) continue;
-			i64 value = __builtin_popcount(~reachable[i] & reachable[e.to]) * SCORE_SCALE;
-			for (int j = 0; j < game.K; ++j) {
-				if (reachable[i] & (1 << j)) {
-					// expand
-					value += game.dists[j][e.to] * game.dists[j][e.to] * SCORE_SCALE / 3;
-				} else {
-					// approach
-					value += SCORE_SCALE * 5 / (game.dists[j][e.to] * game.dists[j][e.to] + 1);
+
+		vector<pair<int, const Edge*>> cand_edges;
+		vector<i64> connect_score;
+		vector<i64> order_score;
+		vector<i64> expand_score;
+		vector<i64> approach_score;
+
+		for (int i = 0; i < N; ++i) {
+			if (!candidate_to[i]) continue;
+			for (const Edge& e : edges[i]) {
+				if (e.owner != NOT_OWNED) continue;
+				if (reachable[i] == reachable[e.to]) continue;
+				cand_edges.push_back(make_pair(i, &e));
+				connect_score.push_back(__builtin_popcount(~reachable[i] & reachable[e.to]) * SCORE_SCALE);
+				order_score.push_back(SCORE_SCALE * orders[e.to]);
+				expand_score.push_back(0);
+				approach_score.push_back(0);
+				for (int j = 0; j < K; ++j) {
+					if (reachable[i] & (1 << j)) {
+						expand_score.back() += dists[j][e.to] * dists[j][e.to] * SCORE_SCALE;
+					} else {
+						approach_score.back() += SCORE_SCALE / (dists[j][e.to] * dists[j][e.to] + 1);
+					}
 				}
-				value += SCORE_SCALE * orders[e.to] / order_div;
-			}
-			if (value > bestValue) {
-				bestValue = value;
-				res = {i, e.to};
 			}
 		}
+
+		vector<pair<i64, int>> scores(cand_edges.size());
+		vi weights = {15, 10, 5, 70};
+		for (int i = 0; i < cand_edges.size(); ++i) {
+			scores[i].first = connect_score[i] * weights[0] + order_score[i] * weights[1] + expand_score[i] * weights[2] + approach_score[i] * weights[3];
+			scores[i].second = i;
+		}
+		int idx = max_element(scores.begin(), scores.end())->second;
+		return make_pair(cand_edges[idx].first, cand_edges[idx].second->to);
 	}
-	// cerr << bestValue << " " << res.first << " " << res.second << endl;
-	return res;
-}
+};
 
 void handshake() {
 	cout << "nihonbashi" << endl;
@@ -274,7 +242,7 @@ void move() {
 		game.use(s, t, i);
 	}
 	cout << game.serialize() << "\n";
-	pair<int, int> res = create_move(game);
+	pair<int, int> res = game.create_move();
 	cout << game.I << " ";
 	cout << res.first << " " << res.second << endl;
 	debug("move:%d\n", get_elapsed_msec());

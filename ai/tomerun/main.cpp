@@ -67,12 +67,10 @@ struct Game {
 	int C, I, F, N, M, K;
 	vector<vector<Edge>> edges;
 	vector<int> mines;
-	vector<i64> values;
 
 	Game(bool original) {
 		scanf("%d %d %d %d %d %d", &C, &I, &F, &N, &M, &K);
 		edges.resize(N);
-		values.resize(N);
 		mines.resize(K);
 		if (original) {
 			turn = 0;
@@ -92,7 +90,7 @@ struct Game {
 			scanf("%d", &turn);
 			for (int i = 0; i < N; ++i) {
 				int ec;
-				scanf("%d %d", &values[i], &ec);
+				scanf("%d", &ec);
 				edges[i].resize(ec);
 				for (int j = 0; j < ec; ++j) {
 					scanf("%d %d", &edges[i][j].to, &edges[i][j].owner);
@@ -108,7 +106,7 @@ struct Game {
 		stringstream ss;
 		ss << C << " " << I << " " << F << " " << N << " " << M << " " << K << " " << (turn + 1);
 		for (int i = 0; i < N; ++i) {
-			ss << " " << values[i] << " " << edges[i].size();
+			ss << " " << edges[i].size();
 			for (const Edge& e : edges[i]) {
 				ss << " " << e.to << " " << e.owner;
 			}
@@ -119,32 +117,32 @@ struct Game {
 		return ss.str();
 	}
 
-	void init() {
-		values.resize(N);
-		vi visited(N, 0);
-		vi q;
-		q.reserve(N);
-		for (int i = 0; i < K; ++i) {
-			q.clear();
-			q.push_back(mines[i]);
-			visited[mines[i]] |= (1 << i);
-			int dist = 1;
-			int dist_end = q.size();
-			for (int j = 0; j < q.size(); ++j) {
-				if (j == dist_end) {
-					++dist;
-					dist_end = q.size();
-				}
-				int s = q[j];
-				for (const Edge& e : edges[s]) {
-					int t = e.to;
-					if (visited[t] & (1 << i)) continue;
-					visited[t] |= (1 << i);
-					values[t] += SCORE_SCALE / (dist + 2);
-					q.push_back(t);
-				}
-			}
-		}
+	void init() { // TODO: remove
+		// values.resize(N);
+		// vi visited(N, 0);
+		// vi q;
+		// q.reserve(N);
+		// for (int i = 0; i < K; ++i) {
+		// 	q.clear();
+		// 	q.push_back(mines[i]);
+		// 	visited[mines[i]] |= (1 << i);
+		// 	int dist = 1;
+		// 	int dist_end = q.size();
+		// 	for (int j = 0; j < q.size(); ++j) {
+		// 		if (j == dist_end) {
+		// 			++dist;
+		// 			dist_end = q.size();
+		// 		}
+		// 		int s = q[j];
+		// 		for (const Edge& e : edges[s]) {
+		// 			int t = e.to;
+		// 			if (visited[t] & (1 << i)) continue;
+		// 			visited[t] |= (1 << i);
+		// 			values[t] += SCORE_SCALE / (dist + 2);
+		// 			q.push_back(t);
+		// 		}
+		// 	}
+		// }
 	}
 
 	void use(int s, int t, int owner) {
@@ -252,7 +250,6 @@ void handshake() {
 void init() {
 	time_limit  = 8000;
 	Game game(true);
-	game.init();
 	string ser = game.serialize();
 	cout << ser << "\n";
 	int num_future = 0;

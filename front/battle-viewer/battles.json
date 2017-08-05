@@ -13,6 +13,13 @@
             "num_edges": 12,
             "num_nodes": 8,
             "num_punters": 2
+        },
+        {
+            "filename": "../battles/vos.json",
+            "name": "vos",
+            "num_edges": 12,
+            "num_nodes": 8,
+            "num_punters": 2
         }
     ]
 }

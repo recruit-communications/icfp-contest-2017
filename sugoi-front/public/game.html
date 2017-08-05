@@ -25,7 +25,7 @@
         function createRow(data, idx) {
           const date = (new Date(data.created_at)).toISOString();
           const punters = data.punter_ids.join('<br />');
-          const results = data.results.map((res, i) => {
+          const results = (data.results || []).map((res, i) => {
             return `${i+1}位 ${res.punter} / ${res.score}pt`
           }).join('<br />');
 

@@ -29,7 +29,7 @@ app.get('/game/list', (req, res) => {
 });
 
 // 対戦実行
-app.get('/battle/execute', (req, res) => {
+app.get('/game/execute', (req, res) => {
   battle.exec().then((data) => {
     res.json(data);
   });

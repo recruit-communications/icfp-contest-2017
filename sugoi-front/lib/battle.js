@@ -10,10 +10,10 @@ const http = require('http');
 // map: マップID
 function exec({id = uuid(), num = 2, map = "sample"} = {}) {
   let params = {};
-  return pick(num).then((pids) => {
+  return pick(num).then((punters) => {
     params = {
       id: id,
-      punters: pids.map((pid) => {id: pid}),
+      punter_ids: punters.map((p) => p.id),
       map: map
     };
     return postJenkins(params);
@@ -25,11 +25,11 @@ function exec({id = uuid(), num = 2, map = "sample"} = {}) {
 }
 
 // Jenkinsにジョブ登録
-function postJenkins({id, map, punters}) {
+function postJenkins({id, map, punter_ids}) {
   const params = [
     `game_id=${id}`,
     `map_id=${map}`,
-    `punter_ids=${punters.join(',')}`,
+    `punter_ids=${punter_ids.join(',')}`,
   ].join('&')
   const options = {
     host: '52.198.25.234',

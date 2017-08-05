@@ -272,7 +272,7 @@ void doit(State &s) {
     cout << s.to_json() << endl; // print new state
 
     auto e = s.choose_greedily();
-    cout << e.first << " " << e.second << endl; // print edge
+    cout << s.punter_id << " " << e.second << " " << e.first << endl; // print edge
 }
 
 int main() {

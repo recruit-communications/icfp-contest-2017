@@ -20,10 +20,10 @@ const graphStyle = [
     "style": {
       "background-color": "red",
       "border-color": "white",
-      "width": 120,
-      "height": 120,
+      "width": 80,
+      "height": 80,
       "color": "#000",
-      "font-size": 72,
+      "font-size": 48,
       "font-weight": "bold",
       "z-index": 9999,
       "text-valign": "center",
@@ -52,7 +52,7 @@ const graphStyle = [
       "font-size": 64,
       "color": "#FFF",
       "line-color": "#009",
-      "width": 15,
+      "width": 13,
       "z-index" : 1,
       "curve-style": "haystack",
       "haystack-radius": 0

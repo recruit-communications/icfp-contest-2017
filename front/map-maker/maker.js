@@ -14,14 +14,14 @@ let json = {
 
 function initParams() {
   for (site of json.sites) {
-    id = Math.max(id, site.id);
+    id = Math.max(id, site.id) + 1;
   }
   select = 0;
   eles = [];
   changes = [];
 }
 
-function drawCanvas() {
+function renderGraph() {
   initParams();
   if (cy.elements !== undefined) {
     cy.destroy();
@@ -58,9 +58,10 @@ function drawCanvas() {
 function clickBackground(position) {
   if (mode == line) {
     eles.push(cy.add([
-      {group:"nodes", data: {"id": id}, renderedPosition: {x: position.x, y: position.y}},
+      {group:"nodes", data: {"id": id.toString()}, renderedPosition: {x: position.x, y: position.y}},
       {group:"edges", data: {source: select, target: id}}
     ]));
+    elements.push({})
     changes.push({mode:line, source:select, target:id, addNode:true});
     console.log("Added line:")
     console.log(eles[eles.length - 1]);
@@ -121,7 +122,7 @@ function undoCanvas() {
 
 function resetCanvas() {
   cy.destroy();
-  drawCanvas();
+  renderGraph();
 }
 
 function lineInputMode() {
@@ -164,7 +165,7 @@ function makeJsonFormat() {
 
   if ($("input[name=format]:checked").val() == "true") {
     return JSON.stringify(json, null, "\t");
-  } else {
+  } else { 
     return JSON.stringify(json);
   }
 }
@@ -175,6 +176,17 @@ function processOutput() {
   console.log("Output as Json");
 }
 
+function doVisualize() {
+  json = JSON.parse($("#json-form").val());
+  renderGraph();
+}
+
+function keyPress(e) {
+  var evtobj = window.event? event : e;
+  if ((evtobj.keyCode == 90 || evtobj.keyCode == 91) && evtobj.ctrlKey) undoCanvas();
+}
+
 $(function(){
-  drawCanvas();
+  renderGraph();
+  document.onkeydown = keyPress;
 })

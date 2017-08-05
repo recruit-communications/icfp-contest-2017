@@ -21,13 +21,13 @@
       </p>
       <fieldset>
         <legend>Canvas</legend>
-        <div id="controllers">
+        <div class="container-fluid" id="controllers">
           <div id="element-type">
             <button class="btn" id="line-input" onclick="lineInputMode()" disabled>- (line)</button>
             <button class="btn" id="mine-input" onclick="mineInputMode()">λ (mine)</button>
           </div>
           <div id="state-changer">
-            <button class="btn" id="undo" onclick="undoCanvas()">Undo</button>
+            <button class="btn" id="undo" onclick="undoCanvas()">Undo (Ctrl+Z)</button>
             <button class="btn" id="reset" onclick="resetCanvas()">Reset!</button>
           </div>
         </div>
@@ -46,6 +46,23 @@
           </div>
         </div>
       </fieldset>
+      <div align="center" onclick="obj=document.getElementById('open').style; obj.display=(obj.display=='none')?'block':'none';">
+        <a style="cursor:pointer;">▼ 既存のグラフを追加編集</a>
+      </div>
+      <br>
+      <div class="container-fluid" id="open" style="display:none;clear:both;">
+        <fieldset>
+          <div class="container-text" align="center">
+            <div>
+              <textarea id="json-form" cols="140" rows="10" placeholder="ここにグラフデータ貼り付けてください。"></textarea>
+            </div>
+            <div>
+              <button class="btn" id="submit-button" onclick="doVisualize()">これを追加編集！</button>
+            </div>
+            <br>
+          </div>
+        </fieldset>
+      </div>
     <!--- load scripts -->
     <script src="../js-core/jquery.min.js"></script>
     <script src="../js-core/bootstrap.min.js"></script>

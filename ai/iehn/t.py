@@ -69,18 +69,14 @@ def setup():
     N, M, K = LI()
     pe(K=K)
     e = {}
-    ee = {}
     for _ in range(M):
         a,b = LI()
         if a not in e:
             e[a] = set()
         if b not in e:
             e[b] = set()
-        if a not in ee:
-            ee[a] = set()
         e[a].add(b)
         e[b].add(a)
-        ee[a].add(b)
 
     max_i = max(e.keys())
     uf = UnionFind(max_i + 1)
@@ -118,7 +114,6 @@ def setup():
 
     state = {
         'e': e,
-        'ee': ee,
         'ek': ek,
         'es': es,
         'esa': esa,
@@ -139,7 +134,6 @@ def play():
     state = input()
     state = pickle.loads(eval(state))
     e = state['e']
-    ee = state['ee']
     ek = state['ek']
     es = state['es']
     esa = state['esa']
@@ -152,28 +146,22 @@ def play():
     pe(P=P,N=N,C=C)
 
     def fr(s,v):
-        if s in ee and v in ee[s]:
-            r = '{} {}'.format(s,v)
-            ee[s].remove(v)
-        else:
-            r = '{} {}'.format(v,s)
-            ee[v].remove(s)
-        e[v].remove(s)
-        e[s].remove(v)
+        if v in e and s in e[v]:
+            e[v].remove(s)
+        if s in e and v in e[s]:
+            e[s].remove(v)
         esa.append(v)
         uf.union(s,v)
-        return r
+        return '{} {}'.format(s,v)
 
     for i in range(C):
         s,t = LI()
         if s == -1:
             # passの場合
             continue
-        if s in ee and t in ee[s]:
-            ee[s].remove(t)
-        if t in e[s]:
+        if s in e and t in e[s]:
             e[s].remove(t)
-        if s in e[t]:
+        if t in e and s in e[t]:
             e[t].remove(s)
 
     r = None
@@ -188,6 +176,7 @@ def play():
                 continue
             if uf.table[s] != -1 and uf.table[v] != -1:
                 r = fr(s,v)
+                break
             et.append([len(e[v] - ess) + 2, -len(e[s]), (s,v)])
 
     esas = esa[K:]
@@ -199,6 +188,7 @@ def play():
                 continue
             if uf.table[s] != -1 and uf.table[v] != -1:
                 r = fr(s,v)
+                break
             et.append([len(e[v] - ess), -len(e[s]), (s,v)])
 
     if not r and et:
@@ -206,7 +196,7 @@ def play():
         s,v = et[-1][2]
         r = fr(s,v)
 
-    for k,v in ee.items():
+    for k,v in e.items():
         if r:
             break
         if not v:
@@ -221,9 +211,9 @@ def play():
 
     if r:
         pe(r=r)
-        pf(r)
+        pf('{} '.format(P) + r)
     else:
-        pf('-1 -1')
+        pf('{} '.format(P) + '-1 -1')
 
 def init():
     pf('iUdon2')

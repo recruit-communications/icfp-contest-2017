@@ -9,7 +9,7 @@
 
   <body>
     <div class="container-fluid">
-        <h1>&#955; Map Viewer | <a href="../puntfx/index.html">&#955; PunterFX</a> | <a href="../battle-viewer">&#955; Battle Viewer</a></h1>
+      <h1>&#955; Map Viewer | <a href="../puntfx/index.html"> &#955; Punter FX</a> | <a href="../battle-viewer">&#955; Battle Viewer</a> | <a href="../map-maker">&#955; Map Maker</a></h1>
       <fieldset>
         <legend>Game Information</legend>
         <div id="dropdown">
@@ -35,6 +35,21 @@
         </div>
       </fieldset>
     </div>
+    <div class="container-fluid">
+      <fieldset>
+        <legend>Submit form</legend>
+        <div class="container-text" align="center">
+          <div>
+            <button class="btn" id="submit-button" onclick="doVisualize()">ヴィジュアライズ！</button>
+          </div>
+          <br>
+          <div>
+            <textarea id="json-form" cols="140" rows="10" placeholder="ここにグラフデータ貼り付けてください。"></textarea>
+          </div>
+        </div>
+        <br><br><br><br>
+      </fieldset>
+      </divt>
     <!--- load scripts -->
     <script src="../js-core/jquery.min.js"></script>
     <script src="../js-core/bootstrap.min.js"></script>

@@ -44,6 +44,8 @@ class OfflineBridge:
         json_bytes = self.buffer[:n].decode()
         self.buffer = self.buffer[n:]
         obj = json.loads(json_bytes)
+        if 'timeout' in obj:
+            return self.read_json()
         return obj
 
     def handshake(self, name):

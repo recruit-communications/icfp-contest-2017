@@ -2,6 +2,10 @@ package com.kenkoooo.sugoi
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 
+case class HandShakeFromPunter(me: String)
+
+case class HandShakeFromServer(you: String)
+
 case class SetupToPunter(punter: Int, punters: Int, map: LambdaMap)
 
 case class SetupToServer(ready: Int, state: String)

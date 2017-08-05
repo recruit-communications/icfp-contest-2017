@@ -1,25 +1,26 @@
 package com.kenkoooo.sugoi
 
 import java.io.File
-import java.util.concurrent.TimeUnit
+import java.util.Scanner
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import org.apache.logging.log4j.scala.Logging
 
+import scala.collection.JavaConverters._
 import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.{Future, _}
-import scala.sys.process.{Process, ProcessIO}
+import scala.concurrent._
+import scala.concurrent.duration.DurationInt
+import scala.language.postfixOps
 
 object SugoiDealer extends Logging {
-  val mapper = new ObjectMapper()
-  mapper.registerModule(DefaultScalaModule)
+  val mapper: ObjectMapper = SugoiMapper.mapper
 
   def main(args: Array[String]): Unit = {
     val filepath = args(0)
     val map = mapper.readValue[LambdaMap](new File(filepath), classOf[LambdaMap])
-    val programs = for (i: Int <- 1 until args.length) yield new AiProgram(args(i), i)
+    val programs = for (i: Int <- 1 until args.length) yield new PunterProgram(args(i), i)
     setup(programs, map)
     play(programs, map)
   }
@@ -30,10 +31,10 @@ object SugoiDealer extends Logging {
     * @param programs AI たち
     * @param map      マップ
     */
-  private def setup(programs: Seq[AiProgram], map: LambdaMap): Unit = {
+  private def setup(programs: Seq[PunterProgram], map: LambdaMap): Unit = {
     programs.foreach(program => {
       val setupInput = mapper.writeValueAsString(SetupToPunter(program.punter, programs.size, map))
-      val (setupOutput, code) = program.put(setupInput, 10)
+      val (setupOutput, code) = program.putCommand(setupInput, 10)
       if (code != 0) program.penaltyCount += 1
       val output = mapper.readValue[SetupToServer](setupOutput, classOf[SetupToServer])
       program.state = output.state
@@ -47,18 +48,18 @@ object SugoiDealer extends Logging {
     * @param programs AI たち
     * @param map      マップ
     */
-  private def play(programs: Seq[AiProgram], map: LambdaMap): Unit = {
+  private def play(programs: Seq[PunterProgram], map: LambdaMap): Unit = {
     val gameState = new GameState(map, programs.length)
     val deque = new ArrayBuffer[Move]()
     programs.foreach { p => deque.append(PassMove(Pass(p.punter))) }
 
     while (gameState.remainEdgeCount > 0) {
-      def playOneTurn(p: AiProgram): Unit = {
+      def playOneTurn(p: PunterProgram): Unit = {
         val playToPunterString = mapper.writeValueAsString(PlayToPunter(PreviousMoves(deque.toArray), p.state))
         deque.remove(0)
 
         // play
-        val (playOutput, code) = p.put(playToPunterString, 2)
+        val (playOutput, code) = p.putCommand(playToPunterString, 2)
 
         if (p.penaltyCount >= 10 || code != 0) {
           // failed
@@ -91,44 +92,58 @@ object SugoiDealer extends Logging {
   }
 }
 
-
-class AiProgram(val command: String, val punter: Int) extends Logging {
-  var penaltyCount = 0
+class PunterProgram(cmd: String, val punter: Int) extends Logging {
   var state = ""
+  var penaltyCount = 0
 
-  /**
-    * give the program the string as the standard input
-    *
-    * @param input a string given to the program via stdin
-    * @return the output string and exit code
-    */
-  def put(input: String, timeoutSeconds: Long): (String, Int) = {
-    val buffer = new ArrayBuffer[String]()
-    val io = new ProcessIO(
-      in => {
-        val writer = new java.io.PrintWriter(in)
-        writer.println(input)
-        writer.close()
-      },
-      out => {
-        val src = scala.io.Source.fromInputStream(out)
-        for (line <- src.getLines()) {
-          buffer.append(line)
-        }
-        src.close()
-      },
-      _.close())
-    val process = Process(Array(command)).run(io)
-    val future = Future(blocking(process.exitValue()))
+  def putCommand(command: String, timeout: Long): (String, Long) = {
+    val f = future {
+      execute(command)
+    }
+    f.onComplete(content => content.get)
 
-    val result = try {
-      Await.result(future, duration.Duration(timeoutSeconds, TimeUnit.SECONDS))
-    } catch {
+    try Await.result(f, 10 seconds)
+    catch {
       case e: TimeoutException =>
         logger.catching(e)
-        process.destroy()
-        process.exitValue()
+        ("", 1)
     }
-    (buffer.mkString, result)
   }
+
+  private def execute(command: String): (String, Long) = {
+    val pb = new ProcessBuilder(Array(cmd).toList.asJava)
+    val proc = pb.start()
+    val os = proc.getOutputStream
+    val sc = new Scanner(proc.getInputStream)
+    try {
+      // handshake
+      val handshakeFromPunter = sc.nextLine()
+      logger.info(s"handshake from punter: $handshakeFromPunter")
+      val name = SugoiMapper.mapper.readValue(handshakeFromPunter, classOf[HandShakeFromPunter]).me
+      os.write(SugoiMapper.mapper.writeValueAsBytes(HandShakeFromServer(name)))
+      os.flush()
+
+      os.write(command.getBytes)
+      os.write("\n".getBytes())
+      os.flush()
+
+      val fromPunter = sc.nextLine()
+      logger.info(s"command from punter: $fromPunter")
+      (fromPunter, 0)
+    } catch {
+      case e: Throwable =>
+        logger.catching(e)
+        ("", 1)
+    } finally {
+      sc.close()
+      os.close()
+      proc.destroy()
+      logger.info("Process successfully destroyed")
+    }
+  }
+}
+
+object SugoiMapper {
+  val mapper = new ObjectMapper()
+  mapper.registerModules(DefaultScalaModule)
 }

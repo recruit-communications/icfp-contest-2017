@@ -271,16 +271,16 @@ function handleBack() {
 
 function handleGo() {
   bindGoHandlers();
-  forwardBattle();
+  forwardBattle(true);
   handlePause();
 }
 
-function forwardBattle() {
+function forwardBattle(logging) {
   let data = moves[row][col];
   if (data.claim != undefined) {
     updateEdgeOwner(data.claim.punter, data.claim.source, data.claim.target);
   }
-  logMove(data);
+  if (logging) logMove(data);
 
   col++;
   if (col == moves[row].length) {
@@ -313,8 +313,9 @@ function handlePlay() {
 
 function handleEnd() {
   while (row < moves.length) {
-    handleGo(moves);
+    forwardBattle(false);
   }
+  logInfo("Moves End...");
   bindEndHandlers();
 }
 

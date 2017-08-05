@@ -18,7 +18,7 @@ function exec({id = uuid(), num = 2, map = "sample"} = {}) {
     };
     return postJenkins(params);
   }).then(() => {
-    return db.addBattle(params);
+    return db.addGame(params);
   }).then(() => {
     return params
   });
@@ -64,7 +64,7 @@ function postJenkins({id, map, clients}) {
 // num: 選択数
 // return: 選択クライアントIDs
 function pick(num) {
-  return db.clients().then((data) => {
+  return db.punters().then((data) => {
     let res = [];
     for (let i=0; i<num; i++) {
       Array.prototype.push.apply(res, data.splice(data.length*Math.random()<<0, 1));

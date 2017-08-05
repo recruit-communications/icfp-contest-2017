@@ -63,6 +63,7 @@ struct Game {
 	int C, I, F, N, M, K;
 	vector<vector<Edge>> edges;
 	vector<int> mines;
+	vvi dists;
 
 	Game(bool original) {
 		scanf("%d %d %d %d %d %d", &C, &I, &F, &N, &M, &K);
@@ -95,6 +96,7 @@ struct Game {
 			for (int i = 0; i < K; ++i) {
 				scanf("%d", &mines[i]);
 			}
+			calc_mine_dists();
 		}
 	}
 
@@ -155,36 +157,35 @@ struct Game {
 			swap(s, t);
 		}
 	}
-};
 
-vector<vector<int>> mine_dists(const Game& game) {
-	vi q;
-	q.reserve(game.N);
-	vvi dists(game.K, vector<int>(game.N));
-	for (int i = 0; i < game.K; ++i) {
-		vector<bool> visited(game.N);
-		q.clear();
-		q.push_back(game.mines[i]);
-		visited[game.mines[i]] = true;
-		int dist = 1;
-		int dist_end = q.size();
-		for (int j = 0; j < q.size(); ++j) {
-			if (j == dist_end) {
-				++dist;
-				dist_end = q.size();
-			}
-			int s = q[j];
-			for (const Edge& e : game.edges[s]) {
-				int t = e.to;
-				if (visited[t]) continue;
-				visited[t] = true;
-				dists[i][t] = dist;
-				q.push_back(t);
+	void calc_mine_dists() {
+		vi q;
+		q.reserve(N);
+		dists.assign(K, vector<int>(N));
+		for (int i = 0; i < K; ++i) {
+			vector<bool> visited(N);
+			q.clear();
+			q.push_back(mines[i]);
+			visited[mines[i]] = true;
+			int dist = 1;
+			int dist_end = q.size();
+			for (int j = 0; j < q.size(); ++j) {
+				if (j == dist_end) {
+					++dist;
+					dist_end = q.size();
+				}
+				int s = q[j];
+				for (const Edge& e : edges[s]) {
+					int t = e.to;
+					if (visited[t]) continue;
+					visited[t] = true;
+					dists[i][t] = dist;
+					q.push_back(t);
+				}
 			}
 		}
 	}
-	return dists;
-}
+};
 
 pair<int, int> create_move(const Game& game) {
 	vector<int> orders(game.N);
@@ -222,7 +223,6 @@ pair<int, int> create_move(const Game& game) {
 		if (candidate_to[i]) cur_order += orders[i];
 	}
 	const int order_div = cur_order <= game.C ? 1 : cur_order <= game.C * 2 ? 2 : 5;
-	const auto dists = mine_dists(game);
 	int bestValue = -1;
 	pair<int, int> res(-1, -1);
 	for (int i = 0; i < game.N; ++i) {
@@ -234,10 +234,10 @@ pair<int, int> create_move(const Game& game) {
 			for (int j = 0; j < game.K; ++j) {
 				if (reachable[i] & (1 << j)) {
 					// expand
-					value += dists[j][e.to] * dists[j][e.to] * SCORE_SCALE / 3;
+					value += game.dists[j][e.to] * game.dists[j][e.to] * SCORE_SCALE / 3;
 				} else {
 					// approach
-					value += SCORE_SCALE * 5 / (dists[j][e.to] * dists[j][e.to] + 1);
+					value += SCORE_SCALE * 5 / (game.dists[j][e.to] * game.dists[j][e.to] + 1);
 				}
 				value += SCORE_SCALE * orders[e.to] / order_div;
 			}

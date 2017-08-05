@@ -33,26 +33,22 @@ def read_json():
         if idx >= 0:
             break
         # まだ : がない
-        buffer += sys.stdin.buffer.read1(100)
+        buffer += sys.stdin.buffer.read1(1)
     n = int(buffer[:idx].decode())
     buffer = buffer[idx + 1:]
 
     while len(buffer) < n:
         # n 以上になるまで追加で読む
-        buffer += sys.stdin.buffer.read1(100)
+        buffer += sys.stdin.buffer.read1(1)
 
-    json_bytes = buffer[:n].decode()
-    buffer = buffer[n:]
-    obj = json.loads(json_bytes)
-    return obj
+    print(buffer)
 
 
 def test():
     write_obj({"me": "kenkoooo"})
-    # read_json()
-    input()
-    # read_json()
-    input()
+    read_json()
+    # input()
+    read_json()
     write_obj(["aaa"])
 
 

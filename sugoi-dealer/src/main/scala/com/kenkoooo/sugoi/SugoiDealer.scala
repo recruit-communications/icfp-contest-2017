@@ -132,7 +132,7 @@ class PunterProgram(cmd: String, val punter: Int) extends Logging {
       val name = SugoiMapper.mapper.readValue(handshakeFromPunter, classOf[HandShakeFromPunter]).me
       val handShakeFromServer = SugoiMapper.mapper.writeValueAsString(HandShakeFromServer(name)) + "\n"
 
-      os.write(handShakeFromServer.length)
+      os.write(handShakeFromServer.getBytes.length.toString.getBytes)
       os.write(":".getBytes)
       os.write(handShakeFromServer.getBytes)
       os.flush()
@@ -140,7 +140,7 @@ class PunterProgram(cmd: String, val punter: Int) extends Logging {
       logger.info(s"handshake to punter: ${handShakeFromServer.length}:$handShakeFromServer")
 
       val commandFromServer = command + "\n"
-      os.write(commandFromServer.length)
+      os.write(commandFromServer.getBytes.length.toString.getBytes)
       os.write(":".getBytes)
       os.write(commandFromServer.getBytes)
       os.flush()

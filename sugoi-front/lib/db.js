@@ -39,7 +39,7 @@ function s3List(prefix) {
       Bucket: bucket,
       Prefix: prefix
     }, (err, data) => {
-      err ? reject(err) : fulfill(data.Contents.slice(1).map((v) => v.Key));
+      err ? reject(err) : fulfill(data.Contents.slice(1));
     });
   });
 }
@@ -52,23 +52,42 @@ function p2i(path, prefix, suffix) {
 
 module.exports = {
   bucket: bucket,
-  clients: () => {
-    return s3List(clientPrefix).then((list) => {
-      return list.map((p) => p2i(p, clientPrefix, '.tar.gz'))
-    });
-  },
-  maps: () => {
-    return s3List(mapPrefix).then((list) => {
-      return list.map((p) => p2i(p, mapPrefix, '.json'))
-    });
-  },
-  battles: () => {
-    const params = {
-      TableName: 'icpf2017-battle'
-    };
+  p2i: p2i,
+  s3List: s3List,
+  punters: (params = {}) => {
+    params.TableName = 'icfp-punter';
     return dbScan(params);
   },
-  addBattle: ({id, clients, map}) => {
+  addPunter: ({id, created_at, punter_num = 2}) => {
+    const params = {
+      TableName: 'icfp-punter',
+      Item: {
+        id: id,
+        created_at: created_at
+      }
+    };
+    return dbPut(params);
+  },
+  maps: (params = {}) => {
+    params.TableName = 'icfp-map';
+    return dbScan(params);
+  },
+  addMap: ({id, created_at, punter_num}) => {
+    const params = {
+      TableName: 'icfp-map',
+      Item: {
+        id: id,
+        created_at: created_at,
+        punter_num: punter_num
+      }
+    };
+    return dbPut(params);
+  },
+  games: (params = {}) => {
+    params.TableName = 'icpf2017-battle';
+    return dbScan(params);
+  },
+  addGame: ({id, clients, map}) => {
     const params = {
       TableName: 'icpf2017-battle',
       Item: {

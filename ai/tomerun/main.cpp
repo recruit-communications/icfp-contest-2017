@@ -194,8 +194,8 @@ pair<int, int> create_move(const Game& game) {
 		}
 	}
 	vector<i64> node_score(game.N);
-	vector<int> reachable(game.N);
-	vector<bool> candidate(game.N);
+	vector<int> reachable(game.N); // i-th bit of reachable[j] := vertex j is reachable from mine i
+	vector<bool> candidate_to(game.N);
 	for (int i = 0; i < game.K; ++i) {
 		vector<int> q = {game.mines[i]};
 		reachable[q[0]] |= (1 << i);
@@ -208,7 +208,7 @@ pair<int, int> create_move(const Game& game) {
 			}
 			for (const Edge& e : game.edges[q[j]]) {
 				if (e.owner == NOT_OWNED && (reachable[e.to] & (1 << i)) == 0) {
-					candidate[q[j]] = true;
+					candidate_to[q[j]] = true;
 				} else if (e.owner == game.I && (reachable[e.to] & (1 << i)) == 0) {
 					q.push_back(e.to);
 					reachable[e.to] |= (1 << i);
@@ -219,14 +219,14 @@ pair<int, int> create_move(const Game& game) {
 	}
 	int cur_order = 0;
 	for (int i = 0; i < game.N; ++i) {
-		if (candidate[i]) cur_order += orders[i];
+		if (candidate_to[i]) cur_order += orders[i];
 	}
 	const int order_div = cur_order <= game.C ? 1 : cur_order <= game.C * 2 ? 2 : 5;
 	const auto dists = mine_dists(game);
 	int bestValue = -1;
 	pair<int, int> res(-1, -1);
 	for (int i = 0; i < game.N; ++i) {
-		if (!candidate[i]) continue;
+		if (!candidate_to[i]) continue;
 		for (const Edge& e : game.edges[i]) {
 			if (e.owner != NOT_OWNED) continue;
 			if (reachable[i] == reachable[e.to]) continue;

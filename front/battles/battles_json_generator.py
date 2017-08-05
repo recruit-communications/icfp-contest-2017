@@ -15,14 +15,21 @@ battles = {"battles":[]}
 for file_name in os.listdir("./"):
     if not (file_name.endswith(".json") or file_name.endswith(".txt")): continue
     with open(file_name) as f:
-        line = f.readline().strip()[5:]
-        try:
-            jsn = eval(line)
-            num_nodes = len(jsn["map"]["sites"])
-            num_edges = len(jsn["map"]["rivers"])
-            num_punters = jsn["punters"]
-        except:
-            print(file_name + " has invalid json format header line")
+        num_nodes = -1
+        num_edges = -1
+        num_punters = -1
+        for line in f.readlines():
+            line = line.strip()[5:]
+            try:
+                jsn = eval(line)
+                num_nodes = len(jsn["map"]["sites"])
+                num_edges = len(jsn["map"]["rivers"])
+                num_punters = jsn["punters"]
+                break
+            except:
+                continue
+        else:
+            print(file_name + " has no game settings line")
             continue
             
         if file_name in official_data:

@@ -1,6 +1,6 @@
 package com.kenkoooo.sugoi
 
-import java.io.{BufferedReader, File, InputStream, InputStreamReader}
+import java.io.{File, InputStream, InputStreamReader}
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
@@ -96,7 +96,7 @@ object SugoiDealer extends Logging {
 }
 
 class PunterProgram(cmd: String, val punter: Int) extends Logging {
-  var state = ""
+  var state: Object = _
   var penaltyCount = 0
 
   def putCommand(command: String, timeout: Long): (String, Long) = {
@@ -164,7 +164,7 @@ class PunterProgram(cmd: String, val punter: Int) extends Logging {
 }
 
 class SugoiInputReader(in: InputStream) extends Logging {
-  val reader = new BufferedReader(new InputStreamReader(in))
+  val reader = new InputStreamReader(in)
 
   def next(): String = {
     val buf = new ArrayBuffer[Char]()

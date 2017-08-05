@@ -20,11 +20,11 @@ class OfflineBridge:
 
     def send_json(self, obj):
         d = json.dumps(obj) + '\n'
-        bytes = d.encode()
-        n = len(bytes)
+        qqq = d.encode()
+        n = len(qqq)
         sys.stdout.buffer.write(str(n).encode())
         sys.stdout.buffer.write(':'.encode())
-        sys.stdout.buffer.write(bytes)
+        sys.stdout.buffer.write(qqq)
         sys.stdout.flush()
 
     def read_json(self):

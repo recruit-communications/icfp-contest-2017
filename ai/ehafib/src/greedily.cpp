@@ -245,7 +245,8 @@ public:
         // cerr << "score = " << max_score << endl;
 
         if (idx == -1) {
-            return make_pair(-1, -1);
+            //return make_pair(-1, -1);
+            return choose_randomly();
         } else {
             return make_pair(sources[idx], targets[idx]);
         }
@@ -254,7 +255,8 @@ public:
     void set_used_edge(int u, int v, int uid) {
         // TODO あとで高速化？
         for (int i = 0; i < used.size(); i++) {
-            if (sources[i] == u && targets[i] == v && used[i] == 0) {
+            if(used[i]) continue;
+            if ((sources[i] == u && targets[i] == v) || (sources[i] == v && targets[i] == u)) {
                 used[i] = 1;
                 claim[uid].push_back(i);
                 break;
@@ -272,7 +274,7 @@ void doit(State &s) {
     cout << s.to_json() << endl; // print new state
 
     auto e = s.choose_greedily();
-    cout << e.first << " " << e.second << endl; // print edge
+    cout << s.punter_id << " " << e.second << " " << e.first << endl; // print edge
 }
 
 int main() {

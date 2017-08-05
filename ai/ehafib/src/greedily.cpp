@@ -245,7 +245,8 @@ public:
         // cerr << "score = " << max_score << endl;
 
         if (idx == -1) {
-            return make_pair(-1, -1);
+            //return make_pair(-1, -1);
+            return choose_randomly();
         } else {
             return make_pair(sources[idx], targets[idx]);
         }

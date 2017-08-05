@@ -11,6 +11,7 @@
       <table class="table table-bordered">
         <tr>
           <th>id</th>
+          <th>punter_num</th>
           <th>file</th>
         </tr>
       </table>
@@ -22,6 +23,7 @@
         function createRow(data, idx) {
           return $('<tr>')
             .append($('<td>', { text: data.id }))
+            .append($('<td>', { text: data.punter_num }))
             .append($('<td>').append($('<a>', {
               href: data.url,
               text: 'JSON'

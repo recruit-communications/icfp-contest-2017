@@ -21,4 +21,6 @@ touch install punter
 
 # tar.gz作る
 TOKEN=57c8be97-ef1c-4730-bf15-5da1d039fab3
-tar cvz install punter PACKAGES src README > icfp-$TOKEN.tar.gz
+ARCHIVE=icfp-$TOKEN.tar.gz
+tar cvz install punter PACKAGES src README > $ARCHIVE
+md5 $ARCHIVE

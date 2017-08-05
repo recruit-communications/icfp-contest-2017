@@ -140,7 +140,7 @@ function logError(msg) {
   return;
 }
 
-function start(json) {
+function start(jsons) {
   let graph = undefined;
   moves = undefined;
   row = 0;
@@ -150,12 +150,14 @@ function start(json) {
 
   try {
     // Read settings (punters, map)
-    let settings = json.settings;
+    console.log(jsons[0].substring(5));
+
+    let settings = JSON.parse(jsons[0].substring(5));
     if (settings == undefined) {
       logError("no settings values!!!!");
       return;
     }
-    //punterID = json.settings.punter;
+    punterID = settings.punter;
     numPunters = settings.punters;
     logInfo("number of punters: " + numPunters);
     logInfo("received initial game graph: " + JSON.stringify(settings.map));
@@ -166,10 +168,12 @@ function start(json) {
     };
     logInfo("rendering game graph...");
     renderGraph(graph);
+    logInfo("You are punter #" + punterID);
 
 
     // Read scores and print final scores
-    let scores = json.scores;
+    let stop = JSON.parse(jsons[jsons.length - 1].substring(5)).stop;
+    let scores = stop.scores;
     if (scores == undefined) {
       logError("no scores values!!!");
       return;
@@ -178,8 +182,41 @@ function start(json) {
 
 
     // Read moves and process battle play log
-    moves = json.moves;
-    if (moves == undefined) {
+    moves = []
+    for (let i = 1; i < jsons.length - 1; i++) {
+
+      let json = JSON.parse(jsons[i].substring(5));
+      if (json.move == undefined) continue;
+      let move = [];
+      for (let j = 0; j < numPunters; j++) {
+        let punter = (punterID + j) % numPunters;
+        //console.log(punter);
+        for (let k = 0; k < json.move.moves.length; k++) {
+          let ele = json.move.moves[k];
+          if (ele.claim != undefined && ele.claim.punter == punter) {
+            move.push(ele);
+            break;
+          }
+          if (ele.pass != undefined && ele.pass.punter == punter) {
+            move.push(ele);
+            break;
+          }
+        }
+      }
+      moves.push(move);
+    }
+    let move = [];
+    for (let i = 0; i < stop.moves.length; i++) {
+      if (stop.moves[i].claim !== undefined) {
+        if (stop.moves[i].claim.punter < punterID) continue;
+        move.push(stop.moves[i]);
+      } else if (stop.moves[i].pass !== undefined) {
+        if (stop.moves[i].pass.punter < punterID) continue;
+        move.push(stop.moves[i]);
+      }
+    }
+    if (move.length > 0) moves.push(move);
+    if (moves.length == 0) {
       logError("no moves values!!!");
       return;
     }
@@ -201,14 +238,14 @@ function handleReset(moves) {
 function handleBack() {
   bindBackHandlers();
 
-  console.log(row, col);
+  //console.log(row, col);
   col--;
   if (col < 0) {
     row--;
     col = moves[row].length - 1;
   }
 
-  console.log(row, col);
+  //console.log(row, col);
   let data = moves[row][col];
   if (data.claim != undefined) {
     removeEdgeOwner(data.claim.punter, data.claim.source, data.claim.target);
@@ -343,12 +380,14 @@ function removeEdgeOwner(punter, source, target) {
 function selectBattle(url) {
   fetch(url, {mode: "no-cors"})
     .then(function(res) {
-      return res.json()
-    }).then(function(json) {
+      return res.text();
+    }).then(function(text) {
+      return text.split("\n");
+    }).then(function(jsons) {
       if (cy.elements !== undefined) {
         cy.destroy();
       }
-      start(json);
+      start(jsons);
   });
   $("#download-link").attr("href", url);
 }

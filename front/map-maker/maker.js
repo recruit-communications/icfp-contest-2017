@@ -61,7 +61,6 @@ function clickBackground(position) {
       {group:"nodes", data: {"id": id.toString()}, renderedPosition: {x: position.x, y: position.y}},
       {group:"edges", data: {source: select, target: id}}
     ]));
-    elements.push({})
     changes.push({mode:line, source:select, target:id, addNode:true});
     console.log("Added line:")
     console.log(eles[eles.length - 1]);

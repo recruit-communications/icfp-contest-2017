@@ -28,7 +28,7 @@ svg {
 /*  pointer-events: none;	This line needs to be removed */
 }
 
-#settings-table {
+.settings-table {
   border-spacing: 10px;
   border-collapse: separate;
 }
@@ -39,8 +39,6 @@ svg {
 }
 
 #cy {
-  float:left;
-  margin-left: 100px;
   position: relative;
   width: 1000px;
   height: 700px;
@@ -48,52 +46,55 @@ svg {
   background: #000;
 }
 
-#game-controllers {
+.header {
+  font-weight: bold;
+  font-size: 20px;
+}
+
+#controllers {
+  position: relative;
+  overflow: hidden;
+}
+
+#element-type {
+  position: relative;
+  left: 40%;
   float: left;
-  padding-left: 20px;
+  margin-right: 20px;
+  margin-bottom: 20px;
 }
 
-#controlers-header {
-  align: center;
-  font-size: 22px;
-  margin-bottom: 3px;
+#line-input {
+  background-color: #009;
+  color: white;
 }
 
-#visualise-settings {
-  font-size: 15px;
-  margin-top: 20px;
-  margin-bottom: 40px;
+#mine-input {
+  background-color: red;
+  color: white;
 }
 
-#game-scores {
-  border-collapse: collapse;
+#element-type button {
   font-size: 18px;
 }
 
-#score-header {
-  font-size: 22px;
+#state-changer {
+  position: relative;
+  left: 40%;
+  float: left;
+  margin-left: 20px;
+  margin-bottom: 20px;
 }
 
-#game-scores tr th {
+#state-changer button {
+  font-size: 18px;
+}
+
+#output-area {
   text-align: center;
+  margin: 20px;
 }
 
-.c0 {
-  width: 140px;
-  text-align: center;
-}
-
-.c1 {
-  width: 80px;
-  text-align: right;
-}
-
-.c2 {
-  width: 80px;
-  text-align: center;
-}
-
-#line-width, #time-span {
-  height: 30px;
-  width: 50px;
+#json-place {
+  margin: 20px;
 }

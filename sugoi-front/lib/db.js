@@ -52,16 +52,34 @@ function s3List(prefix) {
   });
 }
 
+function s3Get(key) {
+  return new Promise((fulfill, reject) => {
+    s3.getObject({
+      Bucket: bucket,
+      Key: key
+    }, (err, data) => {
+      err ? reject(err) : fulfill(data);
+    });
+  });
+}
+
 // path -> id
 function p2i(path, prefix, suffix) {
   const len = path.length - prefix.length - suffix.length;
   return path.substr(prefix.length, len);
 }
 
+// id -> path
+function i2p(id, prefix, suffix) {
+  return `${prefix}${id}${suffix}`;
+}
+
 module.exports = {
   bucket: bucket,
   p2i: p2i,
+  i2p: i2p,
   s3List: s3List,
+  s3Get: s3Get,
   punters: (params = {}) => {
     params.TableName = 'icfp-punter';
     return dbScan(params);
@@ -95,37 +113,34 @@ module.exports = {
     params.TableName = 'icfp-game';
     return dbScan(params);
   },
-  addGame: ({id, league_id, created_at, punters, map}) => {
+  addGame: ({id, league_id, created_at = (new Date).getTime(), punter_ids, map}) => {
     const params = {
-      TableName: 'icpf-game',
+      TableName: 'icfp-game',
       Item: {
         id: id,
         league_id: league_id,
         created_at: created_at,
-        punters: punters,
+        punter_ids: punter_ids,
         map: map
       }
     };
     return dbPut(params);
   },
-  updateGame: ({id, league_id, created_at, punters, map}) => {
+  updateGame: ({id, created_at, results}) => {
     const params = {
-      TableName: 'icpf-game',
+      TableName: 'icfp-game',
       ExpressionAttributeNames: {
+        '#R': 'results'
       },
       ExpressionAttributeValues: {
+        ':r': results
       },
-      UpdateExpression: '',
+      UpdateExpression: 'SET #R = :r',
       Key: {
         id: id,
         created_at: created_at
-      },
-      Item: {
-        league_id: league_id,
-        punters: punters,
-        map: map
       }
     };
-    return dbPut(params);
+    return dbUpdate(params);
   },
 };

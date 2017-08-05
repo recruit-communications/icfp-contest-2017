@@ -2,14 +2,14 @@
 <html>
   <head>
     <meta charset="utf-8">
-    <title>Lambda Battle Viewer</title>
+    <title>&#955; Battle Viewer</title>
     <link rel="stylesheet" href="../js-core/bootstrap.min.css">
     <link rel="stylesheet" href="battle.css">
   </head>
 
   <body>
     <div class="container-fluid">
-        <h1><a href="../graph-viewer/index.html">&#955; Map Viewer</a> | <a href="../puntfx/index.html"> &#955; Punter FX</a> | &#955; Battle Viewer</h1>
+      <h1><a href="../graph-viewer/index.html">&#955; Map Viewer</a> | <a href="../puntfx/index.html"> &#955; Punter FX</a> | &#955; Battle Viewer | <a href="../map-maker/index.html">&#955; Map Maker</a></h1>
       <div class="row">
         <div class="col-md-4">
           <fieldset>
@@ -39,44 +39,49 @@
           </fieldset>
         </div>
       </div>
-
-      <fieldset>
-        <legend>Game Controler</legend>
-        <div id="game-scores" align="center"></div>
-        <table class="settings-table" align="center">
-          <tr>
-            <td>
-              <button class="btn" id="reset-button" onclick="handleReset()" disabled>&lt;&lt;</button>
-              <button class="btn" id="back-button" onclick="handleBack()" disabled>&lt;</button>
-              <button class="btn" id="go-button" onclick="handleGo()" disabled>&gt;</button>
-              <button class="btn" id="end-button" onclick="handleEnd()" disabled>&gt;&gt;</button>
-              <span>&nbsp;&nbsp;</span>
-              <button class="btn" id="pause-button" onclick="handlePause()" disabled>| |</button>
-              <button class="btn" id="play-button" onclick="handlePlay()" disabled>-&gt;</button>
-            </td>
-          </tr>
-        </table>
-      </fieldset>
-      <fieldset align="center" id="visualise-settings">
-        <tr>
-          <td>
-            線の太さ(動かない…) <input type="number" name="line-width" id="line-width" value="20">
-            <button class="btn" id="width-button" onclick="updateWidth()">更新</button>
-          </td>
-          &nbsp;&nbsp;
-          <td>
-            更新間隔 <input type="number" name="time-span" id="time-span" value="500" step="50" min="50">ms
-            <button class="btn" id="time-button" onclick="updateSpan()">更新</button>
-          </td>
-        </tr>
-      </fieldset>
     </div>
-    <div class="container-fluid">
+    <div class="container-fluid" overflow="hidden">
       <fieldset>
-        <legend>Canvas</legend>
+        <legend>Viewer</legend>
         <div class="container-fluid" id="cy"></div>
         <div id="loading">
           <span class="fa fa-refresh fa-spin"></span>
+        </div>
+        <div id="game-controllers">
+          <div id="settings-table" align="center">
+            <div id="controlers-header">Controllers</div>
+            <table>
+              <tr>
+                <td>
+                  <button class="btn" id="reset-button" onclick="handleReset()" disabled>&lt;&lt;</button>
+                  <button class="btn" id="back-button" onclick="handleBack()" disabled>&lt;</button>
+                  <button class="btn" id="go-button" onclick="handleGo()" disabled>&gt;</button>
+                  <button class="btn" id="end-button" onclick="handleEnd()" disabled>&gt;&gt;</button>
+                  <span>&nbsp;&nbsp;</span>
+                  <button class="btn" id="pause-button" onclick="handlePause()" disabled>| |</button>
+                  <button class="btn" id="play-button" onclick="handlePlay()" disabled>-&gt;</button>
+                </td>
+              </tr>
+            </table>
+          </div>
+          <div id="visualise-settings" align="center">
+            <table>
+              <tr>
+                <td>
+                  線の太さ<input type="number" name="line-width" id="line-width" value="20" step="2" min="2" readonly onchange="updateWidth()">
+                </td>
+                <td>&nbsp;&nbsp;</td>
+                <td>
+                  更新間隔 <input type="number" name="time-span" id="time-span" value="500" step="50" min="50" onchange="updateSpan()">ms
+                </td>
+              </tr>
+            </table>
+          </div>
+          <div>
+            <p align="center" id="score-header"> Final Scores </p>
+            <table id="game-scores" border="1" align="center">
+            </table>
+          </div>
         </div>
       </fieldset>
     </div>
@@ -94,8 +99,8 @@
         </div>
         <br><br><br><br>
       </fieldset>
-    </div>
-    <!--- load scripts -->
+    </divt>
+    <--- load scripts -->
     <script src="../js-core/jquery.min.js"></script>
     <script src="../js-core/bootstrap.min.js"></script>
     <script src="../js-core/fastclick.min.js"></script>

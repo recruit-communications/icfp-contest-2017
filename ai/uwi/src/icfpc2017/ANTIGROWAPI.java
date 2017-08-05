@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.Queue;
 import java.util.Scanner;
 
-public class PassOnlyAI {
+public class ANTIGROWAPI {
 	static Scanner in;
 	static PrintWriter out;
 	static String INPUT = "";
@@ -28,7 +28,7 @@ public class PassOnlyAI {
 			out.flush();
 		}else if(phase == 'I'){
 			// 初回入力2
-			int N = ni(), P = ni(), F = ni();
+			int N = ni(), P = ni();
 			int V = ni(), E = ni(), M = ni();
 			List<List<Edge>> g = new ArrayList<>();
 			for(int i = 0;i < V;i++)g.add(new ArrayList<>());
@@ -57,14 +57,7 @@ public class PassOnlyAI {
 			state.N = N;
 			state.P = P;
 			state.mindistss = mindistss;
-			if(F == 1){
-				state.futures = new ArrayList<>();
-				for(int i = 0;i < V;i++)state.futures.add(null);
-			}
 			out.println(toBase64(state));
-			if(F == 1){
-				out.println(0);
-			}
 		}else if(phase == 'G'){
 			// ゲーム中入力
 			State state = (State)fromBase64(in.next());
@@ -143,17 +136,6 @@ public class PassOnlyAI {
 		List<List<Edge>> g; // グラフ
 		BitSet mines; // mineかどうか
 		List<List<Integer>> mindistss; // 最短経路長
-		List<Integer> futures;
-	}
-	
-	static class Future implements Serializable
-	{
-		private static final long serialVersionUID = 8685203019168931849L;
-		int mine, site;
-		public Future(int mine, int site) {
-			this.mine = mine;
-			this.site = site;
-		}
 	}
 	
 	static class Edge implements Serializable
@@ -170,26 +152,6 @@ public class PassOnlyAI {
 	}
 
 	public static void main(String[] args) throws Exception {
-//		int n = 3000, m = 3000;
-//		Random gen = new Random();
-//		StringBuilder sb = new StringBuilder();
-//		sb.append("I" + " " + 16 + " ");
-//		sb.append(15 + " ");
-//		sb.append(n + " ");
-//		sb.append(m + " ");
-//		sb.append(n + " ");
-//		for (int i = 0; i < m; i++) {
-//			int v1 = gen.nextInt(n);
-//			int v2 = gen.nextInt(n);
-//			sb.append(Math.min(v1, v2) + " ");
-//			sb.append(Math.max(v1, v2) + " ");
-//		}
-//		for(int i = 0;i < n;i++){
-//			sb.append(gen.nextInt(n) + " ");
-//		}
-//		INPUT = sb.toString();
-
-		
 		in = INPUT.isEmpty() ? new Scanner(System.in) : new Scanner(INPUT);
 		out = new PrintWriter(System.out);
 

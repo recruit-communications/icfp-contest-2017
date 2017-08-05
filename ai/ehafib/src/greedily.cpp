@@ -254,7 +254,8 @@ public:
     void set_used_edge(int u, int v, int uid) {
         // TODO あとで高速化？
         for (int i = 0; i < used.size(); i++) {
-            if (sources[i] == u && targets[i] == v && used[i] == 0) {
+            if(used[i]) continue;
+            if ((sources[i] == u && targets[i] == v) || (sources[i] == v && targets[i] == u)) {
                 used[i] = 1;
                 claim[uid].push_back(i);
                 break;

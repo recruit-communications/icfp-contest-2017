@@ -35,7 +35,7 @@ def pf(s):
 
 
 def setup():
-    C,P = LI()
+    C,P,F = LI()
     N, M, K = LI()
     e = {}
     ee = {}
@@ -96,6 +96,8 @@ def setup():
     #pe(state)
 
     pf(str(pickle.dumps(state)))
+    # futureは未対応
+    pf('0 ')
 
 def play():
     state = input()

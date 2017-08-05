@@ -19,13 +19,13 @@ class OfflineBridge:
         self.buffer = b''
 
     def send_json(self, obj):
-        d = json.dumps(obj)
-        print('SEND', d)
+        d = json.dumps(obj) + '\n'
         bytes = d.encode()
         n = len(bytes)
-        sys.stdout.write(str(n).encode())
-        sys.stdout.write(':'.encode())
-        sys.stdout.write(bytes)
+        sys.stdout.buffer.write(str(n).encode())
+        sys.stdout.buffer.write(':'.encode())
+        sys.stdout.buffer.write(bytes)
+        sys.stdout.flush()
 
     def read_json(self):
         while 1:
@@ -44,7 +44,6 @@ class OfflineBridge:
         json_bytes = self.buffer[:n].decode()
         self.buffer = self.buffer[n:]
         obj = json.loads(json_bytes)
-        print('RECV', obj)
         return obj
 
     def handshake(self, name):
@@ -125,10 +124,10 @@ class OnlineBridge:
             # n 以上になるまで追加で読む
             self.buffer += self.telnet.read_some()
 
-        json_bytes = self.buffer[:n].decode()
+        json_string = self.buffer[:n].decode().rstrip()
+        print('RECV', json_string)
         self.buffer = self.buffer[n:]
-        obj = json.loads(json_bytes)
-        print('RECV', obj)
+        obj = json.loads(json_string)
         return obj
 
     def handshake(self, name):
@@ -156,7 +155,6 @@ class OnlineBridge:
     def recmove(self):
         move = self.read_json()
         if 'stop' in move:
-            print(move)
             return None
         moves = move['move']['moves']
         G = []

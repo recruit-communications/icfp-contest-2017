@@ -1,0 +1,17 @@
+SEND {"me": "kenkoooo"}
+RECV {"you": "kenkoooo"}
+RECV {"punters": 2, "punter": 1, "map": {"mines": [1, 5], "rivers": [{"source": 3, "target": 4}, {"source": 0, "target": 1}, {"source": 2, "target": 3}, {"source": 1, "target": 3}, {"source": 5, "target": 6}, {"source": 4, "target": 5}, {"source": 3, "target": 5}, {"source": 6, "target": 7}, {"source": 5, "target": 7}, {"source": 1, "target": 7}, {"source": 0, "target": 7}, {"source": 1, "target": 2}], "sites": [{"id": 4, "y": -2.0, "x": 2.0}, {"id": 1, "y": 0.0, "x": 1.0}, {"id": 3, "y": -1.0, "x": 2.0}, {"id": 6, "y": -2.0, "x": 0.0}, {"id": 5, "y": -2.0, "x": 1.0}, {"id": 0, "y": 0.0, "x": 0.0}, {"id": 7, "y": -1.0, "x": 0.0}, {"id": 2, "y": 0.0, "x": 2.0}]}}
+SEND {"ready": 1}
+RECV {"move": {"moves": [{"claim": {"punter": 0, "target": 5, "source": 3}}, {"pass": {"punter": 1}}]}}
+SEND {"claim": {"punter": 1, "target": 2, "source": 1}}
+RECV {"move": {"moves": [{"claim": {"punter": 0, "target": 7, "source": 0}}, {"claim": {"punter": 1, "target": 2, "source": 1}}]}}
+SEND {"claim": {"punter": 1, "target": 6, "source": 5}}
+RECV {"move": {"moves": [{"claim": {"punter": 0, "target": 1, "source": 0}}, {"claim": {"punter": 1, "target": 6, "source": 5}}]}}
+SEND {"claim": {"punter": 1, "target": 4, "source": 3}}
+RECV {"move": {"moves": [{"claim": {"punter": 0, "target": 3, "source": 1}}, {"claim": {"punter": 1, "target": 4, "source": 3}}]}}
+SEND {"claim": {"punter": 1, "target": 7, "source": 6}}
+RECV {"move": {"moves": [{"claim": {"punter": 0, "target": 3, "source": 2}}, {"claim": {"punter": 1, "target": 7, "source": 6}}]}}
+SEND {"claim": {"punter": 1, "target": 7, "source": 5}}
+RECV {"move": {"moves": [{"claim": {"punter": 0, "target": 5, "source": 4}}, {"claim": {"punter": 1, "target": 7, "source": 5}}]}}
+SEND {"claim": {"punter": 1, "target": 7, "source": 1}}
+RECV {"stop": {"moves": [{"pass": {"punter": 0}}, {"pass": {"punter": 1}}], "scores": [{"punter": 0, "score": 27}, {"punter": 1, "score": 20}]}}

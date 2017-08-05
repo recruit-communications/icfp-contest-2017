@@ -56,7 +56,7 @@ class OfflineBridge:
         self.map = obj['map']
         self.future = 0
         if 'settings' in obj and 'futures' in obj['settings']:
-            self.future = 1 if obj['settings']['future'] else 0
+            self.future = 1 if obj['settings']['futures'] else 0
 
     def ready(self, F, state, sorted_site_ids):
         obj = {'ready': self.punter_id, 'state': [state, sorted_site_ids]}
@@ -141,7 +141,7 @@ class OnlineBridge:
         self.map = sup['map']
         self.future = 0
         if 'settings' in sup and 'futures' in sup['settings']:
-            self.future = 1 if sup['settings']['future'] else 0
+            self.future = 1 if sup['settings']['futures'] else 0
 
     def ready(self, F):
         obj = {'ready': self.punter_id}

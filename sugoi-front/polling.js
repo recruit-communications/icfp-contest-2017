@@ -49,10 +49,11 @@ db.games(params).then((data) => {
     const key = db.i2p(game.id, 'logs/app.', '.log');
     db.s3Get(key).then((obj) => {
       // ログから結果を反映
-      game.results = log.parse(obj.Body.utf8Slice()).map((r, i) => {
+      const res = log.parse(obj.Body.utf8Slice()).map((r, i) => {
         r.punter = game.punter_ids[i]
         return r;
       });
+      game.results = sortBy(res, (r) => r.score).reverse();
       db.updateGame(game);
     }).catch((e) => {
       // s3Getのエラーはスルー

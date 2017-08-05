@@ -52,7 +52,7 @@ const graphStyle = [
       "font-size": 64,
       "color": "#FFF",
       "line-color": "#009",
-      "width": 35,
+      "width": 15,
       "z-index" : 1,
       "curve-style": "haystack",
       "haystack-radius": 0

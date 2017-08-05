@@ -46,10 +46,6 @@ inline ll get_elapsed_msec() {
 #define debugln()
 #endif
 
-#ifndef PLAYER_NAME
-#define PLAYER_NAME "tomerun"
-#endif
-
 const int NOT_OWNED = -1;
 const i64 SCORE_SCALE = 1000000;
 
@@ -221,6 +217,11 @@ pair<int, int> create_move(const Game& game) {
 			}
 		}
 	}
+	int cur_order = 0;
+	for (int i = 0; i < game.N; ++i) {
+		if (candidate[i]) cur_order += orders[i];
+	}
+	const int order_div = cur_order <= game.C ? 1 : cur_order <= game.C * 2 ? 2 : 5;
 	const auto dists = mine_dists(game);
 	int bestValue = -1;
 	pair<int, int> res(-1, -1);
@@ -238,6 +239,7 @@ pair<int, int> create_move(const Game& game) {
 					// approach
 					value += SCORE_SCALE * 5 / (dists[j][e.to] * dists[j][e.to] + 1);
 				}
+				value += SCORE_SCALE * orders[e.to] / order_div;
 			}
 			if (value > bestValue) {
 				bestValue = value;
@@ -250,7 +252,7 @@ pair<int, int> create_move(const Game& game) {
 }
 
 void handshake() {
-	cout << PLAYER_NAME << endl;
+	cout << "nihonbashi" << endl;
 }
 
 void init() {

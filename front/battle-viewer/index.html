@@ -57,6 +57,19 @@
           </tr>
         </table>
       </fieldset>
+      <fieldset align="center" id="visualise-settings">
+        <tr>
+          <td>
+            線の太さ(動かない…) <input type="number" name="line-width" id="line-width" value="20">
+            <button class="btn" id="width-button" onclick="updateWidth()">更新</button>
+          </td>
+          &nbsp;&nbsp;
+          <td>
+            更新間隔 <input type="number" name="time-span" id="time-span" value="500" step="50" min="50">ms
+            <button class="btn" id="time-button" onclick="updateSpan()">更新</button>
+          </td>
+        </tr>
+      </fieldset>
     </div>
     <div class="container-fluid">
       <fieldset>
@@ -79,6 +92,7 @@
             <textarea id="json-form" cols="140" rows="10" placeholder="ここにbridgeの出力を貼り付けてください"></textarea>
           </div>
         </div>
+        <br><br><br><br>
       </fieldset>
     </div>
     <!--- load scripts -->

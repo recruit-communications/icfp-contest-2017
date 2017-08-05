@@ -1,5 +1,6 @@
 const app = require('express')();
 const http = require('http').Server(app);
+const fs = require('fs');
 const db = require('./lib/db');
 const battle = require('./lib/battle');
 
@@ -13,8 +14,12 @@ app.get('/client/list', (req, res) => {
 // マップ一覧
 app.get('/map/list', (req, res) => {
   db.maps().then((data) => {
-    const list = data.map((v) => `https://s3-ap-northeast-1.amazonaws.com/${db.bucket}/${v}`)
-    res.json(list);
+    res.json(data.map((v) => {
+      return {
+        id: v,
+        url: `https://s3-ap-northeast-1.amazonaws.com/${db.bucket}/maps/${v}.json`,
+      }
+    }));
   });
 });
 
@@ -29,6 +34,19 @@ app.get('/battle/list', (req, res) => {
 app.get('/battle/execute', (req, res) => {
   battle.exec().then((data) => {
     res.json(data);
+  });
+});
+
+// その他静的ファイル
+app.get('/public/*', (req, res) => {
+  const path = req.url.split('?')[0];
+  fs.readFile(__dirname + path, (err, data) => {
+    if (err) {
+      res.writeHead(404);
+      return res.end(' ');
+    }
+    res.writeHead(200);
+    res.end(data);
   });
 });
 

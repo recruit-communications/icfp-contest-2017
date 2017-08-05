@@ -1,0 +1,46 @@
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width">
+    <title>対戦</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+  </head>
+  <body>
+    <h2>対戦一覧</h2>
+    <div id="list">
+      <table class="table table-bordered">
+        <tr>
+          <th>date</th>
+          <th>id</th>
+          <th>map</th>
+          <th>clients</th>
+          <th>result</th>
+          <th>log</th>
+        </tr>
+      </table>
+    </div>
+
+    <script src="http://code.jquery.com/jquery-3.2.1.min.js"></script>
+    <script>
+      $(() => {
+        function createRow(data, idx) {
+          return $('<tr>')
+            .append($('<td>', { text: '-' }))
+            .append($('<td>', { text: data.id }))
+            .append($('<td>', { text: data.map }))
+            .append($('<td>', { text: data.clients }))
+            .append($('<td>', { text: '-' }))
+            .append($('<td>').append($('<a>', {
+              href: `/logs/${data.id}`,
+              text: '対戦ログ'
+            })));
+        }
+        $.getJSON('/battle/list', (res) => {
+          res.forEach((d, i) => {
+            $('#list>table').append(createRow(d, i));
+          });
+        });
+      });
+    </script>
+  </body>
+</html>

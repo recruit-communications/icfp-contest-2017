@@ -45,8 +45,8 @@ function s3List(prefix) {
 }
 
 // path -> id
-function p2i(path, prefix) {
-  const len = path.length - prefix.length - '.tar.gz'.length;
+function p2i(path, prefix, suffix) {
+  const len = path.length - prefix.length - suffix.length;
   return path.substr(prefix.length, len);
 }
 
@@ -54,11 +54,13 @@ module.exports = {
   bucket: bucket,
   clients: () => {
     return s3List(clientPrefix).then((list) => {
-      return list.map((p) => p2i(p, clientPrefix))
+      return list.map((p) => p2i(p, clientPrefix, '.tar.gz'))
     });
   },
   maps: () => {
-    return s3List(mapPrefix);
+    return s3List(mapPrefix).then((list) => {
+      return list.map((p) => p2i(p, mapPrefix, '.json'))
+    });
   },
   battles: () => {
     const params = {

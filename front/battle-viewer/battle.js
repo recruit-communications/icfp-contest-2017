@@ -155,6 +155,7 @@ function start(jsons) {
     for (let i = 0; i < jsons.length; i++) {
       move_start++;
       // Read settings (punters, map)
+      console.log(jsons[i].substring(5));
       let settings = JSON.parse(jsons[i].substring(5));
       if (settings.punter == undefined) continue;
       punterID = settings.punter;
@@ -178,6 +179,7 @@ function start(jsons) {
     }
 
     // Read scores and print final scores
+    console.log(jsons[jsons.length - 1].substring(5));
     let stop = JSON.parse(jsons[jsons.length - 1].substring(5)).stop;
     let scores = stop.scores;
     if (scores == undefined) {
@@ -394,6 +396,7 @@ function selectBattle(url) {
       if (cy.elements !== undefined) {
         cy.destroy();
       }
+      while (jsons[jsons.length - 1] == "") jsons.pop();
       start(jsons);
   });
   $("#download-link").attr("href", url);

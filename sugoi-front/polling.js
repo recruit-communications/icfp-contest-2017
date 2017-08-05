@@ -55,7 +55,7 @@ db.games(params).then((data) => {
       db.updateGame(game);
     }).catch((e) => {
       // s3Getのエラーはスルー
-      return if e.name === 'NoSuchKey';
+      if (e.name === 'NoSuchKey') return;
       console.log(e);
     });
   });

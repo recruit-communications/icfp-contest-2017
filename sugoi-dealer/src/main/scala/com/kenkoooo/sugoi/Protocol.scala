@@ -6,9 +6,13 @@ case class HandShakeFromPunter(me: String)
 
 case class HandShakeFromServer(you: String)
 
-case class SetupToPunter(punter: Int, punters: Int, map: LambdaMap)
+case class SetupToPunter(punter: Int, punters: Int, map: LambdaMap, settings: LambdaSettings)
 
-case class SetupToServer(ready: Int, state: String)
+case class LambdaSettings(futures: Boolean)
+
+case class LambdaFuture(source: Int, target: Int)
+
+case class SetupToServer(ready: Int, state: Object, futures: Array[LambdaFuture])
 
 case class River(source: Int, target: Int)
 
@@ -17,7 +21,7 @@ case class Site(id: Int)
 
 case class LambdaMap(sites: Array[Site], rivers: Array[River], mines: Array[Int])
 
-case class PlayToPunter(move: PreviousMoves, state: String)
+case class PlayToPunter(move: PreviousMoves, state: Object)
 
 case class PreviousMoves(moves: Array[Move])
 
@@ -31,9 +35,9 @@ case class PassMove(pass: Pass) extends Move
 
 case class Pass(punter: Int)
 
-case class MoveFromPunter(claim: Claim, pass: Pass, state: String)
+case class MoveFromPunter(claim: Claim, pass: Pass, state: Object)
 
-case class ScoreToPunter(stop: Stop, state: String)
+case class ScoreToPunter(stop: Stop, state: Object)
 
 case class Stop(moves: Array[Move], scores: Array[Score])
 

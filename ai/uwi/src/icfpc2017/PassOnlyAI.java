@@ -28,7 +28,7 @@ public class PassOnlyAI {
 			out.flush();
 		}else if(phase == 'I'){
 			// 初回入力2
-			int N = ni(), P = ni();
+			int N = ni(), P = ni(), F = ni();
 			int V = ni(), E = ni(), M = ni();
 			List<List<Edge>> g = new ArrayList<>();
 			for(int i = 0;i < V;i++)g.add(new ArrayList<>());
@@ -57,6 +57,10 @@ public class PassOnlyAI {
 			state.N = N;
 			state.P = P;
 			state.mindistss = mindistss;
+			if(F == 1){
+				state.futures = new ArrayList<>();
+				for(int i = 0;i < V;i++)state.futures.add(null);
+			}
 			out.println(toBase64(state));
 		}else if(phase == 'G'){
 			// ゲーム中入力
@@ -136,6 +140,17 @@ public class PassOnlyAI {
 		List<List<Edge>> g; // グラフ
 		BitSet mines; // mineかどうか
 		List<List<Integer>> mindistss; // 最短経路長
+		List<Integer> futures;
+	}
+	
+	static class Future implements Serializable
+	{
+		private static final long serialVersionUID = 8685203019168931849L;
+		int mine, site;
+		public Future(int mine, int site) {
+			this.mine = mine;
+			this.site = site;
+		}
 	}
 	
 	static class Edge implements Serializable

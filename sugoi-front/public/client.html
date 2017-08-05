@@ -1,0 +1,43 @@
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width">
+    <title>クライアント</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+  </head>
+  <body>
+    <h2>クライアント一覧</h2>
+    <div id="list">
+      <table class="table table-bordered">
+        <tr>
+          <th>rank</th>
+          <th>id</th>
+          <th>score</th>
+          <th>history</th>
+        </tr>
+      </table>
+    </div>
+
+    <script src="http://code.jquery.com/jquery-3.2.1.min.js"></script>
+    <script>
+      $(() => {
+        function createRow(data, idx) {
+          return $('<tr>')
+            //.append($('<td>', { text: idx }))
+            .append($('<td>', { text: '-' }))
+            .append($('<td>', { text: data }))
+            .append($('<td>', { text: '' }))
+            .append($('<td>').append($('<a>', {
+              href: `/public/battle.html?cid=${data}`,
+              text: '対戦履歴'
+            })));
+        }
+        $.getJSON('/client/list', (res) => {
+          res.forEach((d, i) => {
+            $('#list>table').append(createRow(d, i));
+          });
+        });
+      });
+    </script>
+  </body>
+</html>

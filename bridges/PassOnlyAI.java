@@ -77,7 +77,7 @@ public class PassOnlyAI {
 			}
 
 			out.println(toBase64(state));
-			out.println(-1 + " " + -1);
+			out.println(state.P + " " + -1 + " " + -1);
 		}else{
 			throw new RuntimeException();
 		}

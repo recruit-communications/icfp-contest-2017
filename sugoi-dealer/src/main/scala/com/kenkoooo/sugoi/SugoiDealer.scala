@@ -1,7 +1,6 @@
 package com.kenkoooo.sugoi
 
-import java.io.File
-import java.util.Scanner
+import java.io.{File, InputStream, InputStreamReader}
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
@@ -18,8 +17,10 @@ object SugoiDealer extends Logging {
   val mapper: ObjectMapper = SugoiMapper.mapper
 
   def main(args: Array[String]): Unit = {
+    logger.info("sugoi-dealer is starting...")
     val filepath = args(0)
     val map = mapper.readValue[LambdaMap](new File(filepath), classOf[LambdaMap])
+    logger.info("lambda map loaded")
     val programs = for (i: Int <- 1 until args.length) yield new PunterProgram(args(i), i)
     setup(programs, map)
     play(programs, map)
@@ -31,15 +32,17 @@ object SugoiDealer extends Logging {
     * @param programs AI programs
     * @param map      map
     */
-  private def setup(programs: Seq[PunterProgram], map: LambdaMap): Unit = {
+  private def setup(programs: Seq[PunterProgram], map: LambdaMap): ArrayBuffer[Array[LambdaFuture]] = {
+    val futureBuffer = new ArrayBuffer[Array[LambdaFuture]]()
     programs.foreach(program => {
-      val setupInput = mapper.writeValueAsString(SetupToPunter(program.punter, programs.size, map))
+      val setupInput = mapper.writeValueAsString(SetupToPunter(program.punter, programs.size, map, LambdaSettings(true)))
       val (setupOutput, code) = program.putCommand(setupInput, 10)
       if (code != 0) program.penaltyCount += 1
       val output = mapper.readValue[SetupToServer](setupOutput, classOf[SetupToServer])
       program.state = output.state
+      futureBuffer.append(output.futures)
     })
-
+    futureBuffer
   }
 
   /**
@@ -93,7 +96,7 @@ object SugoiDealer extends Logging {
 }
 
 class PunterProgram(cmd: String, val punter: Int) extends Logging {
-  var state = ""
+  var state: Object = _
   var penaltyCount = 0
 
   def putCommand(command: String, timeout: Long): (String, Long) = {
@@ -117,23 +120,34 @@ class PunterProgram(cmd: String, val punter: Int) extends Logging {
     * @return response string and exit code
     */
   private def execute(command: String): (String, Long) = {
-    val pb = new ProcessBuilder(Array(cmd).toList.asJava)
+    val pb = new ProcessBuilder(cmd.split("\\s").toList.asJava)
     val proc = pb.start()
     val os = proc.getOutputStream
-    val sc = new Scanner(proc.getInputStream)
+    val reader = new SugoiInputReader(proc.getInputStream)
     try {
       // handshake
-      val handshakeFromPunter = sc.nextLine()
+      val handshakeFromPunter = reader.next()
+
       logger.info(s"handshake from punter: $handshakeFromPunter")
       val name = SugoiMapper.mapper.readValue(handshakeFromPunter, classOf[HandShakeFromPunter]).me
-      os.write(SugoiMapper.mapper.writeValueAsBytes(HandShakeFromServer(name)))
+      val handShakeFromServer = SugoiMapper.mapper.writeValueAsString(HandShakeFromServer(name)) + "\n"
+
+      os.write(handShakeFromServer.getBytes.length.toString.getBytes)
+      os.write(":".getBytes)
+      os.write(handShakeFromServer.getBytes)
       os.flush()
 
-      os.write(command.getBytes)
-      os.write("\n".getBytes())
+      logger.info(s"handshake to punter: ${handShakeFromServer.length}:$handShakeFromServer")
+
+      val commandFromServer = command + "\n"
+      os.write(commandFromServer.getBytes.length.toString.getBytes)
+      os.write(":".getBytes)
+      os.write(commandFromServer.getBytes)
       os.flush()
 
-      val fromPunter = sc.nextLine()
+      logger.info(s"command to punter: ${commandFromServer.length}:$commandFromServer")
+
+      val fromPunter = reader.next()
       logger.info(s"command from punter: $fromPunter")
       (fromPunter, 0)
     } catch {
@@ -141,12 +155,37 @@ class PunterProgram(cmd: String, val punter: Int) extends Logging {
         logger.catching(e)
         ("", 1)
     } finally {
-      sc.close()
+      reader.close()
       os.close()
       proc.destroy()
       logger.info("Process successfully destroyed")
     }
   }
+}
+
+class SugoiInputReader(in: InputStream) extends Logging {
+  val reader = new InputStreamReader(in)
+
+  def next(): String = {
+    val buf = new ArrayBuffer[Char]()
+    var r: Int = reader.read()
+    while (r >= 0 && r != ':') {
+      buf.append(r.toChar)
+      r = reader.read()
+    }
+
+    val length = buf.mkString.toInt
+    buf.clear()
+    for (_ <- 0 until length) {
+      buf.append(reader.read().toChar)
+    }
+
+    val line = buf.mkString
+    logger.info(s"input > $line")
+    line
+  }
+
+  def close(): Unit = reader.close()
 }
 
 object SugoiMapper {

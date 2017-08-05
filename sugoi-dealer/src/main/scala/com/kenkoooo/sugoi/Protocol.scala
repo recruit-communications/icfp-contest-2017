@@ -6,9 +6,13 @@ case class HandShakeFromPunter(me: String)
 
 case class HandShakeFromServer(you: String)
 
-case class SetupToPunter(punter: Int, punters: Int, map: LambdaMap)
+case class SetupToPunter(punter: Int, punters: Int, map: LambdaMap, settings: LambdaSettings)
 
-case class SetupToServer(ready: Int, state: String)
+case class LambdaSettings(futures: Boolean)
+
+case class LambdaFuture(source: Int, target: Int)
+
+case class SetupToServer(ready: Int, state: String, futures: Array[LambdaFuture])
 
 case class River(source: Int, target: Int)
 

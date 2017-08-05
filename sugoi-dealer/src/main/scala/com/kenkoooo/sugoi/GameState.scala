@@ -58,8 +58,12 @@ class GameState(map: LambdaMap, punterNum: Int, futures: ArrayBuffer[Array[Lambd
   }
 
   private def calcForOne(punter: Punter): Score = {
+    val sourceToTarget = futureMap(punter)
+
     var score: Score = 0
     mines.foreach(start => {
+      val mapOption = sourceToTarget.get(start)
+
       // naive BFS
       val dist = new mutable.TreeMap[Vertex, Int]()
       dist += (start -> 0)
@@ -76,6 +80,14 @@ class GameState(map: LambdaMap, punterNum: Int, futures: ArrayBuffer[Array[Lambd
 
               val s = dist(v) + 1
               score += (s * s)
+
+              mapOption.foreach(target => {
+                if (target == u) {
+                  score += (s * s * s)
+                } else {
+                  score -= (s * s * s)
+                }
+              })
             }
           }
         }

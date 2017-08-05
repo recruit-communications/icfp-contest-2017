@@ -18,8 +18,10 @@ object SugoiDealer extends Logging {
   val mapper: ObjectMapper = SugoiMapper.mapper
 
   def main(args: Array[String]): Unit = {
+    logger.info("sugoi-dealer is starting...")
     val filepath = args(0)
     val map = mapper.readValue[LambdaMap](new File(filepath), classOf[LambdaMap])
+    logger.info("lambda map loaded")
     val programs = for (i: Int <- 1 until args.length) yield new PunterProgram(args(i), i)
     setup(programs, map)
     play(programs, map)

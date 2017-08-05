@@ -428,6 +428,16 @@ function loadBattleList(showFirst) {
     });
 }
 
+function doVisualize() {
+  text = $("#json-form").val();
+  jsons = text.split("\n");
+  if (cy.elements !== undefined) {
+    cy.destroy();
+  }
+  while (jsons[jsons.length - 1] == "") jsons.pop();
+  start(jsons);
+}
+
 function initPunterColours() {
   for (let i = 0; i < colours.length; i++) {
     $("#punter-colours").append("<div class=\"colours" + i + "\">&ensp;&nbsp;" + i + "&ensp;</div>");

@@ -19,7 +19,7 @@ class GameState(map: LambdaMap, punterNum: Int, futures: ArrayBuffer[Array[Lambd
   futures.zipWithIndex.foreach(v => {
     val (arr, i) = v
     futureMap += (i -> new mutable.TreeMap[Vertex, Vertex]())
-    arr.foreach(f => futureMap(i) += (f.source -> f.target))
+    Option(arr).foreach(_.foreach(f => futureMap(i) += (f.source -> f.target)))
   })
 
   val graph = new mutable.TreeMap[Vertex, mutable.TreeMap[Vertex, Punter]]
@@ -53,7 +53,7 @@ class GameState(map: LambdaMap, punterNum: Int, futures: ArrayBuffer[Array[Lambd
     */
   def calcScore(): mutable.TreeMap[Punter, Score] = {
     val map = new mutable.TreeMap[Punter, Score]()
-    for (punter <- 1 to punterNum) map += (punter -> calcForOne(punter))
+    for (punter <- 0 until punterNum) map += (punter -> calcForOne(punter))
     map
   }
 

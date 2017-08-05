@@ -33,6 +33,36 @@ def pe(*a, **b):
 def pf(s):
     print(s, flush=True)
 
+class UnionFind:
+    def __init__(self, size):
+        self.table = [-1 for _ in range(size)]
+
+    def find(self, x):
+        if self.table[x] < 0:
+            return x
+        else:
+            self.table[x] = self.find(self.table[x])
+            return self.table[x]
+
+    def union(self, x, y):
+        s1 = self.find(x)
+        s2 = self.find(y)
+        if s1 != s2:
+            if self.table[s1] <= self.table[s2]:
+                self.table[s1] += self.table[s2]
+                self.table[s2] = s1
+            else:
+                self.table[s2] += self.table[s1]
+                self.table[s1] = s2
+            return True
+        return False
+
+    def subsetall(self):
+        a = []
+        for i in range(len(self.table)):
+            if self.table[i] < 0:
+                a.append((i, -self.table[i]))
+        return a
 
 def setup():
     C,P = LI()
@@ -50,6 +80,9 @@ def setup():
         e[a].add(b)
         e[b].add(a)
         ee[a].add(b)
+
+    max_i = max(e.keys())
+    uf = UnionFind(max_i + 1)
 
     def search(s):
         d = {}
@@ -92,6 +125,7 @@ def setup():
         'N': N,
         'M': M,
         'C': C,
+        'uf': uf,
     }
     #pe(state)
 
@@ -109,9 +143,9 @@ def play():
     N = state['N']
     M = state['M']
     C = state['C']
-    #pe(ee=ee)
-    pe(le=sum([len(_) for _ in ee.values()]))
+    uf = state['uf']
     pe(P=P,N=N,C=C)
+
     for i in range(C):
         s,t = LI()
         if s == -1:
@@ -129,17 +163,20 @@ def play():
     random.shuffle(esam)
     pe(esam=esam)
     esas = esa[M:]
-    for s in esam + esas[::-1]:
+    random.shuffle(esas)
+    for s in esam + esas:
         if r:
             break
-        if s in e:
+        if s not in e:
             continue
         el = list(e[s])
         random.shuffle(el)
         for v in el:
             if r:
                 break
-            if v in ee[s]:
+            if uf.find(s) == uf.find(v):
+                continue
+            if s in ee and v in ee[s]:
                 r = '{} {}'.format(s,v)
                 ee[s].remove(v)
             else:
@@ -148,6 +185,7 @@ def play():
             e[v].remove(s)
             e[s].remove(v)
             esa.append(v)
+            uf.union(s,v)
             break
 
     for k,v in ee.items():
@@ -159,8 +197,9 @@ def play():
         random.shuffle(el)
         r = '{} {}'.format(k,el[0])
         ee[k].remove(el[0])
+        uf.union(k,el[0])
 
-    pe(le2=sum([len(_) for _ in ee.values()]))
+    pe(uf=uf.table)
 
     pf(str(pickle.dumps(state)))
 

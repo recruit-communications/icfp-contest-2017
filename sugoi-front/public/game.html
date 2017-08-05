@@ -11,11 +11,10 @@
       <table class="table table-bordered">
         <tr>
           <th>date</th>
-          <th>id</th>
+          <th>id (log)</th>
           <th>map</th>
           <th>clients</th>
           <th>result</th>
-          <th>log</th>
         </tr>
       </table>
     </div>
@@ -24,16 +23,21 @@
     <script>
       $(() => {
         function createRow(data, idx) {
+          const date = (new Date(data.created_at)).toISOString();
+          const punters = data.punter_ids.join('<br />');
+          const results = (data.results || []).map((res, i) => {
+            return `${i+1}位 ${res.punter} / ${res.score}pt`
+          }).join('<br />');
+
           return $('<tr>')
-            .append($('<td>', { text: '-' }))
-            .append($('<td>', { text: data.id }))
-            .append($('<td>', { text: data.map }))
-            .append($('<td>', { text: data.clients }))
-            .append($('<td>', { text: '-' }))
+            .append($('<td>', { text: date }))
             .append($('<td>').append($('<a>', {
               href: `https://s3-ap-northeast-1.amazonaws.com/icfp2017-kst3-jp/logs/app.${data.id}.log`,
-              text: '対戦ログ'
-            })));
+              text: data.id
+            })))
+            .append($('<td>', { text: data.map }))
+            .append($('<td>', { html: punters }))
+            .append($('<td>', { html: results }));
         }
         $.getJSON('/game/list', (res) => {
           res.forEach((d, i) => {

@@ -1,10 +1,12 @@
 // punter、対戦ログ, mapのポーリング処理
 
 const db = require('./lib/db');
+const log = require('./lib/log');
+const sortBy = require('underscore').sortBy;
 
 // punter
 db.punters().then((data) => {
-  return data.sort((a, b) => a.created_at < b.created_at).shift().created_at;
+  return sortBy(data, (e) => e.created_at).shift().created_at;
 }).then((last) => {
   const prefix = 'clients/'
   const suffix = '.tar.gz'
@@ -20,7 +22,7 @@ db.punters().then((data) => {
 
 // map
 db.maps().then((data) => {
-  return data.sort((a, b) => a.created_at < b.created_at).shift().created_at;
+  return sortBy(data, (e) => e.created_at).pop().created_at;
 }).then((last) => {
   const prefix = 'maps/'
   const suffix = '.json'
@@ -46,11 +48,16 @@ db.games(params).then((data) => {
   data.forEach((game) => {
     const key = db.i2p(game.id, 'logs/app.', '.log');
     db.s3Get(key).then((obj) => {
-      // TODO: get results.
-      game.results = [];
+      // ログから結果を反映
+      game.results = log.parse(obj.Body.utf8Slice()).map((r, i) => {
+        r.punter = game.punter_ids[i]
+        return r;
+      });
       db.updateGame(game);
     }).catch((e) => {
       // s3Getのエラーはスルー
+      if (e.name === 'NoSuchKey') return;
+      console.log(e);
     });
   });
 });

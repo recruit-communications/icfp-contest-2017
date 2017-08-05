@@ -30,7 +30,7 @@ def test():
     write_obj({"me": "kenkoooo"})
     input()
     input()
-    write_obj("aaa")
+    write_obj(["aaa"])
 
 
 if __name__ == '__main__':

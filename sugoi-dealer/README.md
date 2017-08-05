@@ -15,3 +15,4 @@ java -jar sugoi-dealer-assembly-1.0.jar [map JSON files] [punter file path 0] [p
 
 - Remove `state` from battle log
 - Stop output to stdout (the application log still be available in `app.log`)
+- Output error log of the AI when the AI was crashed

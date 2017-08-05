@@ -67,12 +67,10 @@ struct Game {
 	int C, I, F, N, M, K;
 	vector<vector<Edge>> edges;
 	vector<int> mines;
-	vector<i64> values;
 
 	Game(bool original) {
 		scanf("%d %d %d %d %d %d", &C, &I, &F, &N, &M, &K);
 		edges.resize(N);
-		values.resize(N);
 		mines.resize(K);
 		if (original) {
 			turn = 0;
@@ -92,7 +90,7 @@ struct Game {
 			scanf("%d", &turn);
 			for (int i = 0; i < N; ++i) {
 				int ec;
-				scanf("%d %d", &values[i], &ec);
+				scanf("%d", &ec);
 				edges[i].resize(ec);
 				for (int j = 0; j < ec; ++j) {
 					scanf("%d %d", &edges[i][j].to, &edges[i][j].owner);
@@ -108,7 +106,7 @@ struct Game {
 		stringstream ss;
 		ss << C << " " << I << " " << F << " " << N << " " << M << " " << K << " " << (turn + 1);
 		for (int i = 0; i < N; ++i) {
-			ss << " " << values[i] << " " << edges[i].size();
+			ss << " " << edges[i].size();
 			for (const Edge& e : edges[i]) {
 				ss << " " << e.to << " " << e.owner;
 			}
@@ -119,32 +117,32 @@ struct Game {
 		return ss.str();
 	}
 
-	void init() {
-		values.resize(N);
-		vi visited(N, 0);
-		vi q;
-		q.reserve(N);
-		for (int i = 0; i < K; ++i) {
-			q.clear();
-			q.push_back(mines[i]);
-			visited[mines[i]] |= (1 << i);
-			int dist = 1;
-			int dist_end = q.size();
-			for (int j = 0; j < q.size(); ++j) {
-				if (j == dist_end) {
-					++dist;
-					dist_end = q.size();
-				}
-				int s = q[j];
-				for (const Edge& e : edges[s]) {
-					int t = e.to;
-					if (visited[t] & (1 << i)) continue;
-					visited[t] |= (1 << i);
-					values[t] += SCORE_SCALE / (dist + 2);
-					q.push_back(t);
-				}
-			}
-		}
+	void init() { // TODO: remove
+		// values.resize(N);
+		// vi visited(N, 0);
+		// vi q;
+		// q.reserve(N);
+		// for (int i = 0; i < K; ++i) {
+		// 	q.clear();
+		// 	q.push_back(mines[i]);
+		// 	visited[mines[i]] |= (1 << i);
+		// 	int dist = 1;
+		// 	int dist_end = q.size();
+		// 	for (int j = 0; j < q.size(); ++j) {
+		// 		if (j == dist_end) {
+		// 			++dist;
+		// 			dist_end = q.size();
+		// 		}
+		// 		int s = q[j];
+		// 		for (const Edge& e : edges[s]) {
+		// 			int t = e.to;
+		// 			if (visited[t] & (1 << i)) continue;
+		// 			visited[t] |= (1 << i);
+		// 			values[t] += SCORE_SCALE / (dist + 2);
+		// 			q.push_back(t);
+		// 		}
+		// 	}
+		// }
 	}
 
 	void use(int s, int t, int owner) {
@@ -163,7 +161,42 @@ struct Game {
 	}
 };
 
+vector<vector<int>> mine_dists(const Game& game) {
+	vi q;
+	q.reserve(game.N);
+	vvi dists(game.K, vector<int>(game.N));
+	for (int i = 0; i < game.K; ++i) {
+		vector<bool> visited(game.N);
+		q.clear();
+		q.push_back(game.mines[i]);
+		visited[game.mines[i]] = true;
+		int dist = 1;
+		int dist_end = q.size();
+		for (int j = 0; j < q.size(); ++j) {
+			if (j == dist_end) {
+				++dist;
+				dist_end = q.size();
+			}
+			int s = q[j];
+			for (const Edge& e : game.edges[s]) {
+				int t = e.to;
+				if (visited[t]) continue;
+				visited[t] = true;
+				dists[i][t] = dist;
+				q.push_back(t);
+			}
+		}
+	}
+	return dists;
+}
+
 pair<int, int> create_move(const Game& game) {
+	vector<int> orders(game.N);
+	for (int i = 0; i < game.N; ++i) {
+		for (const Edge& e : game.edges[i]) {
+			if (e.owner == NOT_OWNED) orders[i]++;
+		}
+	}
 	vector<i64> node_score(game.N);
 	vector<int> reachable(game.N);
 	vector<bool> candidate(game.N);
@@ -188,6 +221,7 @@ pair<int, int> create_move(const Game& game) {
 			}
 		}
 	}
+	const auto dists = mine_dists(game);
 	int bestValue = -1;
 	pair<int, int> res(-1, -1);
 	for (int i = 0; i < game.N; ++i) {
@@ -195,7 +229,16 @@ pair<int, int> create_move(const Game& game) {
 		for (const Edge& e : game.edges[i]) {
 			if (e.owner != NOT_OWNED) continue;
 			if (reachable[i] == reachable[e.to]) continue;
-			const i64 value = game.values[e.to] + node_score[e.to];
+			i64 value = __builtin_popcount(~reachable[i] & reachable[e.to]) * SCORE_SCALE;
+			for (int j = 0; j < game.K; ++j) {
+				if (reachable[i] & (1 << j)) {
+					// expand
+					value += dists[j][e.to] * dists[j][e.to] * SCORE_SCALE / 3;
+				} else {
+					// approach
+					value += SCORE_SCALE * 5 / (dists[j][e.to] * dists[j][e.to] + 1);
+				}
+			}
 			if (value > bestValue) {
 				bestValue = value;
 				res = {i, e.to};
@@ -213,11 +256,11 @@ void handshake() {
 void init() {
 	time_limit  = 8000;
 	Game game(true);
-	game.init();
 	string ser = game.serialize();
 	cout << ser << "\n";
 	int num_future = 0;
 	cout << num_future << endl;
+	debug("init:%d\n", get_elapsed_msec());
 }
 
 void move() {
@@ -230,7 +273,9 @@ void move() {
 	}
 	cout << game.serialize() << "\n";
 	pair<int, int> res = create_move(game);
+	cout << game.I << " ";
 	cout << res.first << " " << res.second << endl;
+	debug("move:%d\n", get_elapsed_msec());
 }
 
 int main() {

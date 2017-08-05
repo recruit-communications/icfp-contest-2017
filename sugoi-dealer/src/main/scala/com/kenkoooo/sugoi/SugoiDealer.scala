@@ -1,6 +1,7 @@
 package com.kenkoooo.sugoi
 
-import java.io.{File, InputStream, InputStreamReader}
+import java.io.{BufferedReader, File, InputStream, InputStreamReader}
+import java.util.stream.Collectors
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
@@ -52,10 +53,15 @@ object SugoiDealer extends Logging with BattleLogging {
     programs.foreach(program => {
       val setupInput = mapper.writeValueAsString(SetupToPunter(program.punter, programs.size, map, LambdaSettings(true)))
       val (setupOutput, code) = program.putCommand(setupInput, 10)
-      if (code != 0) program.penaltyCount += 1
-      val output = mapper.readValue[SetupToServer](setupOutput, classOf[SetupToServer])
-      program.state = output.state
-      futureBuffer.append(output.futures)
+      if (code != 0 || setupOutput == "") {
+        program.penaltyCount += 1
+        program.state = new ArrayBuffer[String]()
+        futureBuffer.append(Array())
+      } else {
+        val output = mapper.readValue[SetupToServer](setupOutput, classOf[SetupToServer])
+        program.state = output.state
+        futureBuffer.append(output.futures)
+      }
     })
     futureBuffer
   }
@@ -180,6 +186,9 @@ class PunterProgram(cmd: String, val punter: Int, battler: Boolean = false) exte
     } catch {
       case e: Throwable =>
         logger.catching(e)
+        val err = new BufferedReader(new InputStreamReader(proc.getErrorStream))
+        logger.error(err.lines().collect(Collectors.joining("\n")))
+        err.close()
         ("", 1)
     } finally {
       reader.close()
@@ -190,6 +199,11 @@ class PunterProgram(cmd: String, val punter: Int, battler: Boolean = false) exte
   }
 }
 
+/**
+  * Input String Reader to communicate to the bridge
+  *
+  * @param in standard input stream
+  */
 class SugoiInputReader(in: InputStream) extends Logging {
   val reader = new InputStreamReader(in)
 

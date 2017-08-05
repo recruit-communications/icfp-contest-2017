@@ -119,29 +119,47 @@ def play():
             continue
         if t in ee[s]:
             ee[s].remove(t)
+        if t in e[s]:
+            e[s].remove(t)
+        if s in e[t]:
+            e[t].remove(s)
+
     r = None
-    for s in esa[:M] + esa[::-1]:
+    esam = esa[:M]
+    random.shuffle(esam)
+    pe(esam=esam)
+    esas = esa[M:]
+    for s in esam + esas[::-1]:
         if r:
             break
-        if s not in ee:
+        if s in e:
             continue
-        el = list(ee[s])
+        el = list(e[s])
         random.shuffle(el)
         for v in el:
             if r:
                 break
-            if v not in esa or True:
+            if v in ee[s]:
                 r = '{} {}'.format(s,v)
-                esa.append(v)
-                break
+                ee[s].remove(v)
+            else:
+                r = '{} {}'.format(v,s)
+                ee[v].remove(s)
+            e[v].remove(s)
+            e[s].remove(v)
+            esa.append(v)
+            break
 
     for k,v in ee.items():
         if r:
             break
-        if v:
-            v1 = list(v)[0]
-            r = '{} {}'.format(k,v1)
-            ee[k].remove(v1)
+        if not v:
+            continue
+        el = list(v)
+        random.shuffle(el)
+        r = '{} {}'.format(k,el[0])
+        ee[k].remove(el[0])
+
     pe(le2=sum([len(_) for _ in ee.values()]))
 
     pf(str(pickle.dumps(state)))

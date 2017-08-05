@@ -5,8 +5,10 @@ let initialised = false;
 
 let row = 0;
 let col = 0;
+let jsons = undefined;
 let moves = undefined;
 let doPlay = false;
+let timeSpan = 500;
 
 /* Graph rendering */
 
@@ -141,7 +143,7 @@ function logError(msg) {
   return;
 }
 
-function start(jsons) {
+function start() {
   let graph = undefined;
   let move_start = 0;
   moves = undefined;
@@ -241,7 +243,7 @@ function start(jsons) {
 
 function handleReset(moves) {
   logInfo("Reset viewer");
-  selectBattle($("#download-link").attr("href"));
+  start();
 }
 
 function handleBack() {
@@ -302,7 +304,7 @@ function handlePlay() {
     console.log("DOPLAY");
     if (doPlay && row < moves.length) {
       forwardBattle();
-      setTimeout(play, 500);
+      setTimeout(play, timeSpan);
     } else if (row == moves.length){
       handleEnd();
     }
@@ -367,7 +369,7 @@ function updateEdgeOwner(punter, source, target) {
 
   if (es.length > 0) {
     const e = es[0];
-    e.data()["owner"] = undefined;
+    e.data()["owner"] = punter;
     e.style("line-color", getPunterColour(punter));
   } else {
     logError("Trying to update nonexistent edge! (" + source + " -- " + target + ")");
@@ -392,10 +394,11 @@ function selectBattle(url) {
       return res.text();
     }).then(function(text) {
       return text.split("\n");
-    }).then(function(jsons) {
+    }).then(function(_jsons) {
       if (cy.elements !== undefined) {
         cy.destroy();
       }
+      jsons = _jsons;
       while (jsons[jsons.length - 1] == "") jsons.pop();
       start(jsons);
   });
@@ -435,7 +438,7 @@ function doVisualize() {
     cy.destroy();
   }
   while (jsons[jsons.length - 1] == "") jsons.pop();
-  start(jsons);
+  start();
 }
 
 function initPunterColours() {
@@ -443,6 +446,18 @@ function initPunterColours() {
     $("#punter-colours").append("<div class=\"colours" + i + "\">&ensp;&nbsp;" + i + "&ensp;</div>");
     $(".colours" + i).css({"background-color":colours[i], "display":"inline"});
   }
+}
+
+
+function updateWidth() {
+  width = $("#line-width").val();
+  $("cy").css("width", width);
+  console.log("updateWidth with" + width);
+}
+
+function updateSpan() {
+  timeSpan = $("#time-span").val();
+  console.log("updateSpan with" + timeSpan + "ms");
 }
 
 $(function() {
@@ -458,4 +473,3 @@ $(function() {
     }
   });
 });
-

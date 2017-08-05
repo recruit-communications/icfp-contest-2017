@@ -1,6 +1,7 @@
 const line = "line";
 const mine = "mine";
-let mode = "line";
+const remove = "remove";
+let mode = line;
 
 let select = 0;
 let id = 2;
@@ -32,90 +33,82 @@ function renderGraph() {
       var evtTarget = event.target;
 
       if(evtTarget === cy){
-        console.log(event);
-
         let position = {
             x: event.originalEvent.offsetX,
             y: event.originalEvent.offsetY,
         };
         clickBackground(position);
       } else if (evtTarget.isNode()) {
-        clickNode(evtTarget.id(), event.originalEvent.shiftKey);
+        clickNode(evtTarget, event.originalEvent.shiftKey);
+      } else if (evtTarget.isEdge()) {
+        clickEdge(evtTarget);
       }
-    });
-
-    cy.on('drug', 'node', function(event) {
-      var evtTarget = event.target;
-
-      let position = {
-        x: event.originalEvent.offsetX,
-        y: event.originalEvent.offsetY,
-      };
     });
   });
 }
 
 function clickBackground(position) {
   if (mode == line) {
-    eles.push(cy.add([
+    eles.push({doing:"add", addNode:true, source:select, ele:cy.add([
       {group:"nodes", data: {"id": id.toString()}, renderedPosition: {x: position.x, y: position.y}},
       {group:"edges", data: {source: select, target: id}}
-    ]));
-    changes.push({mode:line, source:select, target:id, addNode:true});
-    console.log("Added line:")
-    console.log(eles[eles.length - 1]);
+    ])});
     select = id;
     id++;
   }
 }
 
-function clickNode(nodeId, shiftKey) {
+function clickNode(nodeMeta, shiftKey) {
+  nodeId = nodeMeta.id();
   if (mode == line) {
     pre_select = select;
     select = nodeId;
     // shiftKeyが押されている場合は、selectが変わるだけ
-    console.log("shiftKey: " + shiftKey + ", source: " + select + " target: " + pre_select);
     if (!shiftKey) {
-      eles.push(cy.add([
+      eles.push({mode:line, doing:"add", addNode:false, source:pre_select, ele:cy.add([
         {group: "edges", data: {source:pre_select, target:select}}
-      ]))
-      changes.push({mode:line, source:pre_select, target:select, addNode:false});
+      ])});
     }
-  } else {
+  } else if (mode == mine) {
     if (!cy.$id(nodeId).hasClass(mine)) {
-      cy.$id(nodeId).addClass(mine);
-      changes.push({mode:mine, id:nodeId, doing:"add"});
-      console.log("Added mine:")
-      console.log(changes[changes.length - 1]);
+      eles.push({mode:mine, doing:"add", id:nodeId, ele:cy.$id(nodeId).addClass(mine)});
     } else {
-      cy.$id(nodeId).removeClass(mine);
-      changes.push({mode:mine, id:nodeId, doing:"remove"});
-      console.log("Removed mine:")
-      console.log(changes[changes.length - 1]);
+      eles.push({mode:mine, doing:"remove", id:nodeId, ele:cy.$id(nodeId).removeClass(mine)});
+    }
+  } else if (mode == remove) {
+    if (nodeId > 0) {
+      eles.push({mode:remove, doing:"remove", ele:cy.remove(nodeMeta)});
+      select = 0;
     }
   }
 }
 
 function undoCanvas() {
-  if (changes.length > 0) {
-    let change = changes.pop();
-    if (change.mode == line) {
-      cy.remove(eles.pop());
-      select = change.source;
-      if (change.addNode) {
-        id--;
+  if (eles.length > 0) {
+    let ele = eles.pop();
+    if (ele.mode == mine) {
+      if (ele.doing == "add")
+        cy.$id(ele.id).removeClass(mine);
+      else
+        cy.$id(ele.id).addClass(mine);
+    } else if (ele.doing == "add") {
+      cy.remove(ele.ele);
+
+      if (ele.source != undefined) {
+        select = ele.source;
+        if (ele.addNode) {
+          id--;
+        }
       }
-      console.log("Undo line:");
-    } else {
-      if (change.doing == "add") {
-        cy.$id(change.id).removeClass(mine);
-        console.log("Undo add mine:");
-      } else {
-        cy.$id(change.id).addClass(mine);
-        console.log("Undo remove mine:");
-      }
+    } else if (ele.doing == "remove") {
+      cy.add(ele.ele);
     }
-    console.log(change);
+  }
+}
+
+function clickEdge(edgeMeta) {
+  if (mode == remove) {
+    eles.push({doing:"remove", ele:cy.remove(edgeMeta)});
   }
 }
 
@@ -126,18 +119,23 @@ function resetCanvas() {
 
 function lineInputMode() {
   mode = line;
-  $("#mine-input").removeAttr("disabled");
   $("#line-input").attr("disabled", true);
+  $("#mine-input").removeAttr("disabled");
+  $("#remove").removeAttr("disabled", true);
 }
 
 function mineInputMode() {
   mode = mine;
   $("#line-input").removeAttr("disabled");
   $("#mine-input").attr("disabled", true);
+  $("#remove").removeAttr("disabled", true);
 }
 
 function removeMode() {
-  // TODO;
+  mode = remove;
+  $("#line-input").removeAttr("disabled");
+  $("#mine-input").removeAttr("disabled", true);
+  $("#remove").attr("disabled", true);
 }
 
 function round(number, decimalPlace) {
@@ -149,7 +147,7 @@ function round(number, decimalPlace) {
 }
 
 function makeJsonFormat() {
-  json = {"sites":[], "rivers":[], "mines":[]};
+  let json = {"sites":[], "rivers":[], "mines":[]};
   cy_json = cy.json();
 
   for (let node of cy_json.elements.nodes) {

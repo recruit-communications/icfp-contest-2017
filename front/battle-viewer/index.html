@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Lambda Battle Viewer</title>
+    <link rel="stylesheet" href="../js-core/bootstrap.min.css">
+    <link rel="stylesheet" href="battle.css">
+  </head>
+
+  <body>
+    <div class="container-fluid">
+        <h1><a href="../graph-viewer/index.html">&#955; Map Viewer</a> | <a href="../puntfx/index.html"> &#955; Punter FX</a> | &#955; Battle Viewer</h1>
+      <div class="row">
+        <div class="col-md-4">
+          <fieldset>
+            <legend>Viewer settings</legend>
+            <table class="settings-table">
+              <tr>
+                <td>Punter colores:
+                  <div id="punter-colours"></div>
+                </td>
+              </tr>
+              <tr>
+                <td>Select Battle:
+                  <div id="dropdown">
+                    <select id="battles-select" class="form-control">
+                    </select>
+                  </div>
+                </td>
+              </tr>
+            </table>
+            <a id="download-link" href="#">Download</a>
+          </fieldset>
+        </div>
+        <div class="col-md-8">
+          <fieldset>
+            <legend>Log</legend>
+            <textarea id="log" readonly="readonly"></textarea>
+          </fieldset>
+        </div>
+      </div>
+
+      <fieldset>
+        <legend>Game Controler</legend>
+        <div id="game-scores" align="center"></div>
+        <table class="settings-table" align="center">
+          <tr>
+            <td>
+              <button class="btn" id="reset-button" onclick="handleReset()" disabled>&lt;&lt;</button>
+              <button class="btn" id="back-button" onclick="handleBack()" disabled>&lt;</button>
+              <button class="btn" id="go-button" onclick="handleGo()" disabled>&gt;</button>
+              <button class="btn" id="end-button" onclick="handleEnd()" disabled>&gt;&gt;</button>
+              <span>&nbsp;&nbsp;</span>
+              <button class="btn" id="pause-button" onclick="handlePause()" disabled>| |</button>
+              <button class="btn" id="play-button" onclick="handlePlay()" disabled>-&gt;</button>
+            </td>
+          </tr>
+        </table>
+      </fieldset>
+    </div>
+    <div class="container-fluid">
+      <fieldset>
+        <legend>Canvas</legend>
+        <div class="container-fluid" id="cy"></div>
+        <div id="loading">
+          <span class="fa fa-refresh fa-spin"></span>
+        </div>
+      </fieldset>
+    </div>
+    <div class="json-submit">
+      <textarea class="json-form" value="ここにbridgeの出力を貼り付けてください">
+
+      </textarea>
+    </div>
+    <!--- load scripts -->
+    <script src="../js-core/jquery.min.js"></script>
+    <script src="../js-core/bootstrap.min.js"></script>
+    <script src="../js-core/fastclick.min.js"></script>
+    <script src="../js-core/cytoscape.min.js"></script>
+    <script src="../js-core/bluebird.min.js"></script>
+    <script src="../js-core/js-core.js"></script>
+    <script src="battle.js"></script>
+    </body>
+</html>

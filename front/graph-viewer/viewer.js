@@ -27,6 +27,7 @@ const colours =
     "#9edae5"];
 
 function renderGraph(graph) {
+  console.log(graph);
   initCy(graph,
     function() {
       initialised = true;
@@ -57,7 +58,7 @@ function handleEdgeClick(edge) {
 }
 
 function updateEdgeOwner(source, target) {
-  const es = cy.edges("[source=\"" + source + "\"][target=\"" + target + "\"]");
+  const es = cy.edges("[source=\"" + source + "\"][target=\"" + target + "\"]")
   if (es.length > 0) {
     const e = es[0];
     e.data()["owner"] = punter;
@@ -69,7 +70,7 @@ function updateEdgeOwner(source, target) {
 
 function updateNumPunters() {
   punter = 0;
-  num_punters = document.getElementById("num_punters").value;
+  num_punters = $("#num_punters").val();
   console.log(num_punters);
   cy.destroy();
 
@@ -101,7 +102,6 @@ function loadMapList(showFirst) {
       selectMap(maps[0].filename);
     }
   });
-
 }
 
 function selectMap(url) {

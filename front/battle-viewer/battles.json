@@ -1,0 +1,18 @@
+{
+    "battles": [
+        {
+            "filename": "../battles/sample.json",
+            "name": "O: Sample from the Desc",
+            "num_edges": 12,
+            "num_nodes": 8,
+            "num_punters": 2
+        },
+        {
+            "filename": "../battles/test.json",
+            "name": "test",
+            "num_edges": 12,
+            "num_nodes": 8,
+            "num_punters": 2
+        }
+    ]
+}

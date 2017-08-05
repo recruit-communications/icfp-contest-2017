@@ -14,6 +14,86 @@ def compress(sorted_site_ids):
     return {sid: i for i, sid in enumerate(sorted_site_ids)}
 
 
+class OfflineBridge:
+    def __init__(self):
+        self.buffer = b''
+
+    def send_json(self, obj):
+        d = json.dumps(obj)
+        print('SEND', d)
+        bytes = d.encode()
+        n = len(bytes)
+        sys.stdout.write(str(n).encode())
+        sys.stdout.write(':'.encode())
+        sys.stdout.write(bytes)
+
+    def read_json(self):
+        while 1:
+            idx = self.buffer.find(b':')
+            if idx >= 0:
+                break
+            # まだ : がない
+            self.buffer += sys.stdin.read()
+        n = int(self.buffer[:idx].decode())
+        self.buffer = self.buffer[idx + 1:]
+
+        while len(self.buffer) < n:
+            # n 以上になるまで追加で読む
+            self.buffer += sys.stdin.read()
+
+        json_bytes = self.buffer[:n].decode()
+        self.buffer = self.buffer[n:]
+        obj = json.loads(json_bytes)
+        print('RECV', obj)
+        return obj
+
+    def handshake(self, name):
+        self.send_json({'me': name})
+        self.read_json()
+
+    def setup(self, obj):
+        self.punter_id = obj['punter']
+        self.punters = obj['punters']
+        self.map = obj['map']
+        self.future = 0
+        if 'settings' in obj and 'futures' in obj['settings']:
+            self.future = 1 if obj['settings']['future'] else 0
+
+    def ready(self, F, state, sorted_site_ids):
+        obj = {'ready': self.punter_id, 'state': [state, sorted_site_ids]}
+        if F:
+            futures = []
+            for m, s in F:
+                futures.append({'source': m, 'target': s})
+            obj['futures'] = futures
+        self.send_json(obj)
+
+    def recmove(self, move):
+        moves = move['move']['moves']
+        state, sorted_site_ids = move['state']
+
+        G = []
+        for move in moves:
+            if 'pass' in move:
+                pid = move['pass']['punter']
+                G.append((pid, -1, -1))
+            else:
+                claim = move['claim']
+                pid = claim['punter']
+                s = claim['source']
+                t = claim['target']
+                G.append((pid, s, t))
+        G.sort()
+        return G, state, sorted_site_ids
+
+    def sendmove(self, s, t, state, sorted_site_ids):
+        if s == -1 or t == -1:
+            self.send_json({'pass': {'punter': self.punter_id}})
+        else:
+            self.send_json({'claim': {'punter': self.punter_id, 'source': s, 'target': t}})
+        self.send_json({'state': [state, sorted_site_ids]})
+
+
 class OnlineBridge:
     def __init__(self, host, port):
         self.telnet = telnetlib.Telnet(host, port)
@@ -65,13 +145,13 @@ class OnlineBridge:
             self.future = 1 if sup['settings']['future'] else 0
 
     def ready(self, F):
+        obj = {'ready': self.punter_id}
         if F:
             futures = []
             for m, s in F:
                 futures.append({'source': m, 'target': s})
-            self.send_json({'ready': self.punter_id, 'futures': futures})
-        else:
-            self.send_json({'ready': self.punter_id})
+            obj['futures'] = futures
+        self.send_json(obj)
 
     def recmove(self):
         move = self.read_json()
@@ -169,13 +249,38 @@ class Process:
         return s, t, new_state
 
 
-def main():
+def offline():
+    cmd = sys.argv[1]
+    name = sys.argv[2]
+    proc = Process(cmd)
+
+    bridge = OfflineBridge()
+    bridge.handshake(name)
+
+    obj = bridge.read_json()
+
+    if 'punter' in obj:
+        # Setup
+        bridge.setup(obj)
+        state, sorted_site_ids, futures = proc.I(bridge.punters, bridge.punter_id, bridge.future, bridge.map)
+        bridge.ready(futures, state, sorted_site_ids)
+    elif 'move' in obj:
+        # Gameplay
+        G, state, sorted_site_ids = bridge.recmove(obj)
+        s, t, state = proc.G(G, state, sorted_site_ids)
+        bridge.sendmove(s, t, state, sorted_site_ids)
+    elif 'stop' in obj:
+        # Scoreing
+        pass
+
+
+def online():
     host = 'punter.inf.ed.ac.uk'
     cmd = sys.argv[1]
-    port = int(sys.argv[2])
+    name = sys.argv[2]
+    port = int(sys.argv[3])
 
     proc = Process(cmd)
-    name = proc.start()
 
     bridge = OnlineBridge(host, port)
     bridge.handshake(name)
@@ -194,4 +299,7 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    if len(sys.argv) == 3:
+        offline()
+    elif len(sys.argv) == 4:
+        online()

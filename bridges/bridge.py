@@ -33,13 +33,13 @@ class OfflineBridge:
             if idx >= 0:
                 break
             # まだ : がない
-            self.buffer += sys.stdin.read()
+            self.buffer += sys.stdin.buffer.read1(100)
         n = int(self.buffer[:idx].decode())
         self.buffer = self.buffer[idx + 1:]
 
         while len(self.buffer) < n:
             # n 以上になるまで追加で読む
-            self.buffer += sys.stdin.read()
+            self.buffer += sys.stdin.buffer.read1(100)
 
         json_bytes = self.buffer[:n].decode()
         self.buffer = self.buffer[n:]

@@ -2,19 +2,21 @@ const line = "line";
 const mine = "mine";
 let mode = "line";
 
-let select = 1;
+let select = 0;
 let id = 2;
 let eles = [];     // cytograph 操作データ
 let changes = [];  // 内部用の操作データ
 let json = {
-  "sites": [{"id":0, "x":0.0, "y":0.0}, {"id":1, "x":0.1, "y":0.0}],
-  "rivers": [],
+  "sites": [{"id":0, "x":0.0, "y":0.0}, {"id":1, "x":8.03, "y":0.0}],
+  "rivers": [{"source":0, "target":1}],
   "mines": [],
 }
 
 function initParams() {
-  id = 2;
-  select = 1;
+  for (site of json.sites) {
+    id = Math.max(id, site.id);
+  }
+  select = 0;
   eles = [];
   changes = [];
 }

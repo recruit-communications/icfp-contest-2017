@@ -67,7 +67,6 @@ class UnionFind:
 def setup():
     C,P,F = LI()
     N, M, K = LI()
-    pe(K=K)
     e = {}
     ee = {}
     for _ in range(M):
@@ -125,7 +124,6 @@ def setup():
         'P': P,
         'N': N,
         'M': M,
-        'K': K,
         'C': C,
         'uf': uf,
     }
@@ -133,7 +131,7 @@ def setup():
 
     pf(str(pickle.dumps(state)))
     # futureは未対応
-    pf('0')
+    pf('0 ')
 
 def play():
     state = input()
@@ -146,30 +144,16 @@ def play():
     P = state['P']
     N = state['N']
     M = state['M']
-    K = state['K']
     C = state['C']
     uf = state['uf']
     pe(P=P,N=N,C=C)
-
-    def fr(s,v):
-        if s in ee and v in ee[s]:
-            r = '{} {}'.format(s,v)
-            ee[s].remove(v)
-        else:
-            r = '{} {}'.format(v,s)
-            ee[v].remove(s)
-        e[v].remove(s)
-        e[s].remove(v)
-        esa.append(v)
-        uf.union(s,v)
-        return r
 
     for i in range(C):
         s,t = LI()
         if s == -1:
             # passの場合
             continue
-        if s in ee and t in ee[s]:
+        if t in ee[s]:
             ee[s].remove(t)
         if t in e[s]:
             e[s].remove(t)
@@ -177,34 +161,34 @@ def play():
             e[t].remove(s)
 
     r = None
-    esam = esa[:K]
-    ess = set(esa)
-    et = []
-    for s in esam:
+    esam = esa[:M]
+    random.shuffle(esam)
+    pe(esam=esam)
+    esas = esa[M:]
+    random.shuffle(esas)
+    for s in esam + esas:
         if r:
             break
-        for v in list(e[s]):
+        if s not in e:
+            continue
+        el = list(e[s])
+        random.shuffle(el)
+        for v in el:
+            if r:
+                break
             if uf.find(s) == uf.find(v):
                 continue
-            if uf.table[s] != -1 and uf.table[v] != -1:
-                r = fr(s,v)
-            et.append([len(e[v] - ess) + 2, -len(e[s]), (s,v)])
-
-    esas = esa[K:]
-    for s in esas:
-        if r:
+            if s in ee and v in ee[s]:
+                r = '{} {}'.format(s,v)
+                ee[s].remove(v)
+            else:
+                r = '{} {}'.format(v,s)
+                ee[v].remove(s)
+            e[v].remove(s)
+            e[s].remove(v)
+            esa.append(v)
+            uf.union(s,v)
             break
-        for v in list(e[s]):
-            if uf.find(s) == uf.find(v):
-                continue
-            if uf.table[s] != -1 and uf.table[v] != -1:
-                r = fr(s,v)
-            et.append([len(e[v] - ess), -len(e[s]), (s,v)])
-
-    if not r and et:
-        et.sort()
-        s,v = et[-1][2]
-        r = fr(s,v)
 
     for k,v in ee.items():
         if r:
@@ -213,7 +197,9 @@ def play():
             continue
         el = list(v)
         random.shuffle(el)
-        r = fr(k,el[0])
+        r = '{} {}'.format(k,el[0])
+        ee[k].remove(el[0])
+        uf.union(k,el[0])
 
     pe(uf=uf.table)
 

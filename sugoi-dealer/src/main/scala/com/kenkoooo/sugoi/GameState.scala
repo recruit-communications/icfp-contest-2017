@@ -4,12 +4,13 @@ package com.kenkoooo.sugoi
 import java.util
 
 import scala.collection.mutable
+import scala.collection.mutable.ArrayBuffer
 
 object GameState {
   val UNUSED: Int = -1
 }
 
-class GameState(map: LambdaMap, punterNum: Int) {
+class GameState(map: LambdaMap, punterNum: Int, futures: ArrayBuffer[Array[LambdaFuture]]) {
   type Punter = Int
   type Vertex = Int
   type Score = Long

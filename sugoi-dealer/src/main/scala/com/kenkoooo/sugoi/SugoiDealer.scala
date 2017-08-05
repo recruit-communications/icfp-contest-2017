@@ -23,7 +23,9 @@ object SugoiDealer extends Logging {
     logger.info("lambda map loaded")
     val programs = for (i: Int <- 1 until args.length) yield new PunterProgram(args(i), i)
     val futures = setup(programs, map)
-    play(programs, map, futures)
+
+    val gameState = new GameState(map, programs.length, futures)
+    play(programs, gameState)
   }
 
   /**
@@ -48,11 +50,10 @@ object SugoiDealer extends Logging {
   /**
     * play game
     *
-    * @param programs AI programs
-    * @param map      Map
+    * @param programs  AI programs
+    * @param gameState state of the game
     */
-  private def play(programs: Seq[PunterProgram], map: LambdaMap, futres: ArrayBuffer[Array[LambdaFuture]]): Unit = {
-    val gameState = new GameState(map, programs.length)
+  private def play(programs: Seq[PunterProgram], gameState: GameState): Unit = {
     val deque = new ArrayBuffer[Move]()
     programs.foreach { p => deque.append(PassMove(Pass(p.punter))) }
 

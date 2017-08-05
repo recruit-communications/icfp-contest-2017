@@ -2,10 +2,11 @@
 
 const db = require('./lib/db');
 const log = require('./lib/log');
+const sortBy = require('underscore').sortBy;
 
 // punter
 db.punters().then((data) => {
-  return data.sort((a, b) => a.created_at < b.created_at).shift().created_at;
+  return sortBy(data, (e) => e.created_at).shift().created_at;
 }).then((last) => {
   const prefix = 'clients/'
   const suffix = '.tar.gz'
@@ -21,7 +22,7 @@ db.punters().then((data) => {
 
 // map
 db.maps().then((data) => {
-  return data.sort((a, b) => a.created_at < b.created_at).shift().created_at;
+  return sortBy(data, (e) => e.created_at).pop().created_at;
 }).then((last) => {
   const prefix = 'maps/'
   const suffix = '.json'

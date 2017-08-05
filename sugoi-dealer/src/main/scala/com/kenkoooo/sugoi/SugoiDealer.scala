@@ -81,10 +81,16 @@ object SugoiDealer extends Logging with BattleLogging {
       val playToPunterString = mapper.writeValueAsString(PlayToPunter(PreviousMoves(deque.toArray), p.state))
       deque.remove(0)
 
+      if (p.penaltyCount >= 10) {
+        // dropout
+        deque.append(PassMove(Pass(p.punter)))
+        return
+      }
+
       // play
       val (playOutput, code) = p.putCommand(playToPunterString, 2)
 
-      if (p.penaltyCount >= 10 || code != 0) {
+      if (code != 0) {
         // failed
         p.penaltyCount += 1
         deque.append(PassMove(Pass(p.punter)))

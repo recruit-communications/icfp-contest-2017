@@ -11,6 +11,12 @@ java -jar sugoi-dealer-assembly-1.0.jar [map JSON files] [punter file path 0] [p
 
 # Changelog
 
+## 2017-08-06 08:30
+
+- Accelerate by using Vector instead of Map
+- Kill the AI which timed out or crashed 10 times
+- Output internal errors to stdout
+
 ## 2017-08-06 06:48
 
 - Remove `state` from battle log

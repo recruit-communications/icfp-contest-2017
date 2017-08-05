@@ -40,8 +40,11 @@
     <!--メインのログ-->
     <Root level="debug">
       <AppenderRef ref="WorkingLog"/>
-      <!--<AppenderRef ref="Console"/>-->
     </Root>
+
+    <Logger name="com.kenkoooo.sugoi" level="warn" additivity="true">
+      <AppenderRef ref="Console"/>
+    </Logger>
 
     <Logger name="BattleLog" level="info" additivity="false">
       <AppenderRef ref="BattleLog"/>

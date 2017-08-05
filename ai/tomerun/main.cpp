@@ -221,6 +221,10 @@ pair<int, int> create_move(const Game& game) {
 			}
 		}
 	}
+	int cur_order = 0;
+	for (int i = 0; i < game.N; ++i) {
+		if (candidate[i]) cur_order += orders[i];
+	}
 	const auto dists = mine_dists(game);
 	int bestValue = -1;
 	pair<int, int> res(-1, -1);
@@ -238,6 +242,7 @@ pair<int, int> create_move(const Game& game) {
 					// approach
 					value += SCORE_SCALE * 5 / (dists[j][e.to] * dists[j][e.to] + 1);
 				}
+				value += SCORE_SCALE * orders[e.to] / 5;
 			}
 			if (value > bestValue) {
 				bestValue = value;

@@ -85,12 +85,13 @@ class OfflineBridge:
         G.sort()
         return G, state, sorted_site_ids
 
-    def sendmove(self, s, t, state, sorted_site_ids):
+    def sendmove(self, pid, s, t, state, sorted_site_ids):
         if s == -1 or t == -1:
-            self.send_json({'pass': {'punter': self.punter_id}})
+            obj = {'pass': {'punter': pid}}
         else:
-            self.send_json({'claim': {'punter': self.punter_id, 'source': s, 'target': t}})
-        self.send_json({'state': [state, sorted_site_ids]})
+            obj = {'claim': {'punter': pid, 'source': s, 'target': t}}
+        obj['state'] = [state, sorted_site_ids]
+        self.send_json(obj)
 
 
 class OnlineBridge:
@@ -239,12 +240,12 @@ class Process:
         txt = '\n'.join(lines)
         recv = self.exec(txt)
         l1, l2 = recv.split('\n')
-        s, t = map(int, l2.split(' '))
+        pid, s, t = map(int, l2.split(' '))
         if s != -1:
             s = sorted_site_ids[s]
             t = sorted_site_ids[t]
         new_state = l1
-        return s, t, new_state
+        return pid, s, t, new_state
 
 
 def offline():
@@ -265,8 +266,8 @@ def offline():
     elif 'move' in obj:
         # Gameplay
         G, state, sorted_site_ids = bridge.recmove(obj)
-        s, t, state = proc.G(G, state, sorted_site_ids)
-        bridge.sendmove(s, t, state, sorted_site_ids)
+        pid, s, t, state = proc.G(G, state, sorted_site_ids)
+        bridge.sendmove(pid, s, t, state, sorted_site_ids)
     elif 'stop' in obj:
         # Scoreing
         pass
@@ -291,7 +292,7 @@ def online():
         G = bridge.recmove()
         if G is None:
             break
-        s, t, state = proc.G(G, state, sorted_site_ids)
+        pid, s, t, state = proc.G(G, state, sorted_site_ids)
         bridge.sendmove(s, t, state, sorted_site_ids)
     bridge.close()
 

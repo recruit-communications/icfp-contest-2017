@@ -1,7 +1,6 @@
 package com.kenkoooo.sugoi
 
-import java.io.File
-import java.util.Scanner
+import java.io.{BufferedReader, File, InputStream, InputStreamReader}
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
@@ -122,20 +121,26 @@ class PunterProgram(cmd: String, val punter: Int) extends Logging {
     val pb = new ProcessBuilder(Array(cmd).toList.asJava)
     val proc = pb.start()
     val os = proc.getOutputStream
-    val sc = new Scanner(proc.getInputStream)
+    val reader = new SugoiInputReader(proc.getInputStream)
     try {
       // handshake
-      val handshakeFromPunter = sc.nextLine()
+      val handshakeFromPunter = reader.next()
+
       logger.info(s"handshake from punter: $handshakeFromPunter")
       val name = SugoiMapper.mapper.readValue(handshakeFromPunter, classOf[HandShakeFromPunter]).me
-      os.write(SugoiMapper.mapper.writeValueAsBytes(HandShakeFromServer(name)))
+      val handShakeFromServer = SugoiMapper.mapper.writeValueAsBytes(HandShakeFromServer(name))
+
+      os.write(handShakeFromServer.length)
+      os.write(":".getBytes)
+      os.write(handShakeFromServer)
       os.flush()
 
+      os.write(command.getBytes.length)
+      os.write(":".getBytes)
       os.write(command.getBytes)
-      os.write("\n".getBytes())
       os.flush()
 
-      val fromPunter = sc.nextLine()
+      val fromPunter = reader.next()
       logger.info(s"command from punter: $fromPunter")
       (fromPunter, 0)
     } catch {
@@ -143,12 +148,37 @@ class PunterProgram(cmd: String, val punter: Int) extends Logging {
         logger.catching(e)
         ("", 1)
     } finally {
-      sc.close()
+      reader.close()
       os.close()
       proc.destroy()
       logger.info("Process successfully destroyed")
     }
   }
+}
+
+class SugoiInputReader(in: InputStream) extends Logging {
+  val reader = new BufferedReader(new InputStreamReader(in))
+
+  def next(): String = {
+    val buf = new ArrayBuffer[Char]()
+    var r: Int = reader.read()
+    while (r >= 0 && r != ':') {
+      buf.append(r.toChar)
+      r = reader.read()
+    }
+
+    val length = buf.mkString.toInt
+    buf.clear()
+    for (_ <- 0 until length) {
+      buf.append(reader.read().toChar)
+    }
+
+    val line = buf.mkString
+    logger.info(s"input > $line")
+    line
+  }
+
+  def close(): Unit = reader.close()
 }
 
 object SugoiMapper {

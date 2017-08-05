@@ -15,28 +15,6 @@ class GameStateSuite extends FunSuite with Matchers {
     graph.isUsed(1, 3) shouldBe false
     graph.addEdge(1, 3, 2)
     graph.isUsed(1, 3) shouldBe true
-    graph.addEdge(0, 1, 2)
-    graph.remainEdgeCount shouldBe 10
-    graph.addEdge(1, 2, 2)
-    graph.remainEdgeCount shouldBe 9
-    graph.addEdge(0, 7, 2)
-    graph.remainEdgeCount shouldBe 8
-    graph.addEdge(7, 6, 2)
-    graph.remainEdgeCount shouldBe 7
-    graph.addEdge(6, 5, 2)
-    graph.remainEdgeCount shouldBe 6
-    graph.addEdge(5, 4, 2)
-    graph.remainEdgeCount shouldBe 5
-    graph.addEdge(4, 3, 2)
-    graph.remainEdgeCount shouldBe 4
-    graph.addEdge(3, 2, 2)
-    graph.remainEdgeCount shouldBe 3
-    graph.addEdge(1, 7, 2)
-    graph.remainEdgeCount shouldBe 2
-    graph.addEdge(7, 5, 2)
-    graph.remainEdgeCount shouldBe 1
-    graph.addEdge(3, 5, 2)
-    graph.remainEdgeCount shouldBe 0
   }
 
 }

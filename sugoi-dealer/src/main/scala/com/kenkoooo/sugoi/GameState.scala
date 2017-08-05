@@ -22,7 +22,7 @@ class GameState(map: LambdaMap, punterNum: Int) {
   })
   val mines: Set[Vertex] = map.mines.toSet
 
-  var remainEdgeCount: Int = map.rivers.length
+  var edgeCount: Int = map.rivers.length
 
   def isUsed(source: Vertex, target: Vertex): Boolean = graph(source)(target) != GameState.UNUSED
 
@@ -36,7 +36,6 @@ class GameState(map: LambdaMap, punterNum: Int) {
   def addEdge(source: Vertex, target: Vertex, punter: Punter): Unit = {
     graph(source)(target) = punter
     graph(target)(source) = punter
-    remainEdgeCount -= 1
   }
 
   /**

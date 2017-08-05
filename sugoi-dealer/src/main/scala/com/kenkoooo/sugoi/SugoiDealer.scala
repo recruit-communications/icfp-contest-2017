@@ -10,7 +10,7 @@ import scala.collection.JavaConverters._
 import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent._
-import scala.concurrent.duration.DurationInt
+import scala.concurrent.duration.{Duration, _}
 import scala.language.postfixOps
 
 object SugoiDealer extends Logging {
@@ -22,8 +22,8 @@ object SugoiDealer extends Logging {
     val map = mapper.readValue[LambdaMap](new File(filepath), classOf[LambdaMap])
     logger.info("lambda map loaded")
     val programs = for (i: Int <- 1 until args.length) yield new PunterProgram(args(i), i)
-    setup(programs, map)
-    play(programs, map)
+    val futures = setup(programs, map)
+    play(programs, map, futures)
   }
 
   /**
@@ -51,47 +51,46 @@ object SugoiDealer extends Logging {
     * @param programs AI programs
     * @param map      Map
     */
-  private def play(programs: Seq[PunterProgram], map: LambdaMap): Unit = {
+  private def play(programs: Seq[PunterProgram], map: LambdaMap, futres: ArrayBuffer[Array[LambdaFuture]]): Unit = {
     val gameState = new GameState(map, programs.length)
     val deque = new ArrayBuffer[Move]()
     programs.foreach { p => deque.append(PassMove(Pass(p.punter))) }
 
-    while (gameState.remainEdgeCount > 0) {
-      def playOneTurn(p: PunterProgram): Unit = {
-        val playToPunterString = mapper.writeValueAsString(PlayToPunter(PreviousMoves(deque.toArray), p.state))
-        deque.remove(0)
 
-        // play
-        val (playOutput, code) = p.putCommand(playToPunterString, 2)
+    def playOneTurn(p: PunterProgram): Unit = {
+      val playToPunterString = mapper.writeValueAsString(PlayToPunter(PreviousMoves(deque.toArray), p.state))
+      deque.remove(0)
 
-        if (p.penaltyCount >= 10 || code != 0) {
-          // failed
-          p.penaltyCount += 1
-          deque.append(PassMove(Pass(p.punter)))
-          return
-        }
-        val moveFromPunter = mapper.readValue[MoveFromPunter](playOutput, classOf[MoveFromPunter])
-        p.state = moveFromPunter.state
+      // play
+      val (playOutput, code) = p.putCommand(playToPunterString, 2)
 
-        if (moveFromPunter.claim == null) {
-          deque.append(PassMove(moveFromPunter.pass))
-          return
-        }
+      if (p.penaltyCount >= 10 || code != 0) {
+        // failed
+        p.penaltyCount += 1
+        deque.append(PassMove(Pass(p.punter)))
+        return
+      }
+      val moveFromPunter = mapper.readValue[MoveFromPunter](playOutput, classOf[MoveFromPunter])
+      p.state = moveFromPunter.state
 
-        val source = moveFromPunter.claim.source
-        val target = moveFromPunter.claim.source
-        if (gameState.isUsed(source, target)) {
-          logger.error(s"$source -- $target is already used!!!")
-          deque.append(PassMove(Pass(p.punter)))
-        } else {
-          logger.info(s"$source -- $target")
-          gameState.addEdge(source, target, p.punter)
-          deque.append(ClaimMove(moveFromPunter.claim))
-        }
+      if (moveFromPunter.claim == null) {
+        deque.append(PassMove(moveFromPunter.pass))
+        return
       }
 
-      programs.foreach(p => playOneTurn(p))
+      val source = moveFromPunter.claim.source
+      val target = moveFromPunter.claim.source
+      if (gameState.isUsed(source, target)) {
+        logger.error(s"$source -- $target is already used!!!")
+        deque.append(PassMove(Pass(p.punter)))
+      } else {
+        logger.info(s"$source -- $target")
+        gameState.addEdge(source, target, p.punter)
+        deque.append(ClaimMove(moveFromPunter.claim))
+      }
     }
+
+    for (_ <- 0 until gameState.edgeCount) programs.foreach(p => playOneTurn(p))
   }
 }
 
@@ -99,13 +98,20 @@ class PunterProgram(cmd: String, val punter: Int) extends Logging {
   var state: Object = _
   var penaltyCount = 0
 
+  /**
+    * put a command to the program with timeout
+    *
+    * @param command command string
+    * @param timeout timeout (seconds)
+    * @return (Result, exit code)
+    */
   def putCommand(command: String, timeout: Long): (String, Long) = {
-    val f = future {
+    val f = Future {
       execute(command)
     }
     f.onComplete(content => content.get)
 
-    try Await.result(f, 10 seconds)
+    try Await.result(f, Duration(timeout, SECONDS))
     catch {
       case e: TimeoutException =>
         logger.catching(e)

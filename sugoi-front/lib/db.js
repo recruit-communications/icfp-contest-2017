@@ -25,6 +25,14 @@ function dbGet(params) {
   });
 }
 
+function dbUpdate(params) {
+  return new Promise((fulfill, reject) => {
+    db.update(params, (err, data) => {
+      err ? reject(err) : fulfill(data);
+    });
+  });
+}
+
 function dbPut(params) {
   return new Promise((fulfill, reject) => {
     db.put(params, (err, data) => {
@@ -84,15 +92,37 @@ module.exports = {
     return dbPut(params);
   },
   games: (params = {}) => {
-    params.TableName = 'icpf2017-battle';
+    params.TableName = 'icfp-game';
     return dbScan(params);
   },
-  addGame: ({id, clients, map}) => {
+  addGame: ({id, league_id, created_at, punters, map}) => {
     const params = {
-      TableName: 'icpf2017-battle',
+      TableName: 'icpf-game',
       Item: {
         id: id,
-        clients: clients,
+        league_id: league_id,
+        created_at: created_at,
+        punters: punters,
+        map: map
+      }
+    };
+    return dbPut(params);
+  },
+  updateGame: ({id, league_id, created_at, punters, map}) => {
+    const params = {
+      TableName: 'icpf-game',
+      ExpressionAttributeNames: {
+      },
+      ExpressionAttributeValues: {
+      },
+      UpdateExpression: '',
+      Key: {
+        id: id,
+        created_at: created_at
+      },
+      Item: {
+        league_id: league_id,
+        punters: punters,
         map: map
       }
     };

@@ -32,10 +32,13 @@ object SugoiDealer extends Logging with BattleLogging {
     val gameState = new GameState(map, programs.length, futures)
     val deque = play(programs, gameState)
 
+    val scores = new ArrayBuffer[Score]()
     gameState.calcScore().foreach(v => {
       val (punter, score) = v
+      scores.append(Score(punter, score))
       logger.info(s"Player: $punter, Score: $score")
     })
+    battleLogger.info(s"RECV ${mapper.writeValueAsString(ScoreToPunter(Stop(deque.toArray, scores.toArray)))}")
   }
 
   /**

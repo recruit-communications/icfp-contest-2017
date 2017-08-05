@@ -25,8 +25,8 @@
     </RollingFile>
 
     <RollingFile name="BattleLog" fileName="battle.log"
-      filePattern="battle-%d{yyyy-MM-dd}-%i.csv.gz">
-      <PatternLayout pattern="%d{yyy-MM-dd HH:mm:ss},%msg%n"/>
+      filePattern="battle-%d{yyyy-MM-dd}-%i.log">
+      <PatternLayout pattern="%msg%n"/>
       <Policies>
         <OnStartupTriggeringPolicy/>
         <SizeBasedTriggeringPolicy size="250 MB"/>
@@ -42,5 +42,9 @@
       <AppenderRef ref="WorkingLog"/>
       <AppenderRef ref="Console"/>
     </Root>
+
+    <Logger name="BattleLog" level="info" additivity="false">
+      <AppenderRef ref="BattleLog"/>
+    </Logger>
   </Loggers>
 </Configuration>

@@ -34,7 +34,7 @@ case class Pass(punter: Int)
 
 case class MoveFromPunter(claim: Claim, pass: Pass, state: Object)
 
-case class ScoreToPunter(stop: Stop, state: Object)
+case class ScoreToPunter(stop: Stop)
 
 case class Stop(moves: Array[Move], scores: Array[Score])
 

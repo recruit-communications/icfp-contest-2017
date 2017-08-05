@@ -45,3 +45,12 @@ svg {
   display: block;
   background: #000;
 }
+
+#visualise-settings {
+  font-size: 15px;
+}
+
+#line-width, #time-span {
+  height: 30px;
+  width: 50px;
+}

@@ -16,9 +16,19 @@
 
     <!--メインのアプリのログ-->
     <RollingFile name="WorkingLog" fileName="app.log"
-      filePattern="/var/log/flare/app-%d{yyyy-MM-dd}-%i.log">
+      filePattern="app-%d{yyyy-MM-dd}-%i.log">
       <PatternLayout pattern="${logLayout}"/>
       <Policies>
+        <SizeBasedTriggeringPolicy size="250 MB"/>
+        <TimeBasedTriggeringPolicy/>
+      </Policies>
+    </RollingFile>
+
+    <RollingFile name="BattleLog" fileName="battle.log"
+      filePattern="battle-%d{yyyy-MM-dd}-%i.csv.gz">
+      <PatternLayout pattern="%d{yyy-MM-dd HH:mm:ss},%msg%n"/>
+      <Policies>
+        <OnStartupTriggeringPolicy/>
         <SizeBasedTriggeringPolicy size="250 MB"/>
         <TimeBasedTriggeringPolicy/>
       </Policies>

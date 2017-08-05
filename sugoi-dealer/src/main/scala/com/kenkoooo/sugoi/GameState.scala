@@ -4,15 +4,23 @@ package com.kenkoooo.sugoi
 import java.util
 
 import scala.collection.mutable
+import scala.collection.mutable.ArrayBuffer
 
 object GameState {
   val UNUSED: Int = -1
 }
 
-class GameState(map: LambdaMap, punterNum: Int) {
+class GameState(map: LambdaMap, punterNum: Int, futures: ArrayBuffer[Array[LambdaFuture]]) {
   type Punter = Int
   type Vertex = Int
   type Score = Long
+
+  val futureMap = new mutable.TreeMap[Punter, mutable.TreeMap[Vertex, Vertex]]()
+  futures.zipWithIndex.foreach(v => {
+    val (arr, i) = v
+    futureMap += (i -> new mutable.TreeMap[Vertex, Vertex]())
+    arr.foreach(f => futureMap(i) += (f.source -> f.target))
+  })
 
   val graph = new mutable.TreeMap[Vertex, mutable.TreeMap[Vertex, Punter]]
   map.sites.foreach(site => graph += (site.id -> new mutable.TreeMap[Vertex, Punter]()))
@@ -22,7 +30,7 @@ class GameState(map: LambdaMap, punterNum: Int) {
   })
   val mines: Set[Vertex] = map.mines.toSet
 
-  var remainEdgeCount: Int = map.rivers.length
+  var edgeCount: Int = map.rivers.length
 
   def isUsed(source: Vertex, target: Vertex): Boolean = graph(source)(target) != GameState.UNUSED
 
@@ -36,7 +44,6 @@ class GameState(map: LambdaMap, punterNum: Int) {
   def addEdge(source: Vertex, target: Vertex, punter: Punter): Unit = {
     graph(source)(target) = punter
     graph(target)(source) = punter
-    remainEdgeCount -= 1
   }
 
   /**
@@ -51,8 +58,12 @@ class GameState(map: LambdaMap, punterNum: Int) {
   }
 
   private def calcForOne(punter: Punter): Score = {
+    val sourceToTarget = futureMap(punter)
+
     var score: Score = 0
     mines.foreach(start => {
+      val mapOption = sourceToTarget.get(start)
+
       // naive BFS
       val dist = new mutable.TreeMap[Vertex, Int]()
       dist += (start -> 0)
@@ -69,6 +80,14 @@ class GameState(map: LambdaMap, punterNum: Int) {
 
               val s = dist(v) + 1
               score += (s * s)
+
+              mapOption.foreach(target => {
+                if (target == u) {
+                  score += (s * s * s)
+                } else {
+                  score -= (s * s * s)
+                }
+              })
             }
           }
         }

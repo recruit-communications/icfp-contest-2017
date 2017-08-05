@@ -35,3 +35,18 @@ db.maps().then((data) => {
 });
 
 // log
+db.games().then((data) => {
+  return data.sort((a, b) => a.created_at < b.created_at).shift().created_at;
+}).then((last) => {
+  const prefix = 'logs/app.'
+  const suffix = '.log'
+  db.s3List(prefix).then((list) => {
+    list.filter((e) => e.LastModified.getTime() > last).forEach((e) => {
+      //
+      db.addMap({
+        id: db.p2i(e.Key, prefix, suffix),
+        created_at: e.LastModified.getTime()
+      });
+    });
+  });
+});

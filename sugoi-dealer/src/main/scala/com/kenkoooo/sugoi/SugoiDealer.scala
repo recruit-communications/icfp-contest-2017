@@ -161,7 +161,6 @@ class PunterProgram(cmd: String, val punter: Int, battler: Boolean = false) exte
       // handshake
       val handshakeFromPunter = reader.next()
 
-      logSend(handshakeFromPunter)
       logger.info(s"handshake from punter: $handshakeFromPunter")
       val name = SugoiMapper.mapper.readValue(handshakeFromPunter, classOf[HandShakeFromPunter]).me
       val handShakeFromServer = SugoiMapper.mapper.writeValueAsString(HandShakeFromServer(name)) + "\n"
@@ -169,18 +168,17 @@ class PunterProgram(cmd: String, val punter: Int, battler: Boolean = false) exte
       os.write(s"${handShakeFromServer.length}:$handShakeFromServer".getBytes)
       os.flush()
 
-      logRecv(handShakeFromServer)
       logger.info(s"handshake to punter: ${handShakeFromServer.length}:$handShakeFromServer")
 
       val commandFromServer = command + "\n"
       os.write(s"${commandFromServer.length}:$commandFromServer".getBytes())
       os.flush()
 
-      logRecv(commandFromServer)
+      logRecv(SugoiMapper.purify(commandFromServer))
       logger.info(s"command to punter: ${commandFromServer.length}:$commandFromServer")
 
       val fromPunter = reader.next()
-      logSend(fromPunter)
+      logSend(SugoiMapper.purify(fromPunter))
       logger.info(s"command from punter: $fromPunter")
       (fromPunter, 0)
     } catch {
@@ -232,4 +230,6 @@ class SugoiInputReader(in: InputStream) extends Logging {
 object SugoiMapper {
   val mapper = new ObjectMapper()
   mapper.registerModules(DefaultScalaModule)
+
+  def purify(line: String): String = mapper.writeValueAsString(mapper.readValue[PurifiedState](line, classOf[PurifiedState]))
 }

@@ -46,4 +46,4 @@ case class TimeoutToPunter(timeout: Int)
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
-case class PurifiedState(claim: Object, pass: Object, move: Object, ready: Object, futures: Object)
+case class PurifiedState(claim: Object, pass: Object, move: Object, ready: Object, futures: Object, punter: Object, punters: Object, map: Object, settings: Object)

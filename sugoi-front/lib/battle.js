@@ -16,7 +16,7 @@ function exec({id = uuid(), num = 2, map = "sample"} = {}) {
       clients: cids,
       map: map
     };
-    return postRundeck(params);
+    return postJenkins(params);
   }).then(() => {
     return db.addBattle(params);
   }).then(() => {
@@ -36,6 +36,27 @@ function postRundeck({id, map, clients}) {
     http.get(url, (res) => {
       fulfill(res);
     });
+  });
+}
+
+// Jenkinsにジョブ登録
+function postJenkins({id, map, clients}) {
+  const params = [
+    `game_id=${id}`,
+    `map_id=${map}`,
+    `punter_ids=${clients.join(',')}`,
+  ].join('&')
+  const options = {
+    host: '52.198.25.234',
+    port: 8080,
+    path: `/job/run/buildWithParameters?${params}`,
+    method: 'POST',
+  };
+
+  return new Promise((fulfill, reject) => {
+    const req = http.request(options);
+    req.end();
+    fulfill();
   });
 }
 

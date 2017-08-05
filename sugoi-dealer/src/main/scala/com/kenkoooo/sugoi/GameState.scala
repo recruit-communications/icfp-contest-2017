@@ -15,6 +15,13 @@ class GameState(map: LambdaMap, punterNum: Int, futures: ArrayBuffer[Array[Lambd
   type Vertex = Int
   type Score = Long
 
+  val futureMap = new mutable.TreeMap[Punter, mutable.TreeMap[Vertex, Vertex]]()
+  futures.zipWithIndex.foreach(v => {
+    val (arr, i) = v
+    futureMap += (i -> new mutable.TreeMap[Vertex, Vertex]())
+    arr.foreach(f => futureMap(i) += (f.source -> f.target))
+  })
+
   val graph = new mutable.TreeMap[Vertex, mutable.TreeMap[Vertex, Punter]]
   map.sites.foreach(site => graph += (site.id -> new mutable.TreeMap[Vertex, Punter]()))
   map.rivers.foreach(river => {

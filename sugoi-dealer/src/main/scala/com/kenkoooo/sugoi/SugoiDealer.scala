@@ -26,10 +26,10 @@ object SugoiDealer extends Logging {
   }
 
   /**
-    * セットアップをする
+    * setup
     *
-    * @param programs AI たち
-    * @param map      マップ
+    * @param programs AI programs
+    * @param map      map
     */
   private def setup(programs: Seq[PunterProgram], map: LambdaMap): Unit = {
     programs.foreach(program => {
@@ -43,10 +43,10 @@ object SugoiDealer extends Logging {
   }
 
   /**
-    * ゲームをプレイさせる
+    * play game
     *
-    * @param programs AI たち
-    * @param map      マップ
+    * @param programs AI programs
+    * @param map      Map
     */
   private def play(programs: Seq[PunterProgram], map: LambdaMap): Unit = {
     val gameState = new GameState(map, programs.length)
@@ -110,6 +110,12 @@ class PunterProgram(cmd: String, val punter: Int) extends Logging {
     }
   }
 
+  /**
+    * execute handshake and command
+    *
+    * @param command executable command string
+    * @return response string and exit code
+    */
   private def execute(command: String): (String, Long) = {
     val pb = new ProcessBuilder(Array(cmd).toList.asJava)
     val proc = pb.start()

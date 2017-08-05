@@ -25,6 +25,14 @@ function dbGet(params) {
   });
 }
 
+function dbPut(params) {
+  return new Promise((fulfill, reject) => {
+    db.put(params, (err, data) => {
+      err ? reject(err) : fulfill(data);
+    });
+  });
+}
+
 function s3List(prefix) {
   return new Promise((fulfill, reject) => {
     s3.listObjects({
@@ -36,20 +44,39 @@ function s3List(prefix) {
   });
 }
 
+// path -> id
+function p2i(path, prefix, suffix) {
+  const len = path.length - prefix.length - suffix.length;
+  return path.substr(prefix.length, len);
+}
+
 module.exports = {
   bucket: bucket,
   clients: () => {
-    return s3List(clientPrefix);
+    return s3List(clientPrefix).then((list) => {
+      return list.map((p) => p2i(p, clientPrefix, '.tar.gz'))
+    });
   },
   maps: () => {
-    return s3List(mapPrefix);
+    return s3List(mapPrefix).then((list) => {
+      return list.map((p) => p2i(p, mapPrefix, '.json'))
+    });
   },
   battles: () => {
-    params = {
+    const params = {
       TableName: 'icpf2017-battle'
     };
-    return dbScan(params).then((data) => {
-      return data;
-    });
-  }
+    return dbScan(params);
+  },
+  addBattle: ({id, clients, map}) => {
+    const params = {
+      TableName: 'icpf2017-battle',
+      Item: {
+        id: id,
+        clients: clients,
+        map: map
+      }
+    };
+    return dbPut(params);
+  },
 };

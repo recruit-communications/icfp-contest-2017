@@ -33,17 +33,19 @@ class OfflineBridge:
             if idx >= 0:
                 break
             # まだ : がない
-            self.buffer += sys.stdin.read()
+            self.buffer += sys.stdin.buffer.read1(100)
         n = int(self.buffer[:idx].decode())
         self.buffer = self.buffer[idx + 1:]
 
         while len(self.buffer) < n:
             # n 以上になるまで追加で読む
-            self.buffer += sys.stdin.read()
+            self.buffer += sys.stdin.buffer.read1(100)
 
         json_bytes = self.buffer[:n].decode()
         self.buffer = self.buffer[n:]
         obj = json.loads(json_bytes)
+        if 'timeout' in obj:
+            return self.read_json()
         return obj
 
     def handshake(self, name):
@@ -56,7 +58,7 @@ class OfflineBridge:
         self.map = obj['map']
         self.future = 0
         if 'settings' in obj and 'futures' in obj['settings']:
-            self.future = 1 if obj['settings']['future'] else 0
+            self.future = 1 if obj['settings']['futures'] else 0
 
     def ready(self, F, state, sorted_site_ids):
         obj = {'ready': self.punter_id, 'state': [state, sorted_site_ids]}
@@ -85,12 +87,13 @@ class OfflineBridge:
         G.sort()
         return G, state, sorted_site_ids
 
-    def sendmove(self, s, t, state, sorted_site_ids):
+    def sendmove(self, pid, s, t, state, sorted_site_ids):
         if s == -1 or t == -1:
-            self.send_json({'pass': {'punter': self.punter_id}})
+            obj = {'pass': {'punter': pid}}
         else:
-            self.send_json({'claim': {'punter': self.punter_id, 'source': s, 'target': t}})
-        self.send_json({'state': [state, sorted_site_ids]})
+            obj = {'claim': {'punter': pid, 'source': s, 'target': t}}
+        obj['state'] = [state, sorted_site_ids]
+        self.send_json(obj)
 
 
 class OnlineBridge:
@@ -141,7 +144,7 @@ class OnlineBridge:
         self.map = sup['map']
         self.future = 0
         if 'settings' in sup and 'futures' in sup['settings']:
-            self.future = 1 if sup['settings']['future'] else 0
+            self.future = 1 if sup['settings']['futures'] else 0
 
     def ready(self, F):
         obj = {'ready': self.punter_id}
@@ -239,12 +242,12 @@ class Process:
         txt = '\n'.join(lines)
         recv = self.exec(txt)
         l1, l2 = recv.split('\n')
-        s, t = map(int, l2.split(' '))
+        pid, s, t = map(int, l2.split(' '))
         if s != -1:
             s = sorted_site_ids[s]
             t = sorted_site_ids[t]
         new_state = l1
-        return s, t, new_state
+        return pid, s, t, new_state
 
 
 def offline():
@@ -265,8 +268,8 @@ def offline():
     elif 'move' in obj:
         # Gameplay
         G, state, sorted_site_ids = bridge.recmove(obj)
-        s, t, state = proc.G(G, state, sorted_site_ids)
-        bridge.sendmove(s, t, state, sorted_site_ids)
+        pid, s, t, state = proc.G(G, state, sorted_site_ids)
+        bridge.sendmove(pid, s, t, state, sorted_site_ids)
     elif 'stop' in obj:
         # Scoreing
         pass
@@ -291,7 +294,7 @@ def online():
         G = bridge.recmove()
         if G is None:
             break
-        s, t, state = proc.G(G, state, sorted_site_ids)
+        pid, s, t, state = proc.G(G, state, sorted_site_ids)
         bridge.sendmove(s, t, state, sorted_site_ids)
     bridge.close()
 

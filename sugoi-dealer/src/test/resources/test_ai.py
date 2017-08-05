@@ -26,9 +26,32 @@ def write_obj(obj):
     sys.stdout.flush()
 
 
+def read_json():
+    buffer = b''
+    while 1:
+        idx = buffer.find(b':')
+        if idx >= 0:
+            break
+        # まだ : がない
+        buffer += sys.stdin.buffer.read1(100)
+    n = int(buffer[:idx].decode())
+    buffer = buffer[idx + 1:]
+
+    while len(buffer) < n:
+        # n 以上になるまで追加で読む
+        buffer += sys.stdin.buffer.read1(100)
+
+    json_bytes = buffer[:n].decode()
+    buffer = buffer[n:]
+    obj = json.loads(json_bytes)
+    return obj
+
+
 def test():
     write_obj({"me": "kenkoooo"})
+    # read_json()
     input()
+    # read_json()
     input()
     write_obj(["aaa"])
 

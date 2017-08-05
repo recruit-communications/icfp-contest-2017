@@ -10,41 +10,26 @@ const http = require('http');
 // map: マップID
 function exec({id = uuid(), num = 2, map = "sample"} = {}) {
   let params = {};
-  return pick(num).then((cids) => {
+  return pick(num).then((pids) => {
     params = {
       id: id,
-      clients: cids,
+      punters: pids.map((pid) => {id: pid}),
       map: map
     };
     return postJenkins(params);
   }).then(() => {
-    return db.addBattle(params);
+    return db.addGame(params);
   }).then(() => {
     return params
   });
 }
 
-// Rundeckにジョブ登録
-function postRundeck({id, map, clients}) {
-  const params = [
-    `authtoken=${process.env.RUNDECK_TOKEN}`,
-    `argString=-game_id+${id}+-map_id+${map}+-punter_ids+${clients.join(',')}`
-  ].join('&')
-  const url = `http://52.198.25.234:4440/api/1/job/ea9912d0-da52-4394-883d-d3b7a10a0e3c/run?${params}`
-
-  return new Promise((fulfill, reject) => {
-    http.get(url, (res) => {
-      fulfill(res);
-    });
-  });
-}
-
 // Jenkinsにジョブ登録
-function postJenkins({id, map, clients}) {
+function postJenkins({id, map, punters}) {
   const params = [
     `game_id=${id}`,
     `map_id=${map}`,
-    `punter_ids=${clients.join(',')}`,
+    `punter_ids=${punters.join(',')}`,
   ].join('&')
   const options = {
     host: '52.198.25.234',
@@ -60,11 +45,11 @@ function postJenkins({id, map, clients}) {
   });
 }
 
-// クライアントをランダム選択
+// punterをランダム選択
 // num: 選択数
-// return: 選択クライアントIDs
+// return: 選択punter_ids
 function pick(num) {
-  return db.clients().then((data) => {
+  return db.punters().then((data) => {
     let res = [];
     for (let i=0; i<num; i++) {
       Array.prototype.push.apply(res, data.splice(data.length*Math.random()<<0, 1));

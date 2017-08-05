@@ -15,11 +15,11 @@ let timeSpan = 500;
 const colours =
   ["#aec7e8",
     "#ff7f0e",
-    "#ffbb78",
     "#f7b6d2",
     "#1f77b4",
     "#2ca02c",
     "#c5b0d5",
+    "#ffbb78",
     "#98df8a",
     "#d62728",
     "#ff9896",
@@ -66,22 +66,26 @@ function enableButton(buttonId) {
  * Communication
  */
 
-function setScores(scores) {
-  $("#game-scores").append("[Final Scores] ");
-  $("#game-scores").css("font-size", "18px");
+function getRank(scores) {
+  rank = [];
+  for (let i = 0; i < scores.length; i++) rank.push(1);
   for (let i = 0; i < scores.length; i++) {
-    $("#game-scores").append("<div class=\"colours" + scores[i].punter + "\">punter #" + scores[i].punter + ": " + scores[i].score + "&nbsp;</div> ");
-    $(".colours" + i).css({"background-color":colours[scores[i].punter], "display":"inline"});
+    for (let j = 0; j < scores.length; j++) {
+      if (scores[i].score < scores[j].score)
+        rank[i]++;
+    }
   }
+  return rank;
 }
 
-function getFormatedScores(scores) {
-  let res = "[Final Scores] ";
+function setScores(scores, punterID) {
+  $("#game-scores").append("<tr><th>punter No</th><th>Score</th><th>Rank</th>/tr>");
+  let rank = getRank(scores);
   for (let i = 0; i < scores.length; i++) {
-    res += "punter #" + scores[i].punter + ": " + scores[i].score;
-    if (i < scores.length) res += ",  ";
+    $("#game-scores").append("<tr><td class=\"c0 colours" + scores[i].punter + "\" >punter #" + scores[i].punter + (punterID - scores[i].punter == 0 ? " (You)":"")
+      + "</td><td class='c1'>" + scores[i].score + "&nbsp;&nbsp;</td><td class='c2'>" + rank[i] +"</td></tr>");
+    $(".colours" + i).css({"background-color":colours[scores[i].punter]});
   }
-  return res;
 }
 
 function writeLog(msg) {
@@ -188,7 +192,7 @@ function start() {
       logError("no scores values!!!");
       return;
     }
-    setScores(scores);
+    setScores(scores, punterID);
 
     //console.log(numPunters, move_start);
 
@@ -444,7 +448,7 @@ function doVisualize() {
 
 function initPunterColours() {
   for (let i = 0; i < colours.length; i++) {
-    $("#punter-colours").append("<div class=\"colours" + i + "\">&ensp;&nbsp;" + i + "&ensp;</div>");
+    $("#punter-colours").append("<div class=\"colours" + i + "\">" +("   " + i).substr(-3).replace(/ /g, "&nbsp;") + "&nbsp;&nbsp;</div>");
     $(".colours" + i).css({"background-color":colours[i], "display":"inline"});
   }
 }
@@ -452,7 +456,7 @@ function initPunterColours() {
 
 function updateWidth() {
   width = $("#line-width").val();
-  $("cy").css("width", width);
+  $("#cy .edge").css("width", width);
   console.log("updateWidth with" + width);
 }
 

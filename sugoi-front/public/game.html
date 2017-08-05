@@ -2,18 +2,20 @@
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width">
-    <title>クライアント</title>
+    <title>対戦</title>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
   </head>
   <body>
-    <h2>クライアント一覧</h2>
+    <h2>対戦一覧</h2>
     <div id="list">
       <table class="table table-bordered">
         <tr>
-          <th>rank</th>
+          <th>date</th>
           <th>id</th>
-          <th>score</th>
-          <th>history</th>
+          <th>map</th>
+          <th>clients</th>
+          <th>result</th>
+          <th>log</th>
         </tr>
       </table>
     </div>
@@ -23,16 +25,17 @@
       $(() => {
         function createRow(data, idx) {
           return $('<tr>')
-            //.append($('<td>', { text: idx }))
             .append($('<td>', { text: '-' }))
-            .append($('<td>', { text: data }))
-            .append($('<td>', { text: '' }))
+            .append($('<td>', { text: data.id }))
+            .append($('<td>', { text: data.map }))
+            .append($('<td>', { text: data.clients }))
+            .append($('<td>', { text: '-' }))
             .append($('<td>').append($('<a>', {
-              href: `/public/battle.html?cid=${data}`,
-              text: '対戦履歴'
+              href: `https://s3-ap-northeast-1.amazonaws.com/icfp2017-kst3-jp/logs/app.${data.id}.log`,
+              text: '対戦ログ'
             })));
         }
-        $.getJSON('/client/list', (res) => {
+        $.getJSON('/game/list', (res) => {
           res.forEach((d, i) => {
             $('#list>table').append(createRow(d, i));
           });

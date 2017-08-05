@@ -5,8 +5,8 @@ const db = require('./lib/db');
 const battle = require('./lib/battle');
 
 // クライアント一覧
-app.get('/client/list', (req, res) => {
-  db.clients().then((data) => {
+app.get('/punter/list', (req, res) => {
+  db.punters().then((data) => {
     res.json(data);
   });
 });
@@ -15,17 +15,15 @@ app.get('/client/list', (req, res) => {
 app.get('/map/list', (req, res) => {
   db.maps().then((data) => {
     res.json(data.map((v) => {
-      return {
-        id: v,
-        url: `https://s3-ap-northeast-1.amazonaws.com/${db.bucket}/maps/${v}.json`,
-      }
+      v.url = `https://s3-ap-northeast-1.amazonaws.com/${db.bucket}/maps/${v.id}.json`;
+      return v;
     }));
   });
 });
 
 // 対戦一覧
-app.get('/battle/list', (req, res) => {
-  db.battles().then((data) => {
+app.get('/game/list', (req, res) => {
+  db.games().then((data) => {
     res.json(data);
   });
 });

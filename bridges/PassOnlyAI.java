@@ -27,7 +27,7 @@ public class PassOnlyAI {
 			out.flush();
 		}else if(phase == 'I'){
 			// 初回入力2
-			int N = ni(), P = ni();
+			int N = ni(), P = ni(), F = ni();
 			int V = ni(), E = ni(), M = ni();
 			List<List<Edge>> g = new ArrayList<>();
 			for(int i = 0;i < V;i++)g.add(new ArrayList<>());
@@ -57,6 +57,7 @@ public class PassOnlyAI {
 			state.P = P;
 			state.mindistss = mindistss;
 			out.println(toBase64(state));
+			out.println(0);
 		}else if(phase == 'G'){
 			// ゲーム中入力
 			State state = (State)fromBase64(in.next());

@@ -60,9 +60,18 @@ class OnlineBridge:
         self.punter_id = sup['punter']
         self.punters = sup['punters']
         self.map = sup['map']
+        self.future = 0
+        if 'settings' in sup and 'futures' in sup['settings']:
+            self.future = 1 if sup['settings']['future'] else 0
 
-    def ready(self):
-        self.send_json({'ready': self.punter_id})
+    def ready(self, F):
+        if F:
+            futures = []
+            for m, s in F:
+                futures.append({'source': m, 'target': s})
+            self.send_json({'ready': self.punter_id, 'futures': futures})
+        else:
+            self.send_json({'ready': self.punter_id})
 
     def recmove(self):
         move = self.read_json()
@@ -103,7 +112,7 @@ class Process:
     def start(self):
         return self.exec('?\n')
 
-    def I(self, num_players, punter_id, ma):
+    def I(self, num_players, punter_id, future, ma):
         n = len(ma['sites'])
         m = len(ma['rivers'])
         k = len(ma['mines'])
@@ -123,13 +132,23 @@ class Process:
             T.append(t)
         M = [conv[m] for m in ma['mines']]
 
-        lines = ['I', ' '.join(map(str, [num_players, punter_id])), ' '.join(map(str, [n, m, k]))]
+        lines = ['I', ' '.join(map(str, [num_players, punter_id, future])), ' '.join(map(str, [n, m, k]))]
         for i in range(m):
             lines.append(' '.join(map(str, [S[i], T[i]])))
         lines.append(' '.join(map(str, M)))
         txt = '\n'.join(lines)
         sorted_site_ids = site_ids
-        return self.exec(txt), sorted_site_ids
+        ret = self.exec(txt)
+        splited = ret.split('\n')
+        state = splited[0]
+        num_f = int(splited[1])
+        F = []
+        for i in range(2, len(splited)):
+            m, s = map(int, splited[i].split())
+            m = sorted_site_ids[m]
+            s = sorted_site_ids[s]
+            F.append(tuple(m, s))
+        return state, sorted_site_ids, F
 
     def G(self, G, state, sorted_site_ids):
         conv = compress(sorted_site_ids)
@@ -162,8 +181,8 @@ def main():
     bridge.handshake(name)
     bridge.setup()
 
-    state, sorted_site_ids = proc.I(bridge.punters, bridge.punter_id, bridge.map)
-    bridge.ready()
+    state, sorted_site_ids, futures = proc.I(bridge.punters, bridge.punter_id, bridge.future, bridge.map)
+    bridge.ready(futures)
 
     while 1:
         G = bridge.recmove()

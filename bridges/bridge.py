@@ -125,10 +125,10 @@ class OnlineBridge:
             # n 以上になるまで追加で読む
             self.buffer += self.telnet.read_some()
 
-        json_bytes = self.buffer[:n].decode()
+        json_string = self.buffer[:n].decode().rstrip()
+        print('RECV', json_string)
         self.buffer = self.buffer[n:]
-        obj = json.loads(json_bytes)
-        print('RECV', obj)
+        obj = json.loads(json_string)
         return obj
 
     def handshake(self, name):
@@ -156,7 +156,6 @@ class OnlineBridge:
     def recmove(self):
         move = self.read_json()
         if 'stop' in move:
-            print(move)
             return None
         moves = move['move']['moves']
         G = []

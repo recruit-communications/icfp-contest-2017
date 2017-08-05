@@ -3,6 +3,17 @@
 using namespace std;
 using namespace json11;
 
+class JsonUtil {
+public:
+    static vector<int> vector_ints(const Json &json) {
+        vector<int> res;
+        for(const auto &x: json.array_items()) {
+            res.push_back(x.int_value());
+        }
+        return res;
+    }
+};
+
 // ?: 初回入力
 void put_my_name() {
     cout << "random" << endl;
@@ -10,7 +21,7 @@ void put_my_name() {
 
 class State {
 public:
-    int number_of_players, punter_id;
+    int number_of_players, punter_id, future_enabled;
     int V, E, M;
     vector<int> sources, targets;
     vector<int> mines;
@@ -18,7 +29,7 @@ public:
 
     // I: 初回入力2時に最初に作るState
     State() {
-        cin >> number_of_players >> punter_id;
+        cin >> number_of_players >> punter_id >> future_enabled;
         cin >> V >> E >> M;
         for (int i = 0; i < E; i++) {
             int a, b;
@@ -42,40 +53,20 @@ public:
         auto json = Json::parse(json_str, err);
 
         number_of_players = json["players"].int_value();
-
         punter_id = json["pid"].int_value();
-
         V = json["v"].int_value();
-
         E = json["e"].int_value();
-
         M = json["m"].int_value();
-
-        sources = vector<int>();
-        for (const auto &x : json["sources"].array_items()) {
-            sources.push_back(x.int_value());
-        }
-
-        targets = vector<int>();
-        for (const auto &x : json["targets"].array_items()) {
-            targets.push_back(x.int_value());
-        }
-
-        mines = vector<int>();
-        for (const auto &x : json["mines"].array_items()) {
-            mines.push_back(x.int_value());
-        }
-
-        used = vector<int>();
-        for (const auto &x : json["used"].array_items()) {
-            used.push_back(x.int_value());
-        }
+        sources = JsonUtil::vector_ints(json["sources"]);
+        targets = JsonUtil::vector_ints(json["targets"]);
+        mines = JsonUtil::vector_ints(json["mines"]);
+        used = JsonUtil::vector_ints(json["used"]);
     }
 
     // 自身をstateとして出力する
     string to_json() const {
-        Json json = Json::object{
-            {"players", number_of_players}, {"pid", punter_id},
+        Json json = Json::object {
+            {"players", number_of_players}, {"pid", punter_id}, {"future_enabled", future_enabled},
             {"v", V}, {"e", E}, {"m", M},
             {"sources", Json(sources)},     {"targets", Json(targets)},
             {"mines", Json(mines)},         {"used", Json(used)},
@@ -110,6 +101,7 @@ public:
 
 void doit_first(State &s) {
     cout << s.to_json() << endl; // print new state
+    cout << 0 << endl; // futureなんてなかった
 }
 
 void doit(State &s) {

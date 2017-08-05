@@ -1,3 +1,2 @@
 #!/bin/bash
-name="\"nihonbashi\""
-g++ -O2 -std=c++14 src/ai/tomerun/main.cpp -o nihonbashi -DPLAYER_NAME="$name"
+g++ -O2 -std=c++14 src/ai/tomerun/main.cpp -o nihonbashi

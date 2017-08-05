@@ -30,22 +30,22 @@ class PassOnlyAI2 {
 			out.flush();
 		}else if(phase == 'I'){
 			// 初回入力2
-			int N = ni(), P = ni(), F = ni();
-			int V = ni(), E = ni(), M = ni();
+			int C = ni(), P = ni(), F = ni();
+			int N = ni(), M = ni(), K = ni();
 			List<List<Edge>> g = new ArrayList<>();
-			for(int i = 0;i < V;i++)g.add(new ArrayList<>());
-			for(int i = 0;i < E;i++){
+			for(int i = 0;i < N;i++)g.add(new ArrayList<>());
+			for(int i = 0;i < M;i++){
 				int s = ni(), t = ni();
 				Edge e = new Edge(s, t);
 				g.get(s).add(e);
 				g.get(t).add(e);
 			}
 			BitSet mines = new BitSet();
-			for(int i = 0;i < M;i++){
+			for(int i = 0;i < K;i++){
 				mines.set(ni());
 			}
 			List<List<Integer>> mindistss = new ArrayList<>();
-			for(int i = 0;i < V;i++){
+			for(int i = 0;i < N;i++){
 				if(mines.get(i)){
 					mindistss.add(mindists(g, i));
 				}else{
@@ -56,12 +56,12 @@ class PassOnlyAI2 {
 			State state = new State();
 			state.g = g;
 			state.mines = mines;
-			state.N = N;
+			state.N = C;
 			state.P = P;
 			state.mindistss = mindistss;
 			if(F == 1){
 				state.futures = new ArrayList<>();
-				for(int i = 0;i < V;i++)state.futures.add(null);
+				for(int i = 0;i < N;i++)state.futures.add(null);
 			}
 			out.println(toBase64(state));
 			if(F == 1){
@@ -86,6 +86,7 @@ class PassOnlyAI2 {
 			}
 			
 			out.println(toBase64(state));
+			out.print(state.P + " ");
 			out.println(-1 + " " + -1);
 		}else{
 			throw new RuntimeException();

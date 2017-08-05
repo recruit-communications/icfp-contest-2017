@@ -62,6 +62,9 @@ public class PassOnlyAI {
 				for(int i = 0;i < V;i++)state.futures.add(null);
 			}
 			out.println(toBase64(state));
+			if(F == 1){
+				out.println(0);
+			}
 		}else if(phase == 'G'){
 			// ゲーム中入力
 			State state = (State)fromBase64(in.next());

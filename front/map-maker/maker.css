@@ -58,7 +58,7 @@ svg {
 
 #element-type {
   position: relative;
-  left: 40%;
+  left: 35%;
   float: left;
   margin-right: 20px;
   margin-bottom: 20px;
@@ -74,13 +74,18 @@ svg {
   color: white;
 }
 
+#remove {
+  background-color: black;
+  color: white;
+}
+
 #element-type button {
   font-size: 18px;
 }
 
 #state-changer {
   position: relative;
-  left: 40%;
+  left: 35%;
   float: left;
   margin-left: 20px;
   margin-bottom: 20px;

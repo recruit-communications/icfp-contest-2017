@@ -12,19 +12,22 @@
       <h1><a href="../graph-viewer/index.html">&#955; Map Viewer</a> | <a href="../puntfx/index.html"> &#955; Punter FX</a> | <a href="../battle-viewer">&#955; Battle Viewer</a> | &#955; Map Maker</h1>
       <p class="header">How To Use</p>
       <p><b>Lineモード </b>：<br>
-        キャンバスもしくはノードをクリックすると線を引く。<br>
+        キャンバスもしくはノードをクリックすると線を引く。(自己辺、多重辺も引ける)<br>
         Shiftを押しながらノードをクリックすると、選択ノードを変更できる。<br>
-        （自己辺、多重辺も引けるので間違えたかな？というときはUndoしてください）
       </p>
       <p><b>Mineモード</b>：<br>
         ノードをクリックすると、Mineの付け外しができる。
+      </p>
+      <p><b>Removeモード</b>：<br>
+        ノード、エッジをクリックすると削除することができる。(ただしノード0は消せない）
       </p>
       <fieldset>
         <legend>Canvas</legend>
         <div class="container-fluid" id="controllers">
           <div id="element-type">
-            <button class="btn" id="line-input" onclick="lineInputMode()" disabled>- (line)</button>
-            <button class="btn" id="mine-input" onclick="mineInputMode()">λ (mine)</button>
+            <button class="btn" id="line-input" onclick="lineInputMode()" disabled>Line</button>
+            <button class="btn" id="mine-input" onclick="mineInputMode()">Mine</button>
+            <button class="btn" id="remove" onclick="removeMode()">Remove</button>
           </div>
           <div id="state-changer">
             <button class="btn" id="undo" onclick="undoCanvas()">Undo (Ctrl+Z)</button>

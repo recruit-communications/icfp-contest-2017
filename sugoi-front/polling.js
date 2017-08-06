@@ -30,12 +30,12 @@ db.maps().then((data) => {
     list.filter((e) => e.LastModified.getTime() > last).forEach((e) => {
       // map情報を取得
       db.s3Get(e.Key).then((obj) => {
-      });
-
-      // DBに登録
-      db.addMap({
-        id: db.p2i(e.Key, prefix, suffix),
-        created_at: e.LastModified.getTime()
+        // DBに登録
+        return db.addMap({
+          id: db.p2i(e.Key, prefix, suffix),
+          created_at: e.LastModified.getTime(),
+          info: log.parseMap(obj.Body.utf8Slice()),
+        });
       });
     });
   });

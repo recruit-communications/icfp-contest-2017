@@ -30,7 +30,7 @@ class PassOnlyAI2 {
 			out.flush();
 		}else if(phase == 'I'){
 			// 初回入力2
-			int C = ni(), P = ni(), F = ni();
+			int C = ni(), P = ni(), F = ni(), S = ni();
 			int N = ni(), M = ni(), K = ni();
 			List<List<Edge>> g = new ArrayList<>();
 			for(int i = 0;i < N;i++)g.add(new ArrayList<>());
@@ -56,36 +56,45 @@ class PassOnlyAI2 {
 			State state = new State();
 			state.g = g;
 			state.mines = mines;
-			state.N = C;
+			state.C = C;
 			state.P = P;
+			state.F = F;
+			state.S = S;
 			state.mindistss = mindistss;
 			if(F == 1){
 				state.futures = new ArrayList<>();
 				for(int i = 0;i < N;i++)state.futures.add(null);
+			}
+			if(S == 1){
+				state.charges = new ArrayList<>();
+				for(int i = 0;i < C;i++)state.charges.add(0);
 			}
 			out.println(toBase64(state));
 			out.println(0);
 		}else if(phase == 'G'){
 			// ゲーム中入力
 			State state = (State)fromBase64(ns());
-			int N = state.N;
+			int C = state.C;
 			outer:
-			for(int i = 0;i < N;i++){
-				int s = ni(), t = ni();
-				if(s != -1 && t != -1){
+			for(int i = 0;i < C;i++){
+				int L = ni();
+				int[] a = new int[L];
+				for(int j = 0;j < L;j++){
+					a[j] = ni();
+				}
+				for(int j = 0;j < L-1;j++){
+					int s = a[j], t = a[j+1];
 					for(Edge e : state.g.get(s)){
 						if((e.x^e.y^s) == t && e.owner == -1){
 							e.owner = i;
 							continue outer;
 						}
 					}
-					throw new RuntimeException(); // ここにはこない
 				}
 			}
 			
 			out.println(toBase64(state));
-			out.print(state.P + " ");
-			out.println(-1 + " " + -1);
+			out.println(state.P);
 		}else{
 			throw new RuntimeException();
 		}
@@ -139,9 +148,11 @@ class PassOnlyAI2 {
 	static class State implements Serializable
 	{
 		private static final long serialVersionUID = -4623606164150300132L;
-		int N; // プレー人数
+		int C; // プレー人数
 		int P; // お前のID(0~N-1)
+		int F, S; // future splurge対応フラグ
 		List<List<Edge>> g; // グラフ
+		List<Integer> charges; // splurgeチャージ量
 		BitSet mines; // mineかどうか
 		List<List<Integer>> mindistss; // 最短経路長
 		List<Integer> futures;

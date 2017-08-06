@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Queue;
 import java.util.Scanner;
 
+// Splurge非対応
 public class PassOnlyAI {
 	static Scanner in;
 	static PrintWriter out;

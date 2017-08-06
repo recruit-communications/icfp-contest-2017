@@ -199,7 +199,7 @@ struct MCTS {
 	const vvi& dists;
 	int turn;
 	vi buf;
-	unordered_map<Edge*, pair<int, i64>> values;
+	unordered_map<Edge*, pair<double, double>> values;
 
 	MCTS(const Game& game) : C(game.C), I(game.I), F(game.F), N(game.N), M(game.M), K(game.K),
 		                       all_edges(game.all_edges), edges(game.edges), mines(game.mines), dists(game.dists) {
@@ -372,7 +372,7 @@ struct MCTS {
 				v.first += weight;
 				v.second += value * weight;
 			}
-			weight *= 0.95;
+			weight *= 0.9;
 		}
 	}
 
@@ -380,6 +380,7 @@ struct MCTS {
 		double best_value = -99999999;
 		Edge* ret = nullptr;
 		for (auto& vp : values) {
+			cerr << vp.first->from << " " << vp.first->to << " " << vp.second.first << " " << vp.second.second << endl;
 			if (vp.second.first < 0.001) continue;
 			double v = 1.0 * vp.second.second / vp.second.first;
 			if (v > best_value) {

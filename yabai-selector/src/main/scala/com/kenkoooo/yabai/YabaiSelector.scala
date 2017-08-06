@@ -1,6 +1,6 @@
 package com.kenkoooo.yabai
 
-import com.fasterxml.jackson.annotation.JsonProperty
+import com.fasterxml.jackson.annotation.{JsonIgnoreProperties, JsonProperty}
 import com.fasterxml.jackson.core.`type`.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
@@ -79,20 +79,26 @@ object YabaiSelector extends Logging {
       }
   }
 
+  @JsonIgnoreProperties(ignoreUnknown = true)
   case class GameResult(map: LambdaMapId, results: Array[PlayerResult],
                         @JsonProperty("created_at") createdAt: Long,
                         id: String,
                         @JsonProperty("punter_ids") punterIds: Array[String],
                         job: Job)
 
+  @JsonIgnoreProperties(ignoreUnknown = true)
   case class PlayerResult(score: Long, punter: PunterId)
 
+  @JsonIgnoreProperties(ignoreUnknown = true)
   case class PunterEntry(id: PunterId, @JsonProperty("created_at") createdAt: Long)
 
-  case class Job(url: String)
+  @JsonIgnoreProperties(ignoreUnknown = true)
+  case class Job(url: String, status: String)
 
+  @JsonIgnoreProperties(ignoreUnknown = true)
   case class MapEntry(info: MapInfo, @JsonProperty("created_at") createdAt: Long, id: String, @JsonProperty("punter_num") punterNum: Int, url: String)
 
+  @JsonIgnoreProperties(ignoreUnknown = true)
   case class MapInfo(rivers: Long, mines: Int, sites: Int)
 
 }

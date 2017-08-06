@@ -19,8 +19,8 @@ public class LocalSimulator {
 	static Logger logger = new Logger("/tmp/icfpclog", LocalDateTime.now());
 	
 	public static void main(String[] args) {
-//		onegame();
-		manygames();
+		onegame();
+//		manygames();
 		
 //		{
 ////			int N = 50, M = 80, K = 20;
@@ -54,13 +54,24 @@ public class LocalSimulator {
 	
 	static void onegame()
 	{
-		int N = 10, M = 20, K = 3;
+		
+//		int N = 50, M = 70, K = 5;
+//		int N = 30000, M = 30000, K = 300;
+//		int N = 5000, M = 5000, K = 300;
+//		int N = 500, M = 500, K = 30;
+		int N = 50, M = 50, K = 5;
+//		int N = 20, M = 30, K = 2;
 //		int N = 5, M = 8, K = 2;
-//		int N = 8, M = 12, K = 3;
+//		int N = 12, M = 12, K = 3;
+//		int N = 8, M = 25, K = 3;
 		long[] scores = game(-1, N, M, K, true, 
 //				new Instanciator(PassOnlyAI2.class),
-				new Instanciator(GrowAI.class, new Class[]{int.class}, new Object[]{3}),
-				new Instanciator(MeijinAI.class, new Class[]{int.class}, new Object[]{3})
+//				new Instanciator(YoshikoAI.class),
+				new Instanciator(GrowAI.class, new Class[]{int.class}, new Object[]{2}),
+//				new Instanciator(MeijinAI.class, new Class[]{int.class}, new Object[]{5})
+//				new Instanciator(MeijinAI.class, new Class[]{int.class}, new Object[]{5})
+//				new Instanciator(MeijinAI.class, new Class[]{int.class}, new Object[]{8})
+				new Instanciator(MeijinIDAI.class, new Class[]{long.class}, new Object[]{900L})
 //				new Instanciator(GrowAI.class, new Class[]{int.class}, new Object[]{0})
 				);
 		tr(scores);
@@ -73,14 +84,15 @@ public class LocalSimulator {
 			tr("GAME:" + i);
 //			int N = 10, M = 20, K = 5;
 //			int N = 10, M = 15, K = 5;
-//			int N = 50, M = 80, K = 20;
-			int N = 10, M = 20, K = 3;
+			int N = 50, M = 80, K = 20;
+//			int N = 10, M = 20, K = 3;
 //			int N = 5, M = 8, K = 2;
 //			int N = 8, M = 12, K = 3;
 			long[] scores = game(i, N, M, K, false, 
 //					new Instanciator(PassOnlyAI2.class),
-					new Instanciator(GrowAI.class, new Class[]{int.class}, new Object[]{3}),
-					new Instanciator(MeijinAI.class, new Class[]{int.class}, new Object[]{6})
+					new Instanciator(MeijinAI2.class, new Class[]{int.class}, new Object[]{6}),
+					new Instanciator(GrowAI.class, new Class[]{int.class}, new Object[]{3})
+//					new Instanciator(MeijinAI.class, new Class[]{int.class}, new Object[]{6})
 //					new Instanciator(GrowAI.class, new Class[]{int.class}, new Object[]{0})
 					);
 			if(scores[0] > scores[1]){
@@ -97,12 +109,31 @@ public class LocalSimulator {
 	
 	static long[] game(long seed, int N, int M, int K, boolean detailed, Instanciator... players)
 	{
+//		N = 25; M = 60; K = 4;
 		int C = players.length;
 		
 		// 環境作成
 		SplittableRandom gen = new SplittableRandom(seed);
 		int[][] es = genGraph(gen, N, M, false);
 		int[] mines = distinct(N, K, gen);
+		
+//		int[][] es = {
+//				{
+//					0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
+//					12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23,	
+//					0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
+//					12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23,	
+//					0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
+//				},
+//				{
+//					1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 0,
+//					13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23,	12,
+//					12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23,	
+//					1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 0,
+//					24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24
+//				}
+//		};
+//		int[] mines = {0, 3, 6, 9};
 		
 		String[] names = new String[C];
 		String[] states = new String[C];

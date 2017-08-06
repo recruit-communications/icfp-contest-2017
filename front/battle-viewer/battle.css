@@ -39,23 +39,41 @@ svg {
 }
 
 #cy {
-  float:left;
-  margin-left: 100px;
-  position: relative;
   width: 1000px;
   height: 700px;
   display: block;
   background: #000;
 }
 
-#game-controllers {
+#viewer-container {
+  overflow: hidden;
+  position: relative;
+}
+
+#viewer-container ul {
+  list-style: none;
+  position: relative;
+  left: 50%;
   float: left;
+}
+
+#viewer-container ul li {
+  position: relative;
+  left: -50%;
+  float: left;
+}
+
+#cy-container {
+  margin-left: -5%;
+}
+
+#game-controllers {
   padding-left: 20px;
 }
 
 #controlers-header {
   align: center;
-  font-size: 22px;
+  font-size: 18px;
   margin-bottom: 3px;
 }
 
@@ -67,11 +85,11 @@ svg {
 
 #game-scores {
   border-collapse: collapse;
-  font-size: 18px;
+  font-size: 16px;
 }
 
 #score-header {
-  font-size: 22px;
+  font-size: 18px;
 }
 
 #game-scores tr th {

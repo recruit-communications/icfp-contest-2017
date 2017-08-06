@@ -40,51 +40,55 @@
         </div>
       </div>
     </div>
-    <div class="container-fluid" overflow="hidden">
-      <fieldset>
-        <legend>Viewer</legend>
-        <div class="container-fluid" id="cy"></div>
-        <div id="loading">
-          <span class="fa fa-refresh fa-spin"></span>
-        </div>
-        <div id="game-controllers">
-          <div id="settings-table" align="center">
-            <div id="controlers-header">Controllers</div>
-            <table>
-              <tr>
-                <td>
-                  <button class="btn" id="reset-button" onclick="handleReset()" disabled>&lt;&lt;</button>
-                  <button class="btn" id="back-button" onclick="handleBack()" disabled>&lt;</button>
-                  <button class="btn" id="go-button" onclick="handleGo()" disabled>&gt;</button>
-                  <button class="btn" id="end-button" onclick="handleEnd()" disabled>&gt;&gt;</button>
-                  <span>&nbsp;&nbsp;</span>
-                  <button class="btn" id="pause-button" onclick="handlePause()" disabled>| |</button>
-                  <button class="btn" id="play-button" onclick="handlePlay()" disabled>-&gt;</button>
-                </td>
-              </tr>
-            </table>
-          </div>
-          <div id="visualise-settings" align="center">
-            <table>
-              <tr>
-                <td>
-                  線の太さ<input type="number" name="line-width" id="line-width" value="20" step="2" min="2" readonly onchange="updateWidth()">
-                </td>
-                <td>&nbsp;&nbsp;</td>
-                <td>
-                  更新間隔 <input type="number" name="time-span" id="time-span" value="500" step="50" min="50" onchange="updateSpan()">ms
-                </td>
-              </tr>
-            </table>
-          </div>
-          <div>
-            <p align="center" id="score-header"> Final Scores </p>
-            <table id="game-scores" border="1" align="center">
-            </table>
-          </div>
-        </div>
-      </fieldset>
-    </div>
+    <fieldset>
+      <div class="container-fluid"  id="viewer-container">
+      <legend>Viewer</legend>
+        <ul>
+          <li id="cy-container">
+            <div class="container-fluid" id="cy"></div>
+            <div id="loading">
+              <span class="fa fa-refresh fa-spin"></span>
+            </div>
+          </li>
+          <li id="game-controllers">
+            <div id="settings-table" align="center">
+              <div id="controlers-header">Controllers</div>
+              <table>
+                <tr>
+                  <td>
+                    <button class="btn" id="reset-button" onclick="handleReset()" disabled>&lt;&lt;</button>
+                    <button class="btn" id="back-button" onclick="handleBack()" disabled>&lt;</button>
+                    <button class="btn" id="go-button" onclick="handleGo()" disabled>&gt;</button>
+                    <button class="btn" id="end-button" onclick="handleEnd()" disabled>&gt;&gt;</button>
+                    <span>&nbsp;&nbsp;</span>
+                    <button class="btn" id="pause-button" onclick="handlePause()" disabled>| |</button>
+                    <button class="btn" id="play-button" onclick="handlePlay()" disabled>-&gt;</button>
+                  </td>
+                </tr>
+              </table>
+            </div>
+            <div id="visualise-settings" align="center">
+              <table>
+                <tr>
+                  <td>
+                    線の太さ<input type="number" name="line-width" id="line-width" value="20" step="2" min="2" readonly onchange="updateWidth()">
+                  </td>
+                  <td>&nbsp;&nbsp;</td>
+                  <td>
+                    更新間隔 <input type="number" name="time-span" id="time-span" value="500" step="50" min="50" onchange="updateSpan()">ms
+                  </td>
+                </tr>
+              </table>
+            </div>
+            <div>
+              <p align="center" id="score-header"> Final Scores </p>
+              <table id="game-scores" border="1" align="center">
+              </table>
+            </div>
+          </li>
+        </ul>
+      </div>
+    </fieldset>
     <div class="container-fluid">
       <fieldset>
         <legend>Bridge stdout submit form</legend>
@@ -107,7 +111,7 @@
     <script src="../js-core/cytoscape.min.js"></script>
     <script src="../js-core/bluebird.min.js"></script>
     <script src="../js-core/js-core.js"></script>
-    <script src="battle.js"></script>
     <script src="../js-core/additional.js"></script>
+    <script src="battle.js"></script>
     </body>
 </html>

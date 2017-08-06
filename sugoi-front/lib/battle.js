@@ -74,7 +74,7 @@ function postJenkins({id, map_id, punter_ids}) {
           }
           fulfill(JSON.parse(body).executable.url);
         });
-      }, 7000);
+      }, 7500);
     });
   });
 }

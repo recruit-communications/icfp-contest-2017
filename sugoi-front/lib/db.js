@@ -98,13 +98,14 @@ module.exports = {
     params.TableName = 'icfp-map';
     return dbScan(params);
   },
-  addMap: ({id, created_at, punter_num = 2}) => {
+  addMap: ({id, created_at, punter_num = 2, info}) => {
     const params = {
       TableName: 'icfp-map',
       Item: {
         id: id,
         created_at: created_at,
-        punter_num: punter_num
+        info: info,
+        punter_num: punter_num,
       }
     };
     return dbPut(params);

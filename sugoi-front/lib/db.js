@@ -118,8 +118,14 @@ module.exports = {
     };
     return dbPut(params);
   },
-  games: (params = {}) => {
-    params.TableName = 'icfp-game';
+  games: ({map_id} = {}) => {
+    const params = {
+      TableName: 'icfp-game',
+    }
+    if (map_id) {
+      params.ExpressionAttributeValues = {':m': map_id};
+      params.FilterExpression = 'map_id = :m';
+    }
     return dbScan(params);
   },
   addGame: ({id, league_id, created_at = (new Date).getTime(), punter_ids, map_id, job = {}, results = null}) => {

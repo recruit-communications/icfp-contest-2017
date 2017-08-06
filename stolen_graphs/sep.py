@@ -14,7 +14,7 @@ def solve(fn):
                 print(n, m, file=of)
 
                 for j in range(m):
-                    u, v, w = map(int, input().split())
+                    u, v = map(int, input().split())
                     print(u, v, file=of)
                 s = int(input())
 

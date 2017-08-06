@@ -76,7 +76,10 @@
               href: `http://13.112.208.142:8080/battle-viewer/?log=https://s3-ap-northeast-1.amazonaws.com/icfp2017-kst3-jp/logs/app.${data.id}.log`,
               text: data.id.slice(0, 8)
             })))
-            .append($('<td>', { text: data.map_id }))
+            .append($('<td>').append($('<a>', {
+              href: `./game.html?map_id=${data.map_id}`,
+              text: data.map_id
+            })))
             .append($('<td>', { html: punters }))
             .append($('<td>')
               .append(dialog(job.status))
@@ -88,7 +91,8 @@
                 html: results
               })))
         }
-        $.getJSON('/game/list', (res) => {
+        const query = decodeURIComponent(location.search);
+        $.getJSON(`/game/list${query}`, (res) => {
           res.forEach((d, i) => {
             $('#list>table tbody').append(createRow(d, i));
           });

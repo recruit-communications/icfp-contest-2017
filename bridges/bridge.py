@@ -89,7 +89,7 @@ class OfflineBridge:
         G.sort()
         return G, state, sorted_site_ids
 
-    def sendmove(self, pid, s, t, state, sorted_site_ids, proc_idx):
+    def sendmove(self, pid, s, t, state, sorted_site_ids, proc_idx=-1):
         if s == -1 or t == -1:
             obj = {'pass': {'punter': pid}}
         else:

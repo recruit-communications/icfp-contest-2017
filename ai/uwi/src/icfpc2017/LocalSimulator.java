@@ -59,18 +59,18 @@ public class LocalSimulator {
 //		int N = 30000, M = 30000, K = 300;
 //		int N = 5000, M = 5000, K = 300;
 //		int N = 500, M = 500, K = 30;
-		int N = 50, M = 50, K = 5;
+//		int N = 50, M = 50, K = 5;
 //		int N = 20, M = 30, K = 2;
 //		int N = 5, M = 8, K = 2;
 //		int N = 12, M = 12, K = 3;
-//		int N = 8, M = 25, K = 3;
+		int N = 8, M = 25, K = 3;
 		long[] scores = game(-1, N, M, K, true, 
 //				new Instanciator(PassOnlyAI2.class),
 //				new Instanciator(YoshikoAI.class),
-				new Instanciator(GrowAI.class, new Class[]{int.class}, new Object[]{2}),
+//				new Instanciator(GrowAI.class, new Class[]{int.class}, new Object[]{2}),
 //				new Instanciator(MeijinAI.class, new Class[]{int.class}, new Object[]{5})
 //				new Instanciator(MeijinAI.class, new Class[]{int.class}, new Object[]{5})
-//				new Instanciator(MeijinAI.class, new Class[]{int.class}, new Object[]{8})
+				new Instanciator(MeijinAI.class, new Class[]{int.class}, new Object[]{8}),
 				new Instanciator(MeijinIDAI.class, new Class[]{long.class}, new Object[]{900L})
 //				new Instanciator(GrowAI.class, new Class[]{int.class}, new Object[]{0})
 				);
@@ -114,7 +114,7 @@ public class LocalSimulator {
 		
 		// 環境作成
 		SplittableRandom gen = new SplittableRandom(seed);
-		int[][] es = genGraph(gen, N, M, false);
+		int[][] es = genGraph(gen, N, M, false, false);
 		int[] mines = distinct(N, K, gen);
 		
 //		int[][] es = {
@@ -439,15 +439,20 @@ public class LocalSimulator {
 	}
 
 	
-	static int[][] genGraph(SplittableRandom gen, int n, int m, boolean loop)
+	static int[][] genGraph(SplittableRandom gen, int n, int m, boolean loop, boolean dup)
 	{
 		int[] f = new int[m];
 		int[] t = new int[m];
+		Set<Long> set = new HashSet<>();
 		for(int i = 0;i < m;i++){
 			while(true){
 				f[i] = gen.nextInt(n);
 				t[i] = gen.nextInt(n);
 				if(!loop && f[i] == t[i])continue;
+				if(!dup){
+					long code = (long)Math.min(f[i], t[i])<<32|Math.max(f[i], t[i]);
+					if(!set.add(code))continue;
+				}
 				break;
 			}
 		}

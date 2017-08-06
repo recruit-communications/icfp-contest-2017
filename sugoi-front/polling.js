@@ -54,12 +54,8 @@ const params = {
 };
 db.games(params).then((data) => {
   data.forEach((game) => {
-    log.getBuildUrl(game.job.url).then((url) => {
-      game.job.url = url;
-      console.log(url);
-      const key = db.i2p(game.id, 'logs/app.', '.log');
-      return db.s3Get(key);
-    }).then((obj) => {
+    const key = db.i2p(game.id, 'logs/app.', '.log');
+    db.s3Get(key).then((obj) => {
       // ログから結果を反映
       const res = log.parseLog(obj.Body.utf8Slice()).map((r, i) => {
         r.punter = game.punter_ids[i]
@@ -68,7 +64,14 @@ db.games(params).then((data) => {
       
       game.job.status = res.length > 0 ? 'success' :'fail';
       game.results = sortBy(res, (r) => r.score).reverse();
-      db.addGame(game);
+      return db.addGame(game);
+    }).then(() => {
+      // ジョブURLの取得
+      return log.getBuildUrl(game.job.url).then((url) => {
+        game.job.url = url;
+        console.log(url);
+        return db.addGame(game);
+      });
     }).catch((e) => {
       // s3Getのエラーはスルー
       if (e.name === 'NoSuchKey') return;

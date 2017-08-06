@@ -24,7 +24,7 @@ function getBuildUrl(queueUrl) {
   return new Promise((fulfill, reject) => {
     request.get({uri: queueUrl}, (err, res, body) => {
       if (err || res.statusCode >= 400) {
-        reject(err || res);
+        reject(err || {name: 'NoSuchKey', body: res.body});
         return;
       }
       fulfill(JSON.parse(body).executable.url);

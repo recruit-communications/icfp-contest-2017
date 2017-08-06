@@ -25,7 +25,7 @@ app.get('/map/list', (req, res) => {
 // 対戦一覧
 app.get('/game/list', (req, res) => {
   const query = url.parse(req.url, true).query;
-  db.games().then((data) => {
+  db.games(query).then((data) => {
     res.json(data);
   });
 });

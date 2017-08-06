@@ -47,6 +47,7 @@
         function createRow(data, idx) {
           const date = formatDate(new Date(data.created_at));
           const punters = data.punter_ids.join('<br />');
+          const jobUrl = (data.job || {}).url;
           const results = (data.results || []).map((res, i) => {
             return `${i+1}位 ${res.punter} / ${res.score}pt`
           }).join('<br />');
@@ -59,7 +60,14 @@
             })))
             .append($('<td>', { text: data.map }))
             .append($('<td>', { html: punters }))
-            .append($('<td>', { html: results }));
+            .append($('<td>')
+              .append($('<a>', {
+                href: jobUrl,
+                text: jobUrl
+              }))
+              .append($('<div>', {
+                html: results
+              })))
         }
         $.getJSON('/game/list', (res) => {
           res.forEach((d, i) => {

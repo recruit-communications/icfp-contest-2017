@@ -11,15 +11,12 @@
   <body>
     <div class="container-fluid">
       <h1>&#955; Map Viewer | <a href="../battle-viewer">&#955; Battle Viewer</a> | <a href="../map-maker">&#955; Map Maker</a></h1>
-      <fieldset>
-        <legend>Game Information</legend>
-        <div id="dropdown">
-          <select id="maps-select" class="form-control">
-          </select>
-
-          <a id="download-link" href="#">Download</a>
-        </div>
-      </fieldset>
+      <legend>Game Information</legend>
+      <div id="dropdown">
+        <select id="maps-select" class="form-control">
+        </select>
+        <a id="download-link" href="#">Download</a>
+      </div>
       <div>
         <div class="form-inline form-group">
           <label>Punter数 (2 ~ 20)：</label><input type="number" value="3" max="20" min="2" class="form-control" id="num_punters" >
@@ -28,33 +25,26 @@
       </div>
     </div>
     <div class="container-fluid">
-      <fieldset>
-        <legend>Canvas</legend>
-        <div class="float-container visual-controller">
-          <ul>
-            <li><button class="btn" id="id-show-change" onclick="changeIdShow()">ID on/off</button></li>
-            <li class="form-inline form-group"><label>IDサイズ：</label><input type="number" class="form-control" id="id-size" min="1" value="32" onchange="changeIdSize()"></li>
-            <li class="form-inline form-group"><label>線の太さ：</label><input type="number" class="form-control" id="line-width" min="1" value="15" onchange="changeLineWidth()"></li>
-          </ul>
-        </div>
-        <div class="container-fluid" id="cy"></div>
-        <div id="loading">
-          <span class="fa fa-refresh fa-spin"></span>
-        </div>
-      </fieldset>
+      <legend>Canvas</legend>
+      <div class="float-container visual-controller">
+        <ul>
+          <li><button class="btn" id="id-show-change" onclick="changeIdShow()">ID on/off</button></li>
+          <li class="form-inline form-group"><label>IDサイズ：</label><input type="number" class="form-control" id="id-size" min="1" value="32" onchange="changeIdSize()"></li>
+          <li class="form-inline form-group"><label>線の太さ：</label><input type="number" class="form-control" id="line-width" min="1" value="15" onchange="changeLineWidth()"></li>
+        </ul>
+      </div>
+      <div class="container-fluid" id="cy"></div>
+      <div id="loading">
+        <span class="fa fa-refresh fa-spin"></span>
+      </div>
     </div>
     <div class="container-fluid">
-      <fieldset>
         <legend>Submit form</legend>
-        <div class="container-text" align="center">
+        <fieldset class="container-text">
+          <button class="btn btn-primary" id="submit-button" onclick="doVisualize()">ヴィジュアライズ！</button>
           <div>
-            <button class="btn" id="submit-button" onclick="doVisualize()">ヴィジュアライズ！</button>
+            <textarea class="text-area" id="json-form" placeholder="ここにグラフデータ貼り付けてください。"></textarea>
           </div>
-          <br>
-          <div>
-            <textarea id="json-form" cols="140" rows="10" placeholder="ここにグラフデータ貼り付けてください。"></textarea>
-          </div>
-        </div>
         <br><br><br><br>
       </fieldset>
     </div>

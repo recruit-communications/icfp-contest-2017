@@ -114,7 +114,7 @@ module.exports = {
     params.TableName = 'icfp-game';
     return dbScan(params);
   },
-  addGame: ({id, league_id, created_at = (new Date).getTime(), punter_ids, map_id}) => {
+  addGame: ({id, league_id, created_at = (new Date).getTime(), punter_ids, map_id, job}) => {
     const params = {
       TableName: 'icfp-game',
       Item: {
@@ -122,7 +122,8 @@ module.exports = {
         league_id: league_id,
         created_at: created_at,
         punter_ids: punter_ids,
-        map: map_id
+        map: map_id,
+        job: job,
       }
     };
     return dbPut(params);

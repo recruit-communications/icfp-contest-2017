@@ -13,7 +13,7 @@
       <a href="punter.html">クライアント一覧</a> |
       <a href="map.html">マップ一覧</a> |
     </h1>
-    <h2>対戦一覧</h2>
+    <h2>対戦一覧 <a href="./game.html?count=10000">(全ての結果を見る)</a></h2>
     <div id="list">
       <table class="table table-bordered tablesorter">
         <thead>
@@ -31,6 +31,7 @@
     </div>
 
     <script src="http://code.jquery.com/jquery-3.2.1.min.js"></script>
+    <script src="https://cdn.rawgit.com/khalidsalomao/simple-query-string/22cc5bbe/src/simplequerystring.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.8.3/underscore-min.js"></script>
     <script src="./js/jquery.tablesorter.min.js"></script>
     <script>
@@ -94,10 +95,10 @@
         }
         const query = decodeURIComponent(location.search);
         $.getJSON(`/game/list${query}`, (res) => {
-          _.sortBy(res, (d) => d.created_at).reverse().forEach((d, i) => {
+          const count = simpleQueryString.parse(location.search).count || 100;
+          _.sortBy(res, (d) => d.created_at).reverse().slice(0, count).forEach((d, i) => {
             $('#list>table tbody').append(createRow(d, i));
           });
-          // for sort
           $("#list>table").tablesorter();
         });
       });

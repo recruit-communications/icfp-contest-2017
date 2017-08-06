@@ -61,11 +61,14 @@ object YabaiSelector extends Logging {
   case class GameResult(map: LambdaMapId, results: Array[PlayerResult],
                         @JsonProperty("created_at") createdAt: Long,
                         id: String,
-                        @JsonProperty("punter_ids") punterIds: Array[String])
+                        @JsonProperty("punter_ids") punterIds: Array[String],
+                        job: Job)
 
   case class PlayerResult(score: Long, punter: PunterId)
 
   case class PunterEntry(id: PunterId, @JsonProperty("created_at") createdAt: Long)
+
+  case class Job(url: String)
 
 }
 

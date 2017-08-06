@@ -72,7 +72,7 @@ object SugoiDealer extends Logging with BattleLogging {
     * @param programs  AI programs
     * @param gameState state of the game
     */
-  private def play(programs: Seq[PunterProgram], gameState: GameState): ArrayBuffer[Move] = {
+  def play(programs: Seq[PunterProgram], gameState: GameState): ArrayBuffer[Move] = {
     val deque = new ArrayBuffer[Move]()
     programs.foreach { p => deque.append(PassMove(Pass(p.punter))) }
 
@@ -121,7 +121,7 @@ object SugoiDealer extends Logging with BattleLogging {
         val route = moveFromPunter.splurge.route
 
         // when pass n times, you can choose n+1 edges, the maximum splurge size will be n+2
-        if (route.length + 2 > p.passCount) {
+        if (route.length > p.passCount + 2) {
           logger.error(s"too many splurge! pass: ${p.passCount}, splurge:${mapper.writeValueAsString(route)}")
           p.penaltyCount += 1
           deque.append(PassMove(Pass(p.punter)))
@@ -159,7 +159,7 @@ object SugoiDealer extends Logging with BattleLogging {
     var turn = 0
     while (turn < gameState.edgeCount) {
       programs.foreach(p => {
-        playOneTurn(p)
+        if (turn < gameState.edgeCount) playOneTurn(p)
         turn += 1
       })
     }

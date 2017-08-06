@@ -1,21 +1,3 @@
-.header {
-  font-weight: bold;
-  font-size: 20px;
-}
-
-#controllers {
-  position: relative;
-  overflow: hidden;
-}
-
-#element-type {
-  position: relative;
-  left: 35%;
-  float: left;
-  margin-right: 20px;
-  margin-bottom: 20px;
-}
-
 #line-input {
   background-color: #009;
   color: white;
@@ -29,29 +11,4 @@
 #remove {
   background-color: black;
   color: white;
-}
-
-#element-type button {
-  font-size: 18px;
-}
-
-#state-changer {
-  position: relative;
-  left: 35%;
-  float: left;
-  margin-left: 20px;
-  margin-bottom: 20px;
-}
-
-#state-changer button {
-  font-size: 18px;
-}
-
-#output-area {
-  text-align: center;
-  margin: 20px;
-}
-
-#json-place {
-  margin: 20px;
 }

@@ -46,9 +46,9 @@ svg {
 }
 
 
-/**********************/
-/* User Settings      */
-/**********************/
+/*****************************************/
+/* User Settings  (Don"t Write Id's css  */
+/*****************************************/
 
 .float-container {
     position: relative;
@@ -67,9 +67,26 @@ svg {
     position: relative;
     float: left;
     left: -50%;
-    margin: 0 5px;
+    margin: 5px;
 }
 
 .form-inline input[type="number"] {
     width: 72px;
+}
+
+.container-text {
+    text-align: center;
+}
+
+.container-text button {
+    margin-bottom: 20px;
+}
+
+.text-area {
+    width: 1000px;
+    height: 100px;
+}
+
+fieldset {
+    margin: 20px;
 }

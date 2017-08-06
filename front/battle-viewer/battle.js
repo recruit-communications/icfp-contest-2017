@@ -253,6 +253,8 @@ function handleBack() {
   bindBackHandlers();
 
   //console.log(row, col);
+  if (row == 0 && col == 0) return;
+
   col--;
   if (col < 0) {
     row--;
@@ -279,6 +281,8 @@ function handleGo() {
 }
 
 function forwardBattle(logging) {
+  if (row >= moves.length) return;
+  
   let data = moves[row][col];
   if (data.claim != undefined) {
     updateEdgeOwner(data.claim.punter, data.claim.source, data.claim.target);
@@ -437,6 +441,9 @@ function loadBattleList(showFirst) {
 
 function doVisualize() {
   text = $("#json-form").val();
+
+  if (text.length == 0) return;
+
   jsons = text.split("\n");
   if (cy.elements !== undefined) {
     cy.destroy();
@@ -467,13 +474,16 @@ function updateSpan() {
 $(function() {
   $(document).ready(function() {
     initPunterColours();
-    const matches = /battle=([^&#=]*)/.exec(window.location.search);
-    if (matches !== null && matches !== undefined) {
-      const param1 = matches[1];
-      loadBattleList(false);
-      selectBattle(param1);
-    } else {
-      loadBattleList(true);
+    logUrl = decodeURIComponent(location.search).substr(5);
+    if (logUrl.length == 0) {
+      const matches = /battle=([^&#=]*)/.exec(window.location.search);
+      if (matches !== null && matches !== undefined) {
+        const param1 = matches[1];
+        loadBattleList(false);
+        selectBattle(param1);
+      } else {
+        loadBattleList(true);
+      }
     }
   });
 });

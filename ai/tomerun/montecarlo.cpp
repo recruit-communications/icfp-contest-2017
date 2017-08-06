@@ -220,7 +220,7 @@ struct Game {
 struct MCTS {
 	struct PlayerState {
 		vector<i64> reachable;
-		unordered_set<int> connected_node;
+		vi connected_node;
 		vector<Edge*> random_edge;
 		vector<Edge*> selected_edge;
 		int prev_from, prev_to;
@@ -250,13 +250,14 @@ struct MCTS {
 				q.clear();
 				q.push_back(mines[mine]);
 				states_orig[player].reachable[mines[mine]] |= (1LL << mine);
+				states_orig[player].connected_node.push_back(mines[mine]);
 				for (int i = 0; i < q.size(); ++i) {
 					for (const Edge* e : edges[q[i]]) {
 						if (e->owner != player) continue;
 						int t = e->from + e->to - q[i];
 						if (states_orig[player].reachable[t] & (1LL << mine)) continue;
 						states_orig[player].reachable[t] |= (1LL << mine);
-						states_orig[player].connected_node.insert(t);
+						states_orig[player].connected_node.push_back(t);
 						q.push_back(t);
 					}
 				}
@@ -274,7 +275,7 @@ struct MCTS {
 	Edge* select_move(PlayerState& st) {
 		const int EXPAND_PREV = 0, RANDOM_NODE = 1, RANDOM_EDGE = 2, EXPAND_PREV_PREV = 3;
 		int strategy = RANDOM_EDGE;
-		// if (st.prev_from == -1) {
+		// if (st.prev_to == -1 || st.reachable[st.prev_to] == 0) {
 		// 	strategy = (rnd.nextUInt() & 0x330) ? RANDOM_NODE : RANDOM_EDGE;
 		// } else {
 		// 	int rv = rnd.nextUInt(32);
@@ -287,13 +288,36 @@ struct MCTS {
 		// 	}
 		// }
 		if (strategy == EXPAND_PREV) {
-
+			const int size = edges[st.prev_to].size();
+			int ei = rnd.nextUInt(size);
+			for (int i = 0; i < size; ++i) {
+				Edge* e = edges[st.prev_to][(i + ei) % size];
+				if (e->owner == NOT_OWNED && st.reachable[st.prev_to] != st.reachable[e->to]) return e;
+			}
+			strategy = (rnd.nextUInt() & 0x800) ? EXPAND_PREV_PREV : RANDOM_NODE;
 		}
 		if (strategy == EXPAND_PREV_PREV) {
-
+			const int size = edges[st.prev_from].size();
+			int ei = rnd.nextUInt(size);
+			for (int i = 0; i < size; ++i) {
+				Edge* e = edges[st.prev_from][(i + ei) % size];
+				if (e->owner == NOT_OWNED && st.reachable[st.prev_from] != st.reachable[e->to]) return e;
+			}
+			strategy = RANDOM_NODE;
 		}
 		if (strategy == RANDOM_NODE) {
-			
+			for (int i = 0; i < st.connected_node.size(); ++i) {
+				int pos = rnd.nextUInt(st.connected_node.size() - i);
+				swap(st.connected_node[i], st.connected_node[i + pos]);
+				const int s = st.connected_node[i];
+				const int size = edges[s].size();
+				const int ei = rnd.nextUInt(size);
+				for (int j = 0; j < size; ++j) {
+					Edge* e = edges[s][(j + ei) % size];
+					if (e->owner == NOT_OWNED && st.reachable[s] != st.reachable[e->to]) return e;
+				}
+			}
+			strategy = RANDOM_EDGE;
 		}
 		if (strategy == RANDOM_EDGE) {
 			while (st.random_edge[st.random_edge_idx]->owner != NOT_OWNED) {
@@ -309,7 +333,7 @@ struct MCTS {
 		if ((st.reachable[from] & ~st.reachable[to]) == 0) return;
 		buf.clear();
 		buf.push_back(to);
-		if (st.reachable[to] == 0) st.connected_node.insert(to);
+		if (st.reachable[to] == 0) st.connected_node.push_back(to);
 		st.reachable[to] |= st.reachable[from];
 		for (int i = 0; i < buf.size(); ++i) {
 			int s = buf[i];
@@ -318,7 +342,7 @@ struct MCTS {
 				int t = e->from + e->to - s;
 				if ((st.reachable[from] & ~st.reachable[t]) == 0) continue;
 				buf.push_back(t);
-				if (st.reachable[t] == 0) st.connected_node.insert(t);
+				if (st.reachable[t] == 0) st.connected_node.push_back(t);
 				st.reachable[t] |= st.reachable[from];
 			}
 		}
@@ -371,20 +395,21 @@ struct MCTS {
 			e->owner = NOT_OWNED;
 		}
 		i64 my_score = score[I];
-		// score[I] = -999999;
 		i64 value = my_score - *max_element(score.begin(), score.end());
 		if (value == 0) {
 			score[I] = 0;
 			value += (my_score - *max_element(score.begin(), score.end())) / 10;
 		}
+		double weight = 1.0;
 		for (Edge* e : states[I].selected_edge) {
 			if (values.find(e) == values.end()) {
-				values[e] = make_pair(1, value);
+				values[e] = make_pair(weight, value * weight);
 			} else {
 				auto& v = values[e];
-				v.first++;
-				v.second += value;
+				v.first += weight;
+				v.second += value * weight;
 			}
+			weight *= 0.95;
 		}
 	}
 
@@ -392,6 +417,7 @@ struct MCTS {
 		double best_value = -99999999;
 		Edge* ret = nullptr;
 		for (auto& vp : values) {
+			if (vp.second.first < 0.001) continue;
 			double v = 1.0 * vp.second.second / vp.second.first;
 			if (v > best_value) {
 				best_value = v;

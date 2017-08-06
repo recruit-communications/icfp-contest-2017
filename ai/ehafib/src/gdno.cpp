@@ -8,6 +8,10 @@
 using namespace std;
 using namespace json11;
 
+const int USE_VERTEX_WEIGHT = 0;
+const double VERTEX_COEFFICIENT = 1e-4;
+const int USE_LAMBDA_WEIGHT = 1;
+
 // ?: 初回入力
 void put_my_name() {
     cout << "greedy" << endl;
@@ -103,6 +107,9 @@ public:
     vector<vector<int>> claim;
     vector<int> my_mines;
     vector<UnionFind> uf;
+    vector<vector<double>> vertex_weight;
+    vector<int> vertex_deg;
+    vector<long long> current_score;
 
     // I: 初回入力2時に最初に作るState
     State() { // {{{
@@ -215,20 +222,21 @@ public:
     // }}}
 
     // O(MV)
-    long long calc_score(int uid, UnionFind &u) {
-        long long res = 0;
-        for (int mi = 0; mi < M; mi++) {
-            int m = mines[mi];
-            for (int v = 0; v < V; v++) {
-                if (u.eq(m, v)) {
-                    res += score[mi][v] * 1LL * score[mi][v];
-                }
-            }
-        }
-        return res;
-    }
+    // long long calc_score(int uid, UnionFind &u) {
+    //    long long res = 0;
+    //    for (int mi = 0; mi < M; mi++) {
+    //        int m = mines[mi];
+    //        for (int v = 0; v < V; v++) {
+    //            if (u.eq(m, v)) {
+    //                res += score[mi][v] * 1LL * score[mi][v];
+    //            }
+    //        }
+    //    }
+    //    return res;
+    //}
 
     // O(MNV)
+    // USE_VERTEX_WEIGHTが0でないときはO(M^2NV)
     void add_next_score_weight_kai() {
         for (int i = 0; i < number_of_players; i++) { // O(N)
             vector<vector<long long>> addm(M, vector<long long>(V, 0));
@@ -255,6 +263,7 @@ public:
                         continue;
                     if (uf[i].eq(v, e.to))
                         continue;
+
                     //// O(V)
                     // UnionFind u = uf[i];
                     // u.unite(v, e.to); // O(V)
@@ -273,10 +282,25 @@ public:
 
                     lnow -= lprev;
 
-                    e.weight += (lnow * 1.0 / number_of_players);
-
                     if (i == punter_id) {
                         e.weight += lnow;
+                    } else {
+                        e.weight += (lnow * 1.0 / (number_of_players - 1));
+                    }
+
+                    // add edge weight
+                    if(USE_VERTEX_WEIGHT) {
+                        for(int mi = 0; mi < M; mi++) {
+                            int m = mines[mi];
+                            if(uf[punter_id].eq(m, v) && !uf[punter_id].eq(m, e.to)) {
+                                e.weight += vertex_deg[e.to];
+                                e.weight += VERTEX_COEFFICIENT * vertex_weight[mi][e.to];
+                            }
+                            if(!uf[punter_id].eq(m, v) && uf[punter_id].eq(m, e.to)) {
+                                e.weight += vertex_deg[e.to];
+                                e.weight += VERTEX_COEFFICIENT * vertex_weight[mi][v];
+                            }
+                        }
                     }
                 }
             }
@@ -321,26 +345,81 @@ public:
                         e.weight += 1145141919.0;
                         q.push(e.to);
                     }
+
+                    if (dist[e.to] <= 2) {
+                        e.weight += 364364.0;
+                        q.push(e.to);
+                    }
                 }
             }
         }
     }
 
-    void add_enemy_gain() {}
-
-    pair<int, int> choose_greedily() {
-        // O(ME)
-        if (M * 1.0 * E > 1e8) {
-            return choose_randomly();
-        }
-
+    void init_union_find() {
         for (int i = 0; i < M; i++) {
             uf.push_back(UnionFind(V));
             for (const int &eidx : claim[i]) {
                 uf[i].unite(sources[eidx], targets[eidx]);
             }
         }
+    }
 
+    void init_vertex_deg() {
+        // O(E)
+        vertex_deg = vector<int>(V, 0);
+        for(int e = 0; e < E; e++ ){
+            if(used[e]) continue;
+            vertex_deg[sources[e]]++;
+            vertex_deg[targets[e]]++;
+        }
+    }
+
+    // O(MV^2) TODO: 時間決めて打ち切る処理の追加
+    void init_vertex_weight() {
+        if(!USE_VERTEX_WEIGHT) return;
+
+        vertex_weight = vector<vector<double>>(M, vector<double>(V, 0));
+        if(M*1.0*V*V > 1e8) return;
+
+        for (int v = 0; v < V; v++) {
+            queue<int> q;
+            vector<int> dist(V, -1);
+            const int D = 4;
+            dist[v] = 0;
+            q.push(v);
+
+            while (!q.empty()) {
+                int w = q.front();
+                q.pop();
+                for (Edge &e : G[w]) {
+                    if (used[e.idx] == 0)
+                        continue;
+                    if (dist[e.to] != -1)
+                        continue;
+                    dist[e.to] = dist[w] + 1;
+
+                    //cnt[dist[e.to]]++;
+                    for(int mi = 0; mi < M; mi++) {
+                        vertex_weight[mi][dist[e.to]] += score[mi][e.to] * 1.0 * score[mi][e.to] / D / V;
+                    }
+
+                    if (dist[e.to] + 1 < D) {
+                        q.push(e.to);
+                    }
+                }
+            }
+        }
+    }
+
+    pair<int, int> choose_greedily() {
+        // O(ME)
+        if (M * 1.0 * number_of_players * E > 1e8) {
+            return choose_randomly();
+        }
+
+        init_union_find();
+        init_vertex_deg();
+        init_vertex_weight();
         add_next_score_weight_kai();
         add_near_lambda();
 
@@ -393,6 +472,7 @@ void doit(State &s) {
     cout << s.to_json() << endl; // print new state
 
     auto e = s.choose_greedily();
+    // if(e.first == -1 && e.second == -1) e = s.choose_randomly();
     cout << s.punter_id << " " << e.second << " " << e.first
          << endl; // print edge
 }

@@ -20,7 +20,12 @@ done
 touch install punter
 
 # tar.gz作る
-TOKEN=57c8be97-ef1c-4730-bf15-5da1d039fab3
-ARCHIVE=icfp-$TOKEN.tar.gz
+# 引数がある場合はそれをアーカイブ名にする
+if (($# >= 1)); then
+	ARCHIVE=$1.tar.gz
+else
+	TOKEN=57c8be97-ef1c-4730-bf15-5da1d039fab3
+	ARCHIVE=icfp-$TOKEN.tar.gz
+fi
 tar cvz install punter PACKAGES src README > $ARCHIVE
 md5 $ARCHIVE

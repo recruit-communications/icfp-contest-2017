@@ -17,7 +17,7 @@ object YabaiSelector {
   val mapper = new ObjectMapper()
   mapper.registerModule(DefaultScalaModule)
 
-  val ILLEGAL_ZERO_SLESHHOLD = 5
+  val ILLEGAL_ZERO_RATIO = 0.5
   val FEWER_SELECTED_MAP_TOP = 10
   val PARALLEL_BATTLE_COUNT = 5
 
@@ -26,17 +26,19 @@ object YabaiSelector {
     val mapSelected = new mutable.TreeMap[LambdaMapId, Int]().withDefaultValue(0)
     val mapMemberCount = new mutable.TreeMap[LambdaMapId, Int]().withDefaultValue(0)
     val punterIdCount = new mutable.TreeMap[PunterId, Int]().withDefaultValue(0)
+
+    val validPunterIds = (for (entry <- mapper.readValue[List[PunterEntry]](YabaiUrl.get(YabaiUrl.punterList), new TypeReference[List[PunterEntry]] {})) yield entry.id).toSet
+    validPunterIds.foreach(punterId => punterIdCount(punterId) = 0)
+
     mapper.readValue[List[GameResult]](YabaiUrl.get(YabaiUrl.gameLog), new TypeReference[List[GameResult]] {}).foreach(r => Option(r.results).foreach(_.foreach(g => {
       if (g.score == 0) zeroCount(g.punter) += 1
-      else punterIdCount(g.punter) += 1
+      punterIdCount(g.punter) += 1
       mapSelected(r.map) += 1
       if (mapMemberCount(r.map) < r.results.length) mapMemberCount(r.map) = r.results.length
     })))
 
-    val validPunterIds = (for (entry <- mapper.readValue[List[PunterEntry]](YabaiUrl.get(YabaiUrl.punterList), new TypeReference[List[PunterEntry]] {})) yield entry.id).toSet
-
     mapSelected.foreach { case (mapId, count) => mapSelected(mapId) = count / mapMemberCount(mapId) }
-    for ((punterId, count) <- zeroCount if count > ILLEGAL_ZERO_SLESHHOLD) punterIdCount.remove(punterId)
+    for ((punterId, _) <- zeroCount if punterIdCount(punterId).toDouble == 0 || zeroCount(punterId).toDouble / punterIdCount(punterId).toDouble > ILLEGAL_ZERO_RATIO) punterIdCount.remove(punterId)
 
     val sortedPunters = for ((punterId, _) <- punterIdCount.toArray.sortBy { case (_, count) => count } if validPunterIds.contains(punterId)) yield punterId
     var pos = 0

@@ -80,7 +80,8 @@ object YabaiSelector extends Logging {
   }
 
   @JsonIgnoreProperties(ignoreUnknown = true)
-  case class GameResult(map: LambdaMapId, results: Array[PlayerResult],
+  case class GameResult(@JsonProperty("map_id") map: LambdaMapId,
+                        results: Array[PlayerResult],
                         @JsonProperty("created_at") createdAt: Long,
                         id: String,
                         @JsonProperty("punter_ids") punterIds: Array[String],

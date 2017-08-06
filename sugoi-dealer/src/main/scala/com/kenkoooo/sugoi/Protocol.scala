@@ -16,6 +16,8 @@ case class SetupToServer(ready: Int, state: Object, futures: Array[LambdaFuture]
 
 case class River(source: Int, target: Int)
 
+@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonIgnoreProperties(ignoreUnknown = true)
 case class Site(id: Int, x: Double, y: Double)
 
 case class LambdaMap(sites: Array[Site], rivers: Array[River], mines: Array[Int])

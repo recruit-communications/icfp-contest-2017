@@ -118,12 +118,11 @@ module.exports = {
     };
     return dbPut(params);
   },
-  games: ({map_id} = {}) => {
-    const params = {
-      TableName: 'icfp-game',
-    }
-    if (map_id) {
-      params.ExpressionAttributeValues = {':m': map_id};
+  games: (params = {}) => {
+    params.TableName = 'icfp-game';
+
+    if (params.map_id) {
+      params.ExpressionAttributeValues = {':m': params.map_id};
       params.FilterExpression = 'map_id = :m';
     }
     return dbScan(params);

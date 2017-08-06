@@ -187,7 +187,8 @@ struct xor128_random {
     double next_double(double r) { return next() * 0.00000000023283064365386962890625 * r; }
 };
 
-xor128_random rng;
+xor128_random rng(rand());
+
 
 void handshake() {
   cout << "jUdon2" << endl;
@@ -195,8 +196,8 @@ void handshake() {
 
 void init() {
   //time_limit = 8000;
-  int C, I, F, N, M, K;
-  scanf("%d %d %d %d %d %d", &C, &I, &F, &N, &M, &K);
+  int C, I, F, S, N, M, K;
+  scanf("%d %d %d %d %d %d %d", &C, &I, &F, &S, &N, &M, &K);
   Graph G(N);
   vi E(M*2);
   for(int i=0;i<M;i++){
@@ -285,7 +286,7 @@ void init() {
 }
 
 void move() {
-  double time_limit = 0.9;
+  double time_limit = 0.5;
   double start_time = getTime();
 
   // state読み込み
@@ -323,26 +324,31 @@ void move() {
   // 選ばれた辺
   vi EF(M);
   for(int i=0;i<C;i++){
-    int a,b;
-    scanf("%d %d", &a, &b);
-    if(a == -1){
+    int n,a;
+    scanf("%d", &n);
+    if(n < 1){
       continue;
     }
-    for(int j=0;j<M;j++){
-      if(((a == E[j][0] && b == E[j][1]) || (a == E[j][1] && b == E[j][0])) && EF[j] == 0){
-        EF[j] = 1;
-        M -= 1;
-        for(int k=0;k<2;k++){
-          int tmp;
-          tmp = E[j][k];
-          E[j][k] = E[M][k];
-          E[M][k] = tmp;
-        }
-        break;
-      }
-    }
+    scanf("%d", &a);
     UnionFind uf(PARS[i], RANKS[i]);
-    uf.unite(a, b);
+    for(;n > 1;n--){
+      int b = a;
+      scanf("%d", &a);
+      for(int j=0;j<M;j++){
+        if(((a == E[j][0] && b == E[j][1]) || (a == E[j][1] && b == E[j][0])) && EF[j] == 0){
+          EF[j] = 1;
+          M -= 1;
+          for(int k=0;k<2;k++){
+            int tmp;
+            tmp = E[j][k];
+            E[j][k] = E[M][k];
+            E[M][k] = tmp;
+          }
+          break;
+        }
+      }
+      uf.unite(a, b);
+    }
     PARS[i] = uf.par;
     RANKS[i] = uf.rank;
   }
@@ -406,11 +412,12 @@ void move() {
 
   double mr = -1;
   double ms = -1;
-  int mi = 0;
+  int mi = -1;
   //DBG_OUTPUT(E)
   for(int i=0;i<M;i++){
     double ir = (double)SR[i] / (double)SC[i];
     double is = (double)SS[i] / (double)SC[i];
+    //cerr << i << ": ir,is = " << ir << ", " << is << endl;
     if(mr < 0 || ir < mr || (ir == mr && is > ms)){
       mr = ir;
       ms = is;
@@ -453,7 +460,7 @@ void move() {
     cout << I << ' ' << E[mi][0] << ' ' << E[mi][1] << endl;
   }else{
     // とりあえずパス
-    cout << I << ' ' << -1 << ' ' << -1 << endl;
+    cout << I << endl;
   }
 }
 

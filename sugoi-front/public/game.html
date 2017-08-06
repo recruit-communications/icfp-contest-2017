@@ -8,22 +8,37 @@
   <body>
     <h2>対戦一覧</h2>
     <div id="list">
-      <table class="table table-bordered">
-        <tr>
-          <th>date</th>
-          <th>id (log)</th>
-          <th>map</th>
-          <th>clients</th>
-          <th>result</th>
-        </tr>
+      <table class="table table-bordered tablesorter">
+        <thead>
+          <tr>
+            <th>date</th>
+            <th>id (log)</th>
+            <th>map</th>
+            <th>clients</th>
+            <th>result</th>
+          </tr>
+        </thead>
+        <tbody>
+        </tbody>
       </table>
     </div>
 
     <script src="http://code.jquery.com/jquery-3.2.1.min.js"></script>
+    <script src="./js/jquery.tablesorter.min.js"></script>
     <script>
       $(() => {
+        function formatDate(date) {
+          const ff = (f) => ('0'+f).slice(-2);
+          const MM = ff(date.getMonth() + 1)
+          const DD = ff(date.getDate())
+          const HH = ff(date.getHours())
+          const mm = ff(date.getMinutes())
+          const ss = ff(date.getSeconds());
+          return `${MM}/${DD} ${HH}:${mm}:${ss}`
+        }
+
         function createRow(data, idx) {
-          const date = (new Date(data.created_at)).toISOString();
+          const date = formatDate(new Date(data.created_at));
           const punters = data.punter_ids.join('<br />');
           const results = (data.results || []).map((res, i) => {
             return `${i+1}位 ${res.punter} / ${res.score}pt`
@@ -41,8 +56,12 @@
         }
         $.getJSON('/game/list', (res) => {
           res.forEach((d, i) => {
-            $('#list>table').append(createRow(d, i));
+            $('#list>table tbody').append(createRow(d, i));
           });
+          // for sort
+          $("#list>table").tablesorter();
+          $("#list>table th:nth-child(1)").click();
+          $("#list>table th:nth-child(1)").click();
         });
       });
     </script>

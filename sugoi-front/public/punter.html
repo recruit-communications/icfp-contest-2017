@@ -8,17 +8,22 @@
   <body>
     <h2>クライアント一覧</h2>
     <div id="list">
-      <table class="table table-bordered">
-        <tr>
-          <th>rank</th>
-          <th>id</th>
-          <th>score</th>
-          <th>history</th>
-        </tr>
+      <table class="table table-bordered tablesorter">
+        <thead>
+          <tr>
+            <th>rank</th>
+            <th>id</th>
+            <th>score</th>
+            <th>history</th>
+          </tr>
+        </thead>
+        <tbody>
+        </tbody>
       </table>
     </div>
 
     <script src="http://code.jquery.com/jquery-3.2.1.min.js"></script>
+    <script src="./js/jquery.tablesorter.min.js"></script>
     <script>
       $(() => {
         function createRow(data, idx) {
@@ -34,8 +39,9 @@
         }
         $.getJSON('/punter/list', (res) => {
           res.forEach((d, i) => {
-            $('#list>table').append(createRow(d, i));
+            $('#list>table tbody').append(createRow(d, i));
           });
+          $("#list>table").tablesorter();
         });
       });
     </script>

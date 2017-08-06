@@ -3,8 +3,8 @@ package com.kenkoooo.sugoi
 
 import java.util
 
-import scala.collection.{immutable, mutable}
 import scala.collection.mutable.ArrayBuffer
+import scala.collection.{immutable, mutable}
 
 object GameState {
   val UNUSED: Int = -1
@@ -31,7 +31,9 @@ class GameState(map: LambdaMap, punterNum: Int, futures: ArrayBuffer[Array[Lambd
 
   var edgeCount: Int = map.rivers.length
 
-  def isUsed(source: Vertex, target: Vertex): Boolean = graph(source)(target) != GameState.UNUSED
+  def isUsed(source: Vertex, target: Vertex): Boolean = {
+    graph.contains(source) && graph(source).contains(target) && graph(source)(target) != GameState.UNUSED
+  }
 
   /**
     * use edge

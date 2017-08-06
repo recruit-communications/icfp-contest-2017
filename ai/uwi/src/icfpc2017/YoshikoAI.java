@@ -17,6 +17,8 @@ import java.util.InputMismatchException;
 import java.util.List;
 import java.util.Queue;
 
+import icfpc2017.PassOnlyAI2.Edge;
+
 class YoshikoAI {
 	public InputStream is;
 	public PrintWriter out;
@@ -112,7 +114,7 @@ class YoshikoAI {
 			out.flush();
 		}else if(phase == 'I'){
 			// 初回入力2
-			int C = ni(), P = ni(), F = ni();
+			int C = ni(), P = ni(), F = ni(), S = ni();
 			int N = ni(), M = ni(), K = ni();
 			List<Edge> es = new ArrayList<>();
 			for(int i = 0;i < M;i++){
@@ -135,6 +137,8 @@ class YoshikoAI {
 			state.C = C;
 			state.P = P;
 			state.N = N;
+			state.F = F;
+			state.S = S;
 			if(F == 1){
 				state.futures = new ArrayList<>();
 				for(int i = 0;i < N;i++)state.futures.add(null);
@@ -147,8 +151,13 @@ class YoshikoAI {
 			int C = state.C;
 			List<Edge> added = new ArrayList<>();
 			for(int i = 0;i < C;i++){
-				int s = ni(), t = ni();
-				if(s != -1 && t != -1){
+				int L = ni();
+				int[] a = new int[L];
+				for(int j = 0;j < L;j++){
+					a[j] = ni();
+				}
+				for(int j = 0;j < L-1;j++){
+					int s = a[j], t = a[j+1];
 					if(s > t){
 						int d = s; s = t; t = d;
 					}
@@ -231,6 +240,7 @@ class YoshikoAI {
 		int C; // プレー人数
 		int P; // お前のID(0~N-1)
 		int N; // 頂点数
+		int F, S;
 		List<Edge> es; // 辺集合
 		BitSet mines; // mineかどうか
 		List<Integer> futures;

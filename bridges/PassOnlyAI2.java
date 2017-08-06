@@ -1,5 +1,3 @@
-package icfpc2017;
-
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -13,325 +11,20 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.BitSet;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.InputMismatchException;
 import java.util.List;
 import java.util.Queue;
-import java.util.Random;
-import java.util.Set;
 
-import icfpc2017.PassOnlyAI2.Edge;
-
-class GrowAI {
+class PassOnlyAI2 {
 	public InputStream is;
 	public PrintWriter out;
 	String INPUT = "";
-	
-	int level;
-	
-	public GrowAI(int level)
-	{
-		this.level = level;
-	}
-	
-	final int PASS_WHEN_CHECKMATE = 0;
-	
-	public String guess(State s)
-	{
-		int n = s.g.size();
-//		DJSetList ds = new DJSetList(n);
-		RestorableDisjointSet2 rds = new RestorableDisjointSet2(n, n+5);
-		for(List<Edge> row : s.g){
-			for(Edge e : row){
-				if(e.owner == s.P)rds.union(e.x, e.y);
-			}
-		}
-		
-		long ec = go(level, level, s, rds);
-		if(ec == -1)return "";
-		return (ec>>>32) + " " + ((int)ec);
-	}
-	
-	Random gen = new Random(114514);
-	
-	long go(int rem, int dep, State s, RestorableDisjointSet2 rds)
-	{
-		int n = s.g.size();
-		List<Edge> cans = new ArrayList<>();
-		Set<Long> set = new HashSet<>();
-		for(int i = 0;i < n;i++){
-			List<Edge> row = s.g.get(i);
-			for(Edge e : row){
-				// 未所有で自分のクラスタ同士をくっつける辺をcansに追加
-				if(e.x == i && e.owner == -1 && !rds.equiv(e.x, e.y) && set.add((long)Math.min(e.x, e.y)<<32|Math.max(e.x, e.y))){
-					cans.add(e);
-				}
-			}
-		}
-		
-		// TODO 候補辺がない場合は妨害に回る
-		
-		// 候補辺がない場合適当に返す
-		if(cans.size() == 0){
-			if(rem == dep){
-				if(PASS_WHEN_CHECKMATE == 1){
-					return -1;
-				}else{
-					for(int i = 0;i < n;i++){
-						List<Edge> row = s.g.get(i);
-						for(Edge e : row){
-							if(e.x == i && e.owner == -1){
-								return (long)e.x<<32|e.y;
-							}
-						}
-					}
-					throw new RuntimeException();
-				}
-			}else{
-				return 0;
-			}
-		}
-		
-		// 候補辺を選んだときの追加スコア
-//		tr("START");
-		List<Datum> data = new ArrayList<>();
-		for(Edge e : cans){
-			long plus = 0;
-			{
-				int rx = rds.root(e.x);
-				for(int cur = rx;cur != -1;cur = rds.next[cur]){
-					if(s.mines.get(cur)){
-//						long cha = plus;
-						int ry = rds.root(e.y);
-						for(int tar = ry;tar != -1; tar = rds.next[tar]){
-							long d = s.mindistss.get(cur).get(tar);
-							plus += d*d;
-						}
-//						tr(plus-cha, cur);
-					}
-				}
-			}
-			{
-				int rx = rds.root(e.y);
-				for(int cur = rx;cur != -1;cur = rds.next[cur]){
-					if(s.mines.get(cur)){
-//						long cha = plus;
-						int ry = rds.root(e.x);
-						for(int tar = ry;tar != -1; tar = rds.next[tar]){
-							long d = s.mindistss.get(cur).get(tar);
-							plus += d*d;
-						}
-//						tr(plus-cha, cur);
-					}
-				}
-			}
-//			tr(e, plus);
-			data.add(new Datum(e, plus));
-		}
-		
-		data.sort((x, y) -> -Long.compare(x.score, y.score)); // スコア降順にソート
-		if(rem < dep){
-			int ohp = rds.hp;
-			List<Long> list = new ArrayList<>();
-			for(int i = 0;i < data.size() && i <= 20;i++){
-				Edge e = data.get(i).e;
-				rds.union(e.x, e.y);
-				long val = data.get(i).score + (rem > 0 ? go(rem-1, dep, s, rds) : 0);
-				rds.revert(ohp);
-				list.add(val);
-			}
-			Collections.sort(list);
-			long ret = 0;
-			for(int i = list.size()-1;i >= 0;i--){
-				ret = ret * 2 / 3 + list.get(i);
-			};
-			return ret;
-		}else{
-			int ohp = rds.hp;
-			long ret = 0;
-			long arg = -1;
-			for(int i = Math.min(cans.size()-1, 20);i >= 0;i--){
-				Datum d = data.get(i);
-				rds.union(d.e.x, d.e.y);
-				long val = d.score + (rem > 0 ? go(rem-1, dep, s, rds) : 0);
-				if(val > ret){
-					ret = val;
-					arg = (long)d.e.x<<32|d.e.y;
-				}
-				rds.revert(ohp);
-			}
-//			tr("ret", ret);
-			return arg;
-		}
-	}
-	
-	public static class DJSetList {
-		public int[] upper;
-		public int[] next;
-		public int[] tail;
-
-		public DJSetList(int n) {
-			upper = new int[n];
-			Arrays.fill(upper, -1);
-			next = new int[n];
-			tail = new int[n];
-			Arrays.fill(next, -1);
-			for(int i = 0;i < n;i++)tail[i] = i;
-		}
-
-		public int root(int x) {
-			return upper[x] < 0 ? x : (upper[x] = root(upper[x]));
-		}
-
-		public boolean equiv(int x, int y) {
-			return root(x) == root(y);
-		}
-
-		public boolean union(int x, int y) {
-			x = root(x);
-			y = root(y);
-			if (x != y) {
-				if (upper[y] < upper[x]) {
-					int d = x;
-					x = y;
-					y = d;
-				}
-				next[tail[x]] = y;
-				tail[x] = tail[y];
-				
-				upper[x] += upper[y];
-				upper[y] = x;
-			}
-			return x == y;
-		}
-
-		public int count() {
-			int ct = 0;
-			for (int u : upper)
-				if (u < 0)
-					ct++;
-			return ct;
-		}
-	}
-	
-	public static class RestorableDisjointSet2 {
-		public int[] upper; // minus:num_element(root) plus:root(normal)
-		private int[] targets;
-		private int[] histupper;
-		public int[] next;
-		public int[] tail;
-		public int[] histtail;
-		
-		public int hp = 0;
-		
-		public RestorableDisjointSet2(int n, int m)
-		{
-			upper = new int[n];
-			Arrays.fill(upper, -1);
-			
-			targets = new int[2*m];
-			histupper = new int[2*m];
-			// 
-			next = new int[n];
-			tail = new int[n];
-			histtail = new int[m];
-			Arrays.fill(next, -1);
-			for(int i = 0;i < n;i++)tail[i] = i;
-		}
-		
-		public RestorableDisjointSet2(RestorableDisjointSet2 ds)
-		{
-			this.upper = Arrays.copyOf(ds.upper, ds.upper.length);
-			this.histupper = Arrays.copyOf(ds.histupper, ds.histupper.length);
-			// 
-			this.hp = ds.hp;
-		}
-		
-		public int root(int x)
-		{
-			return upper[x] < 0 ? x : root(upper[x]);
-		}
-		
-		public boolean equiv(int x, int y)
-		{
-			return root(x) == root(y);
-		}
-		
-		public boolean union(int x, int y)
-		{
-			x = root(x);
-			y = root(y);
-			if(x != y) {
-				if(upper[y] < upper[x]) {
-					int d = x; x = y; y = d;
-				}
-//					w[x] += w[y];
-				histtail[hp/2] = tail[x];
-				record(x); record(y);
-				next[tail[x]] = y;
-				tail[x] = tail[y];
-				
-				upper[x] += upper[y];
-				upper[y] = x;
-			}
-			return x == y;
-		}
-		
-		public int time() { return hp; }
-		
-		private void record(int x)
-		{
-			targets[hp] = x;
-			histupper[hp] = upper[x];
-			// 
-			hp++;
-		}
-		
-		public void revert(int to)
-		{
-			while(hp > to){
-				upper[targets[hp-1]] = histupper[hp-1];
-				if((hp&1) == 1){
-					tail[targets[hp-1]] = histtail[hp/2];
-					next[tail[targets[hp-1]]] = -1;
-				}
-				// 
-				hp--;
-			}
-		}
-		
-		public int count()
-		{
-			int ct = 0;
-			for(int u : upper){
-				if(u < 0)ct++;
-			}
-			return ct;
-		}
-		
-		public int[][] makeUp()
-		{
-			int n = upper.length;
-			int[][] ret = new int[n][];
-			int[] rp = new int[n];
-			for(int i = 0;i < n;i++){
-				if(upper[i] < 0)ret[i] = new int[-upper[i]];
-			}
-			for(int i = 0;i < n;i++){
-				int r = root(i);
-				ret[r][rp[r]++] = i;
-			}
-			return ret;
-		}
-
-	}
 
 	public void solve() {
 		char phase = ns().charAt(0);
 		if(phase == '?'){
 			// 初回入力
-			out.println(this.getClass().getSimpleName());
+			out.println("PASSONLY");
 			out.flush();
 		}else if(phase == 'I'){
 			// 初回入力2
@@ -398,9 +91,8 @@ class GrowAI {
 				}
 			}
 			
-			String output = guess(state);
 			out.println(toBase64(state));
-			out.println(state.P + " " + output);
+			out.println(state.P);
 		}else{
 			throw new RuntimeException();
 		}
@@ -474,16 +166,6 @@ class GrowAI {
 		}
 	}
 	
-	static class Datum
-	{
-		Edge e;
-		long score;
-		public Datum(Edge e, long score) {
-			this.e = e;
-			this.score = score;
-		}
-	}
-	
 	static class Edge implements Serializable
 	{
 		private static final long serialVersionUID = 5180071263476967427L;
@@ -494,11 +176,6 @@ class GrowAI {
 			this.x = x;
 			this.y = y;
 			this.owner = -1;
-		}
-
-		@Override
-		public String toString() {
-			return "Edge [x=" + x + ", y=" + y + ", owner=" + owner + "]";
 		}
 	}
 
@@ -514,7 +191,7 @@ class GrowAI {
 	}
 
 	public static void main(String[] args) throws Exception {
-		new GrowAI(3).run();
+		new PassOnlyAI2().run();
 	}
 
 	private byte[] inbuf = new byte[1024];

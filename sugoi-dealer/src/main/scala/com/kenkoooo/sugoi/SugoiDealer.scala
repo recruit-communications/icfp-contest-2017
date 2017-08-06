@@ -51,7 +51,7 @@ object SugoiDealer extends Logging with BattleLogging {
   private def setup(programs: Seq[PunterProgram], map: LambdaMap): ArrayBuffer[Array[LambdaFuture]] = {
     val futureBuffer = new ArrayBuffer[Array[LambdaFuture]]()
     programs.foreach(program => {
-      val setupInput = mapper.writeValueAsString(SetupToPunter(program.punter, programs.size, map, LambdaSettings(true)))
+      val setupInput = mapper.writeValueAsString(SetupToPunter(program.punter, programs.size, map, LambdaSettings(futures = true, splurges = true)))
       val (setupOutput, code) = program.putCommand(setupInput, 10)
       if (code != 0 || setupOutput == "") {
         program.penaltyCount += 1
@@ -72,7 +72,7 @@ object SugoiDealer extends Logging with BattleLogging {
     * @param programs  AI programs
     * @param gameState state of the game
     */
-  private def play(programs: Seq[PunterProgram], gameState: GameState): ArrayBuffer[Move] = {
+  def play(programs: Seq[PunterProgram], gameState: GameState): ArrayBuffer[Move] = {
     val deque = new ArrayBuffer[Move]()
     programs.foreach { p => deque.append(PassMove(Pass(p.punter))) }
 
@@ -99,28 +99,67 @@ object SugoiDealer extends Logging with BattleLogging {
       val moveFromPunter = mapper.readValue[MoveFromPunter](playOutput, classOf[MoveFromPunter])
       p.state = moveFromPunter.state
 
-      if (moveFromPunter.claim == null) {
+      if (moveFromPunter.pass != null) {
+        // pass
         deque.append(PassMove(moveFromPunter.pass))
-        return
-      }
+        p.passCount += 1
+      } else if (moveFromPunter.claim != null) {
+        // claim
+        val source = moveFromPunter.claim.source
+        val target = moveFromPunter.claim.target
+        if (gameState.isUsed(source, target)) {
+          logger.error(s"$source -- $target is already used!!!")
+          p.penaltyCount += 1
+          deque.append(PassMove(Pass(p.punter)))
+        } else {
+          logger.info(s"$source -- $target")
+          gameState.addEdge(source, target, p.punter)
+          deque.append(ClaimMove(moveFromPunter.claim))
+        }
+      } else if (moveFromPunter.splurge != null) {
+        // splurge
+        val route = moveFromPunter.splurge.route
 
-      val source = moveFromPunter.claim.source
-      val target = moveFromPunter.claim.target
-      if (gameState.isUsed(source, target)) {
-        logger.error(s"$source -- $target is already used!!!")
+        // when pass n times, you can choose n+1 edges, the maximum splurge size will be n+2
+        if (route.length > p.passCount + 2) {
+          logger.error(s"too many splurge! pass: ${p.passCount}, splurge:${mapper.writeValueAsString(route)}")
+          p.penaltyCount += 1
+          deque.append(PassMove(Pass(p.punter)))
+          return
+        }
+        for (i <- 1 until route.length) {
+          val source = route(i - 1)
+          val target = route(i)
+          if (gameState.isUsed(source, target)) {
+            logger.error(s"$source -- $target is already used!!!")
+            p.penaltyCount += 1
+            deque.append(PassMove(Pass(p.punter)))
+            return
+          }
+        }
+
+        for (i <- 1 until route.length) {
+          val source = route(i - 1)
+          val target = route(i)
+          logger.info(s"$source -- $target")
+          gameState.addEdge(source, target, p.punter)
+          deque.append(ClaimMove(moveFromPunter.claim))
+        }
+
+        p.passCount -= route.length - 2
+        deque.append(SplurgeMove(moveFromPunter.splurge))
+      } else {
+        // empty move
+        logger.error(s"please specify claim, pass or splurge")
         p.penaltyCount += 1
         deque.append(PassMove(Pass(p.punter)))
-      } else {
-        logger.info(s"$source -- $target")
-        gameState.addEdge(source, target, p.punter)
-        deque.append(ClaimMove(moveFromPunter.claim))
       }
     }
 
     var turn = 0
     while (turn < gameState.edgeCount) {
       programs.foreach(p => {
-        playOneTurn(p)
+        if (turn < gameState.edgeCount) playOneTurn(p)
         turn += 1
       })
     }
@@ -131,6 +170,7 @@ object SugoiDealer extends Logging with BattleLogging {
 class PunterProgram(cmd: String, val punter: Int, battler: Boolean = false) extends Logging with BattleLogging {
   var state: Object = _
   var penaltyCount = 0
+  var passCount = 0
 
   /**
     * put a command to the program with timeout

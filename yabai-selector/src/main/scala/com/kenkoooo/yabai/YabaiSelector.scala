@@ -30,24 +30,23 @@ object YabaiSelector extends Logging {
     val validPunterIds = (for (entry <- mapper.readValue[List[PunterEntry]](YabaiUrl.get(YabaiUrl.punterList), new TypeReference[List[PunterEntry]] {})) yield entry.id).toSet
     validPunterIds.foreach(punterId => punterIdCount(punterId) = 0)
 
-    mapper.readValue[List[GameResult]](YabaiUrl.get(YabaiUrl.gameLog), new TypeReference[List[GameResult]] {}).foreach(r => Option(r.results).foreach(_.foreach(g => {
-      if (g.score == 0) zeroCount(g.punter) += 1
-      punterIdCount(g.punter) += 1
-      mapSelected(r.map) += 1
-      if (mapMemberCount(r.map) < r.results.length) mapMemberCount(r.map) = r.results.length
-    })))
+    mapper.readValue[List[GameResult]](YabaiUrl.get(YabaiUrl.gameLog), new TypeReference[List[GameResult]] {}).foreach(r => Option(r.results).foreach(_.foreach(g =>
+      if (validPunterIds.contains(g.punter)) {
+        if (g.score == 0) zeroCount(g.punter) += 1
+        punterIdCount(g.punter) += 1
+        mapSelected(r.map) += 1
+        if (mapMemberCount(r.map) < r.results.length) mapMemberCount(r.map) = r.results.length
+      })))
 
     mapSelected.foreach { case (mapId, count) => mapSelected(mapId) = count / mapMemberCount(mapId) }
     zeroCount.foreach { case (punterId, count) =>
       if (punterIdCount(punterId) > 10 && count.toDouble / punterIdCount(punterId).toDouble > ILLEGAL_ZERO_RATIO) {
         logger.info(s"zero point ratio: $punterId: $count / ${punterIdCount(punterId)} = ${count.toDouble / punterIdCount(punterId).toDouble}")
         punterIdCount.remove(punterId)
-      } else if (!validPunterIds.contains(punterId)) {
-        punterIdCount.remove(punterId)
       }
     }
 
-    val sortedPunters = for ((punterId, _) <- punterIdCount.toArray.sortBy { case (_, count) => count }) yield punterId
+    val sortedPunters = for ((punterId, _) <- punterIdCount.toArray.sortBy { case (_, count) => count } if validPunterIds.contains(punterId)) yield punterId
     var pos = 0
     Random.shuffle(mapSelected.toArray.sortBy { case (_, count) => count }.toList.take(FEWER_SELECTED_MAP_TOP)).take(PARALLEL_BATTLE_COUNT).foreach { case (mapId, _) =>
       val punterIds = new ArrayBuffer[PunterId]()
@@ -62,11 +61,14 @@ object YabaiSelector extends Logging {
   case class GameResult(map: LambdaMapId, results: Array[PlayerResult],
                         @JsonProperty("created_at") createdAt: Long,
                         id: String,
-                        @JsonProperty("punter_ids") punterIds: Array[String])
+                        @JsonProperty("punter_ids") punterIds: Array[String],
+                        job: Job)
 
   case class PlayerResult(score: Long, punter: PunterId)
 
   case class PunterEntry(id: PunterId, @JsonProperty("created_at") createdAt: Long)
+
+  case class Job(url: String)
 
 }
 

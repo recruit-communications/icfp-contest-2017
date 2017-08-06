@@ -163,11 +163,11 @@ function start() {
       punterId = battleEnv.punter;
       numPunters = battleEnv.punters;
 
-      if (battleEnv.map.settings != undefined) {
-        if (battleEnv.map.settings.features != undefined)
-          canReature = battleEnv.map.settings.features;
-        if (battleEnv.map.settings.splurges != undefined)
-          canSplurge = battleEnv.map.settings.splurges;
+      if (battleEnv.settings != undefined) {
+        if (battleEnv.settings.features != undefined)
+          canReature = battleEnv.settings.features;
+        if (battleEnv.settings.splurges != undefined)
+          canSplurge = battleEnv.settings.splurges;
       }
       splurges = []
       for (let i = 0; i < numPunters; i++) {

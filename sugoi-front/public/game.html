@@ -47,7 +47,7 @@
           return $('<tr>')
             .append($('<td>', { text: date }))
             .append($('<td>').append($('<a>', {
-              href: `https://s3-ap-northeast-1.amazonaws.com/icfp2017-kst3-jp/logs/app.${data.id}.log`,
+              href: `http://13.112.208.142:8080/battle-viewer/?log=https://s3-ap-northeast-1.amazonaws.com/icfp2017-kst3-jp/logs/app.${data.id}.log`,
               text: data.id
             })))
             .append($('<td>', { text: data.map }))

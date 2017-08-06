@@ -20,9 +20,10 @@ object YabaiSelector extends Logging {
   val ILLEGAL_PUNTER_RATIO = 0.5
   val ILLEGAL_MAP_COUNT = 10
   val FEWER_SELECTED_MAP_TOP = 10
-  val PARALLEL_BATTLE_COUNT = 5
 
   def main(args: Array[String]): Unit = {
+    val parallelCount = args(0).toInt
+
     val illegalCount = new mutable.TreeMap[PunterId, Int]().withDefaultValue(0)
     val mapSelected = new mutable.TreeMap[LambdaMapId, Int]().withDefaultValue(0)
     val mapMemberCount = new mutable.TreeMap[LambdaMapId, Int]().withDefaultValue(2)
@@ -33,7 +34,7 @@ object YabaiSelector extends Logging {
     validPunterIds.foreach(punterId => punterIdCount(punterId) = 0)
 
     mapper.readValue[List[MapEntry]](YabaiUrl.get(YabaiUrl.mapList), new TypeReference[List[MapEntry]] {}).foreach(entry => {
-      mapMemberCount(entry.id) = math.min(entry.punterNum, 2)
+      mapMemberCount(entry.id) = math.max(entry.punterNum, 2)
       mapSelected(entry.id) = 0
     })
     mapper.readValue[List[GameResult]](YabaiUrl.get(YabaiUrl.gameLog), new TypeReference[List[GameResult]] {})
@@ -66,7 +67,7 @@ object YabaiSelector extends Logging {
     val sortedPunters = for ((punterId, _) <- punterIdCount.toArray.sortBy { case (_, count) => count } if validPunterIds.contains(punterId)) yield punterId
     var pos = 0
     Random.shuffle(mapSelected.toArray.sortBy { case (_, count) => count }.toList.take(FEWER_SELECTED_MAP_TOP))
-      .take(PARALLEL_BATTLE_COUNT)
+      .take(parallelCount)
       .foreach { case (mapId, _) =>
         val punterIds = new ArrayBuffer[PunterId]()
         for (_ <- 0 until mapMemberCount(mapId)) {

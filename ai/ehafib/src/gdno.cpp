@@ -11,6 +11,7 @@ using namespace json11;
 const int USE_VERTEX_WEIGHT = 0;
 const double VERTEX_COEFFICIENT = 1e-4;
 const int USE_LAMBDA_WEIGHT = 1;
+const int DEBUG = 1;
 
 // ?: 初回入力
 void put_my_name() {
@@ -97,7 +98,7 @@ public:
 
 class State {
 public:
-    int number_of_players, punter_id, future_enabled;
+    int number_of_players, punter_id, future_enabled, splurge_enabled;
     int V, E, M;
     vector<int> sources, targets;
     vector<int> mines;
@@ -113,7 +114,7 @@ public:
 
     // I: 初回入力2時に最初に作るState
     State() { // {{{
-        cin >> number_of_players >> punter_id >> future_enabled;
+        cin >> number_of_players >> punter_id >> future_enabled >> splurge_enabled;
         cin >> V >> E >> M;
         for (int i = 0; i < E; i++) {
             int a, b;
@@ -156,6 +157,9 @@ public:
 
         number_of_players = json["players"].int_value();
         punter_id = json["pid"].int_value();
+        future_enabled = json["future_enabled"].int_value();
+        splurge_enabled = json["splurge_enabled"].int_value();
+
         V = json["v"].int_value();
         E = json["e"].int_value();
         M = json["m"].int_value();
@@ -181,6 +185,8 @@ public:
             G[sources[i]].push_back({targets[i], 1, i, false, 0.0});
             G[targets[i]].push_back({sources[i], 1, i, true, 0.0});
         }
+
+        //if(DEBUG) cout << "INPUT PARSE DONE" << endl;
         // }}}
     }
 
@@ -190,6 +196,7 @@ public:
             {"players", number_of_players},
             {"pid", punter_id},
             {"future_enabled", future_enabled},
+            {"splurge_enabled", splurge_enabled},
             {"v", V},
             {"e", E},
             {"m", M},
@@ -241,14 +248,19 @@ public:
         for (int i = 0; i < number_of_players; i++) { // O(N)
             vector<vector<long long>> addm(M, vector<long long>(V, 0));
 
+            //cout << "ADDM" << endl;
+            //cout << "MV " << i << " " << M << " "  << V << endl;
             for (int mi = 0; mi < M; mi++) {
                 for (int v = 0; v < V; v++) {
+                    // cout << mi << " "  << v << endl;
                     addm[mi][uf[i].root(v)] += score[mi][v];
+                    // cout << "root: " << uf[i].root(v) << endl;
                 }
             }
 
             // long long lprev = calc_score(i, uf[i]); // O(V)
 
+            //cout << "LPREV" << endl;
             long long lprev = 0;
             for (int mi = 0; mi < M; mi++) {
                 int m = mines[mi];
@@ -417,10 +429,15 @@ public:
             return choose_randomly();
         }
 
+        //cout << "INIT_UF" << endl;
         init_union_find();
+        //cout << "VD" << endl;
         init_vertex_deg();
+        //cout << "VW" << endl;
         init_vertex_weight();
+        //cout << "ANSW" << endl;
         add_next_score_weight_kai();
+        //cout << "ANL" << endl;
         add_near_lambda();
 
         // cerr << "idx = " << idx << endl;
@@ -492,14 +509,22 @@ int main() {
             string json_str;
             getline(cin, json_str);
 
+            //cout << "State received." << endl;
             State s = State(json_str);
 
             for (int i = 0; i < s.number_of_players; i++) {
-                int a, b;
-                cin >> a >> b;
-                s.set_used_edge(a, b, i);
-            }
+                int path_length;
+                cin >> path_length;
 
+                vector<int> path(path_length);
+                for(int j = 0; j < path_length; j++) {
+                    cin >> path[j];
+                }
+
+                for(int j = 0; j+1 < path_length; j++) {
+                    s.set_used_edge(path[j], path[j+1], i);
+                }
+            }
             doit(s);
 
         } else {

@@ -5,6 +5,7 @@ import subprocess
 import shlex
 
 JUNCTION = False
+DEBUG = False
 
 
 def compress(sorted_site_ids):
@@ -189,6 +190,9 @@ class Process:
 
     def exec(self, input):
         proc = subprocess.Popen(self.cmdline, stdout=subprocess.PIPE, stdin=subprocess.PIPE)
+        if DEBUG:
+            with open('dump.in', 'w') as dump_f:
+                print(input, file=dump_f)
         stdout = proc.communicate(input=input.encode())[0]
         return stdout.decode().rstrip()
 

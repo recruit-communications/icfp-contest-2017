@@ -40,8 +40,8 @@ object YabaiSelector extends Logging {
     mapSelected.foreach { case (mapId, count) => mapSelected(mapId) = count / mapMemberCount(mapId) }
     zeroCount.foreach { case (punterId, count) =>
       if (punterIdCount(punterId) > 10 && count.toDouble / punterIdCount(punterId).toDouble > ILLEGAL_ZERO_RATIO) {
+        logger.info(s"zero point ratio: $punterId: $count / ${punterIdCount(punterId)} = ${count.toDouble / punterIdCount(punterId).toDouble}")
         punterIdCount.remove(punterId)
-        logger.info(s"zero point ratio: $punterId: ${count.toDouble / punterIdCount(punterId).toDouble}")
       } else if (!validPunterIds.contains(punterId)) {
         punterIdCount.remove(punterId)
       }

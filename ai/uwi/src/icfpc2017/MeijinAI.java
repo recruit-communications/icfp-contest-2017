@@ -65,8 +65,9 @@ class MeijinAI {
 			}
 		}
 		List<Edge> cans = new ArrayList<>(map.values());
-		
-		long ec = go(level, level, s.P, s, cans, rdss, Long.MIN_VALUE/2, Long.MAX_VALUE/2);
+		int maxdep = Math.min(s.remturn, level);
+		long ec = go(maxdep, maxdep, s.P, s, cans, rdss, Long.MIN_VALUE/2, Long.MAX_VALUE/2);
+		s.remturn--;
 		if(ec == -1)return "-1 -1";
 		return (ec>>>32) + " " + ((int)ec);
 	}
@@ -127,9 +128,9 @@ class MeijinAI {
 				rdss[turn].union(d.e.x, d.e.y);
 				d.e.dup--;
 				long val = d.score - (rem > 0 ? go(rem-1, dep, turn^1, s, cans, rdss, -beta, -alpha) : 0);
-				alpha = Math.max(alpha, val);
 				d.e.dup++;
 				rdss[turn].revert(ohp);
+				alpha = Math.max(alpha, val);
 				if(alpha >= beta)return alpha; // alpha-beta cut
 			}
 			return alpha;
@@ -142,6 +143,7 @@ class MeijinAI {
 				rdss[turn].union(d.e.x, d.e.y);
 				d.e.dup--;
 				long val = d.score - (rem > 0 ? go(rem-1, dep, turn^1, s, cans, rdss, -beta, -alpha) : 0);
+//				tr(d.e, d.score, val);
 				if(val > ret){
 					ret = val;
 					arg = (long)d.e.x<<32|d.e.y;
@@ -302,14 +304,13 @@ class MeijinAI {
 			state.C = C;
 			state.P = P;
 			state.mindistss = mindistss;
+			state.remturn = (M-P+C-1)/C;
 			if(F == 1){
 				state.futures = new ArrayList<>();
 				for(int i = 0;i < N;i++)state.futures.add(null);
 			}
 			out.println(toBase64(state));
-			if(F == 1){
-				out.println(0);
-			}
+			out.println(0);
 		}else if(phase == 'G'){
 			// ゲーム中入力
 			State state = (State)fromBase64(ns());
@@ -327,6 +328,11 @@ class MeijinAI {
 					throw new RuntimeException(); // ここにはこない
 				}
 			}
+//			for(List<Edge> row : state.g){
+//				for(Edge e : row){
+//					tr(e);
+//				}
+//			}
 			
 			String output = guess(state);
 			out.println(toBase64(state));
@@ -386,6 +392,7 @@ class MeijinAI {
 		private static final long serialVersionUID = -4623606164150300132L;
 		int C; // プレー人数
 		int P; // お前のID(0~N-1)
+		int remturn; // 残りターン
 		List<List<Edge>> g; // グラフ
 		BitSet mines; // mineかどうか
 		List<List<Integer>> mindistss; // 最短経路長

@@ -65,6 +65,10 @@ function postJenkins({id, map_id, punter_ids}) {
       }
       const queue = `${res.caseless.dict.location}api/json`;
 
+      // TODO: 一旦queueの段階で止める
+      fulfill(queue);
+      return
+
       // queueはすぐ処理されないので、waitを入れてリクエスト
       setTimeout(() => {
         request.get({uri: queue}, (err, res, body) => {

@@ -19,6 +19,7 @@ for file_name in os.listdir("./"):
         num_edges = -1
         num_punters = -1
         for line in f.readlines():
+            line = line.replace("true", "\"true\"")
             line = line.strip()[5:]
             try:
                 jsn = eval(line)

@@ -41,6 +41,14 @@ function dbPut(params) {
   });
 }
 
+function dbDelete(params) {
+  return new Promise((fulfill, reject) => {
+    db.delete(params, (err, data) => {
+      err ? reject(err) : fulfill(data);
+    });
+  });
+}
+
 function s3List(prefix) {
   return new Promise((fulfill, reject) => {
     s3.listObjects({
@@ -122,11 +130,11 @@ module.exports = {
         league_id: league_id,
         created_at: created_at,
         punter_ids: punter_ids,
-        map: map_id,
+        map_id: map_id,
         job: job,
-        results: results,
       }
     };
+    if (results) params.Item.results = results;
     return dbPut(params);
   },
   updateGame: ({id, created_at, results, job}) => {
@@ -148,4 +156,20 @@ module.exports = {
     };
     return dbUpdate(params);
   },
+  deletePunter: (id) => {
+    s3.deleteObject({
+      Bucket: "icfp2017-kst3-jp", 
+      Key: "clients/" + id + ".tar.gz"
+    }, function(err, data) {
+      if (err) console.log(err, err.stack);
+      else     console.log(data);
+    });
+    const params = {
+      TableName: 'icfp-punter',
+      Key: {
+        id: id
+      }
+    }
+    return dbDelete(params);
+  }
 };

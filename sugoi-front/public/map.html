@@ -18,9 +18,12 @@
       <table class="table table-bordered tablesorter">
         <thead>
           <tr>
-            <th>id</th>
-            <th>punter_num</th>
-            <th>file</th>
+            <th>id (DL)</th>
+            <th>標準対戦人数</th>
+            <th>sites</th>
+            <th>mines</th>
+            <th>rivers</th>
+            <th>thumb</th>
           </tr>
         </thead>
         <tbody>
@@ -33,13 +36,22 @@
     <script>
       $(() => {
         function createRow(data, idx) {
+          const info = data.info || {};
+          const thumb = `https://s3-ap-northeast-1.amazonaws.com/icfp2017-kst3-jp/maps/thumbs/${data.id}.png`;
           return $('<tr>')
-            .append($('<td>', { text: data.id }))
-            .append($('<td>', { text: data.punter_num }))
             .append($('<td>').append($('<a>', {
               href: data.url,
-              text: 'JSON'
-            })));
+              text: data.id
+            })))
+            .append($('<td>', { text: data.punter_num }))
+            .append($('<td>', { text: info.sites }))
+            .append($('<td>', { text: info.mines }))
+            .append($('<td>', { text: info.rivers }))
+            .append($('<td>').append($('<img>', {
+              src: thumb,
+              style: 'height: 200px;'
+            })))
+          ;
         }
         $.getJSON('/map/list', (res) => {
           res.forEach((d, i) => {

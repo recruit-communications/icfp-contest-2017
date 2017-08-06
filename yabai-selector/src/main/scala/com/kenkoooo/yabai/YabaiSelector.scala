@@ -22,22 +22,23 @@ object YabaiSelector {
   val PARALLEL_BATTLE_COUNT = 5
 
   def main(args: Array[String]): Unit = {
-    val resultList = mapper.readValue[List[GameResult]](YabaiUrl.get(YabaiUrl.gameLog), new TypeReference[List[GameResult]] {})
     val zeroCount = new mutable.TreeMap[PunterId, Int]().withDefaultValue(0)
     val mapSelected = new mutable.TreeMap[LambdaMapId, Int]().withDefaultValue(0)
     val mapMemberCount = new mutable.TreeMap[LambdaMapId, Int]().withDefaultValue(0)
     val punterIdCount = new mutable.TreeMap[PunterId, Int]().withDefaultValue(0)
-    resultList.foreach(r => Option(r.results).foreach(_.foreach(g => {
+    mapper.readValue[List[GameResult]](YabaiUrl.get(YabaiUrl.gameLog), new TypeReference[List[GameResult]] {}).foreach(r => Option(r.results).foreach(_.foreach(g => {
       if (g.score == 0) zeroCount(g.punter) += 1
       else punterIdCount(g.punter) += 1
       mapSelected(r.map) += 1
       if (mapMemberCount(r.map) < r.results.length) mapMemberCount(r.map) = r.results.length
     })))
 
+    val validPunterIds = (for (entry <- mapper.readValue[List[PunterEntry]](YabaiUrl.get(YabaiUrl.punterList), new TypeReference[List[PunterEntry]] {})) yield entry.id).toSet
+
     mapSelected.foreach { case (mapId, count) => mapSelected(mapId) = count / mapMemberCount(mapId) }
     for ((punterId, count) <- zeroCount if count > ILLEGAL_ZERO_SLESHHOLD) punterIdCount.remove(punterId)
 
-    val sortedPunters = for ((punterId, _) <- punterIdCount.toArray.sortBy { case (_, count) => count }) yield punterId
+    val sortedPunters = for ((punterId, _) <- punterIdCount.toArray.sortBy { case (_, count) => count } if validPunterIds.contains(punterId)) yield punterId
     var pos = 0
     Random.shuffle(mapSelected.toArray.sortBy { case (_, count) => count }.toList.take(FEWER_SELECTED_MAP_TOP)).take(PARALLEL_BATTLE_COUNT).foreach { case (mapId, _) =>
       val punterIds = new ArrayBuffer[PunterId]()
@@ -49,13 +50,14 @@ object YabaiSelector {
     }
   }
 
-  case class GameResult(map: LambdaMapId,
-                        results: Array[PlayerResult],
+  case class GameResult(map: LambdaMapId, results: Array[PlayerResult],
                         @JsonProperty("created_at") createdAt: Long,
                         id: String,
                         @JsonProperty("punter_ids") punterIds: Array[String])
 
   case class PlayerResult(score: Long, punter: PunterId)
+
+  case class PunterEntry(id: PunterId, @JsonProperty("created_at") createdAt: Long)
 
 }
 
@@ -63,6 +65,7 @@ object YabaiSelector {
 object YabaiUrl extends Logging {
   val host = "http://13.112.208.142:3000"
   val gameLog = s"$host/game/list"
+  val punterList = s"$host/punter/list"
 
   def gameExecute(mapId: String, punterIds: List[String]): String = s"$host/game/execute?map_id=$mapId&punter_ids=${punterIds.mkString(",")}"
 

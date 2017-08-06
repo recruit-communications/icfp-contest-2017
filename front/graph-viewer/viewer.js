@@ -109,8 +109,8 @@ $(function(){
       selectMap(param1);
     } else {
       loadMapList(true);
-    } else {
-      loadMapList(false);
     }
+  } else {
+    loadMapList(false);
   }
 })

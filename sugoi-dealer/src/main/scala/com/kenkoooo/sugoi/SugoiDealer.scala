@@ -83,6 +83,10 @@ object SugoiDealer extends Logging with BattleLogging {
 
       if (p.penaltyCount >= 10) {
         // dropout
+        if (p.penaltyCount == 10) {
+          logger.error(s"punter ${p.punter} 10 times penalty")
+        }
+        p.penaltyCount += 1
         deque.append(PassMove(Pass(p.punter)))
         return
       }
@@ -108,7 +112,7 @@ object SugoiDealer extends Logging with BattleLogging {
         val source = moveFromPunter.claim.source
         val target = moveFromPunter.claim.target
         if (gameState.isUsed(source, target)) {
-          logger.error(s"$source -- $target is already used!!!")
+          logger.error(s"punter ${p.punter}: $source -- $target is already used!!!")
           p.penaltyCount += 1
           deque.append(PassMove(Pass(p.punter)))
         } else {
@@ -122,7 +126,7 @@ object SugoiDealer extends Logging with BattleLogging {
 
         // when pass n times, you can choose n+1 edges, the maximum splurge size will be n+2
         if (route.length > p.passCount + 2) {
-          logger.error(s"too many splurge! pass: ${p.passCount}, splurge:${mapper.writeValueAsString(route)}")
+          logger.error(s"punter ${p.punter}: too many splurge! pass: ${p.passCount}, splurge:${mapper.writeValueAsString(route)}")
           p.penaltyCount += 1
           deque.append(PassMove(Pass(p.punter)))
           return
@@ -131,7 +135,7 @@ object SugoiDealer extends Logging with BattleLogging {
           val source = route(i - 1)
           val target = route(i)
           if (gameState.isUsed(source, target)) {
-            logger.error(s"$source -- $target is already used!!!")
+            logger.error(s"punter ${p.punter}: $source -- $target is already used!!!")
             p.penaltyCount += 1
             deque.append(PassMove(Pass(p.punter)))
             return
@@ -150,7 +154,7 @@ object SugoiDealer extends Logging with BattleLogging {
         deque.append(SplurgeMove(moveFromPunter.splurge))
       } else {
         // empty move
-        logger.error(s"please specify claim, pass or splurge")
+        logger.error(s"punter ${p.punter}: please specify claim, pass or splurge")
         p.penaltyCount += 1
         deque.append(PassMove(Pass(p.punter)))
       }

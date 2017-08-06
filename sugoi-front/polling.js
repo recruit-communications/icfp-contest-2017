@@ -36,6 +36,8 @@ db.maps().then((data) => {
           created_at: e.LastModified.getTime(),
           info: log.parseMap(obj.Body.utf8Slice()),
         });
+      }).catch((e) => {
+        console.log(e);
       });
     });
   });
@@ -52,8 +54,12 @@ const params = {
 };
 db.games(params).then((data) => {
   data.forEach((game) => {
-    const key = db.i2p(game.id, 'logs/app.', '.log');
-    db.s3Get(key).then((obj) => {
+    log.getBuildUrl(game.job.url).then((url) => {
+      game.job.url = url;
+      console.log(url);
+      const key = db.i2p(game.id, 'logs/app.', '.log');
+      return db.s3Get(key);
+    }).then((obj) => {
       // ログから結果を反映
       const res = log.parseLog(obj.Body.utf8Slice()).map((r, i) => {
         r.punter = game.punter_ids[i]

@@ -65,21 +65,8 @@ function postJenkins({id, map_id, punter_ids}) {
       }
       const queue = `${res.caseless.dict.location}api/json`;
 
-      // TODO: 一旦queueの段階で止める
+      // ビルドURLは結果取得時に更新することにし、登録時点ではqueueの段階で止める
       fulfill(queue);
-      return
-
-      // queueはすぐ処理されないので、waitを入れてリクエスト
-      setTimeout(() => {
-        request.get({uri: queue}, (err, res, body) => {
-          if (err) {
-            // ジョブ自体は登録されているはずなので成功扱いでも良いのかも？
-            reject(err);
-            return;
-          }
-          fulfill(JSON.parse(body).executable.url);
-        });
-      }, 10000);
     });
   });
 }

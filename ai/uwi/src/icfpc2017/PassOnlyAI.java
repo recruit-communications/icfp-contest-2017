@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Queue;
 import java.util.Scanner;
 
+// Splurge非対応
 public class PassOnlyAI {
 	static Scanner in;
 	static PrintWriter out;
@@ -62,9 +63,7 @@ public class PassOnlyAI {
 				for(int i = 0;i < V;i++)state.futures.add(null);
 			}
 			out.println(toBase64(state));
-			if(F == 1){
-				out.println(0);
-			}
+			out.println(0);
 		}else if(phase == 'G'){
 			// ゲーム中入力
 			State state = (State)fromBase64(in.next());

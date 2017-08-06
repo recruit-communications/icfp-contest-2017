@@ -165,8 +165,9 @@ struct Game {
 			}
 		}
 
-		vector<int> reachable(N); // i-th bit of reachable[j] := vertex j is reachable from mine i
+		vi reachable(N); // i-th bit of reachable[j] := vertex j is reachable from mine i
 		vector<bool> candidate_to(N);
+		vi approach_node_score(N);
 		for (int i = 0; i < K; ++i) {
 			vector<int> q = {mines[i]};
 			reachable[q[0]] |= (1 << i);
@@ -177,6 +178,22 @@ struct Game {
 					} else if (e.owner == I && (reachable[e.to] & (1 << i)) == 0) {
 						q.push_back(e.to);
 						reachable[e.to] |= (1 << i);
+					}
+				}
+			}
+			int dist = 1;
+			int dist_end = q.size();
+			vi visited(reachable);
+			for (int j = 0; j < q.size(); ++j) {
+				if (j == dist_end) {
+					dist++;
+					dist_end = q.size();
+				}
+				for (const Edge& e : edges[q[j]]) {
+					if (e.owner == NOT_OWNED && (visited[e.to] & (1 << i)) == 0) {
+						visited[e.to] |= (1 << i);
+						approach_node_score[e.to] += SCORE_SCALE / (dist + 0.1);
+						q.push_back(e.to);
 					}
 				}
 			}
@@ -202,20 +219,33 @@ struct Game {
 					if (reachable[i] & (1 << j)) {
 						expand_score.back() += dists[j][e.to] * dists[j][e.to] * SCORE_SCALE;
 					} else {
-						approach_score.back() += SCORE_SCALE / (dists[j][e.to] * dists[j][e.to] + 1);
+						approach_score.back() += approach_node_score[e.to];
 					}
 				}
 			}
 		}
 
+		if (cand_edges.empty()) {
+			for (int i = 0; i < N; ++i) {
+				for (const Edge& e : edges[i]) {
+					if (e.owner == NOT_OWNED) {
+						return make_pair(i, e.to);
+					}
+				}
+			}
+			return make_pair(-1, -1);
+		}
+
 		vector<pair<i64, int>> scores(cand_edges.size());
 		vi weights;
 		if (turn < M / C / 3) {
-			weights = {5, 1, 0, 50}; // in early phase, prior connecting mines
+			weights = {50, 1, 0, 5}; // in early phase, prior connecting mines
 		} else {
-			weights = {3, 2, 1, 10};
+			weights = {5, 2, 1, 3};
 		}
 		for (int i = 0; i < cand_edges.size(); ++i) {
+			// cerr << "(" << cand_edges[i].first << " " << cand_edges[i].second->to << ") ";
+			// cerr << connect_score[i] << " " << order_score[i] << " " << expand_score[i] << " " << approach_score[i] << endl;
 			scores[i].first = connect_score[i] * weights[0] + order_score[i] * weights[1] + expand_score[i] * weights[2] + approach_score[i] * weights[3];
 			scores[i].second = i;
 		}

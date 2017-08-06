@@ -19,3 +19,19 @@
 `python3 bridge.py Kenkoooo 'java PassOnlyAI' 'java PassOnlyAI' 'java PassOnlyAI'`
 
 `def decision(bridge):` の内部で、頂点数やプレイヤー数などで、プログラムを切り分ける(ここは提出前に調整する)
+
+# エラったとき
+
+エラーログの中から、スタックトレース直後の
+数値:なんかJSON
+
+という部分の、「数値:なんかJSON」を取り出して
+
+```txt
+15:{"you":"hoge"}
+(ここに数値:JSON を貼り付ける)
+```
+
+て、
+`punter < file`
+する

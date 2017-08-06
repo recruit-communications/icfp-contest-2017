@@ -15,13 +15,16 @@ $(function() {
   }
 
   $('html').keydown(function(e) {
+    console.log(e.which);
     switch(e.which) {
-    case 39: // Key[->]
-      handleGo();
-      break;
-    case 37: // Key[<-]
-      handleBack();
-      break;
+      case 39: // Key[->]
+      case 190:
+        handleGo();
+        break;
+      case 188:
+      case 37: // Key[<-]
+        handleBack();
+        break;
     }   
   }); 
 });

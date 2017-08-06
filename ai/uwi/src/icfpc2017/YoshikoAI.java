@@ -17,57 +17,131 @@ import java.util.InputMismatchException;
 import java.util.List;
 import java.util.Queue;
 
-class PassOnlyAI2 {
+import icfpc2017.PassOnlyAI2.Edge;
+
+class YoshikoAI {
 	public InputStream is;
 	public PrintWriter out;
 	String INPUT = "";
+	
+	String guess(State s)
+	{
+		int n = s.N;
+		DJSet ds = new DJSet(n); // TODO これもStateに入れてもいいかも
+		for(Edge e : s.es){
+			if(e.owner == s.P){
+				ds.union(e.x, e.y);
+			}
+		}
+		int[] mcount = new int[n];
+		for(int i = 0;i < n;i++){
+			if(s.mines.get(i)){
+				mcount[ds.root(i)]++;
+			}
+		}
+		long max = -1;
+		Edge best = null;
+		for(Edge e : s.es){
+			if(e.owner == -1 && !ds.equiv(e.x, e.y)){
+				long score = (long)(mcount[ds.root(e.x)]+1) * (mcount[ds.root(e.y)]+1);
+				if(score > max){
+					max = score;
+					best = e;
+				}
+			}
+		}
+		if(best == null){
+			for(Edge e : s.es){
+				if(e.owner == -1){
+					long score = mcount[ds.root(e.x)];
+					if(score > max){
+						max = score;
+						best = e;
+					}
+				}
+			}
+		}
+		assert best != null;
+		return best.x + " " + best.y;
+	}
+	
+	public static class DJSet {
+		public int[] upper;
+
+		public DJSet(int n) {
+			upper = new int[n];
+			Arrays.fill(upper, -1);
+		}
+
+		public int root(int x) {
+			return upper[x] < 0 ? x : (upper[x] = root(upper[x]));
+		}
+
+		public boolean equiv(int x, int y) {
+			return root(x) == root(y);
+		}
+
+		public boolean union(int x, int y) {
+			x = root(x);
+			y = root(y);
+			if (x != y) {
+				if (upper[y] < upper[x]) {
+					int d = x;
+					x = y;
+					y = d;
+				}
+				upper[x] += upper[y];
+				upper[y] = x;
+			}
+			return x == y;
+		}
+
+		public int count() {
+			int ct = 0;
+			for (int u : upper)
+				if (u < 0)
+					ct++;
+			return ct;
+		}
+	}
+
 
 	public void solve() {
 		char phase = ns().charAt(0);
 		if(phase == '?'){
 			// 初回入力
-			out.println("PASSONLY");
+			out.println("僕らは目指した〜");
 			out.flush();
 		}else if(phase == 'I'){
 			// 初回入力2
 			int C = ni(), P = ni(), F = ni(), S = ni();
 			int N = ni(), M = ni(), K = ni();
-			List<List<Edge>> g = new ArrayList<>();
-			for(int i = 0;i < N;i++)g.add(new ArrayList<>());
+			List<Edge> es = new ArrayList<>();
 			for(int i = 0;i < M;i++){
 				int s = ni(), t = ni();
-				Edge e = new Edge(s, t);
-				g.get(s).add(e);
-				g.get(t).add(e);
+				Edge e = new Edge(Math.min(s, t), Math.max(s, t));
+				es.add(e);
 			}
+			es.sort((a, b) -> {
+				if(a.x != b.x)return a.x - b.x;
+				return a.y - b.y;
+			});
 			BitSet mines = new BitSet();
 			for(int i = 0;i < K;i++){
 				mines.set(ni());
 			}
-			List<List<Integer>> mindistss = new ArrayList<>();
-			for(int i = 0;i < N;i++){
-				if(mines.get(i)){
-					mindistss.add(mindists(g, i));
-				}else{
-					mindistss.add(null);
-				}
-			}
 			
 			State state = new State();
-			state.g = g;
+			state.es = es;
 			state.mines = mines;
 			state.C = C;
 			state.P = P;
+			state.N = N;
 			state.F = F;
 			state.S = S;
-			state.mindistss = mindistss;
 			if(F == 1){
 				state.futures = new ArrayList<>();
 				for(int i = 0;i < N;i++)state.futures.add(null);
-			}
-			if(S == 1){
-				state.charges = new ArrayList<>();
-				for(int i = 0;i < C;i++)state.charges.add(0);
 			}
 			out.println(toBase64(state));
 			out.println(0);
@@ -75,7 +149,7 @@ class PassOnlyAI2 {
 			// ゲーム中入力
 			State state = (State)fromBase64(ns());
 			int C = state.C;
-			outer:
+			List<Edge> added = new ArrayList<>();
 			for(int i = 0;i < C;i++){
 				int L = ni();
 				int[] a = new int[L];
@@ -84,17 +158,32 @@ class PassOnlyAI2 {
 				}
 				for(int j = 0;j < L-1;j++){
 					int s = a[j], t = a[j+1];
-					for(Edge e : state.g.get(s)){
-						if((e.x^e.y^s) == t && e.owner == -1){
-							e.owner = i;
-							continue outer;
-						}
+					if(s > t){
+						int d = s; s = t; t = d;
 					}
+					Edge e = new Edge(s, t);
+					e.owner = i;
+					added.add(e);
+				}
+			}
+			added.sort((a, b) -> {
+				if(a.x != b.x)return a.x - b.x;
+				return a.y - b.y;
+			});
+			int q = 0;
+			for(int p = 0;p < added.size();p++){
+				Edge e = added.get(p);
+				while(q < state.es.size() && (state.es.get(q).owner != -1 || state.es.get(q).x < e.x || state.es.get(q).x == e.x && state.es.get(q).y < e.y)){
+					q++;
+				}
+				if(q < state.es.size() && state.es.get(q).x == e.x && state.es.get(q).y == e.y){
+					state.es.get(q).owner = e.owner;
 				}
 			}
 			
 			out.println(toBase64(state));
-			out.println(state.P);
+			out.print(state.P + " ");
+			out.println(guess(state));
 		}else{
 			throw new RuntimeException();
 		}
@@ -150,11 +239,10 @@ class PassOnlyAI2 {
 		private static final long serialVersionUID = -4623606164150300132L;
 		int C; // プレー人数
 		int P; // お前のID(0~N-1)
-		int F, S; // future splurge対応フラグ
-		List<List<Edge>> g; // グラフ
-		List<Integer> charges; // splurgeチャージ量
+		int N; // 頂点数
+		int F, S;
+		List<Edge> es; // 辺集合
 		BitSet mines; // mineかどうか
-		List<List<Integer>> mindistss; // 最短経路長
 		List<Integer> futures;
 	}
 	
@@ -193,7 +281,7 @@ class PassOnlyAI2 {
 	}
 
 	public static void main(String[] args) throws Exception {
-		new PassOnlyAI2().run();
+		new YoshikoAI().run();
 	}
 
 	private byte[] inbuf = new byte[1024];

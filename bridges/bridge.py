@@ -193,7 +193,7 @@ class Process:
         global LAST_INPUT
         LAST_INPUT = input
         stdout, stderr = proc.communicate(input=input.encode())
-        sys.stderr.print(stderr.decode().rstrip())
+        print(stderr.decode().rstrip(), file=sys.stderr)
         return stdout.decode().rstrip()
 
     def handshake(self):
@@ -369,5 +369,5 @@ if __name__ == '__main__':
         elif len(sys.argv) == 4:
             online()
     except:
-        sys.stderr.print(LAST_INPUT)
+        print(LAST_INPUT, file=sys.stderr)
         raise

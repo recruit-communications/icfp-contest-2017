@@ -30,12 +30,13 @@ object YabaiSelector extends Logging {
     val validPunterIds = (for (entry <- mapper.readValue[List[PunterEntry]](YabaiUrl.get(YabaiUrl.punterList), new TypeReference[List[PunterEntry]] {})) yield entry.id).toSet
     validPunterIds.foreach(punterId => punterIdCount(punterId) = 0)
 
-    mapper.readValue[List[GameResult]](YabaiUrl.get(YabaiUrl.gameLog), new TypeReference[List[GameResult]] {}).foreach(r => Option(r.results).foreach(_.foreach(g => {
-      if (g.score == 0) zeroCount(g.punter) += 1
-      punterIdCount(g.punter) += 1
-      mapSelected(r.map) += 1
-      if (mapMemberCount(r.map) < r.results.length) mapMemberCount(r.map) = r.results.length
-    })))
+    mapper.readValue[List[GameResult]](YabaiUrl.get(YabaiUrl.gameLog), new TypeReference[List[GameResult]] {}).foreach(r => Option(r.results).foreach(_.foreach(g =>
+      if (validPunterIds.contains(g.punter)) {
+        if (g.score == 0) zeroCount(g.punter) += 1
+        punterIdCount(g.punter) += 1
+        mapSelected(r.map) += 1
+        if (mapMemberCount(r.map) < r.results.length) mapMemberCount(r.map) = r.results.length
+      })))
 
     mapSelected.foreach { case (mapId, count) => mapSelected(mapId) = count / mapMemberCount(mapId) }
     zeroCount.foreach { case (punterId, count) =>

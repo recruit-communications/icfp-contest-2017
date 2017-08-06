@@ -85,43 +85,6 @@ struct XorShift {
 };
 const double XorShift::TO_DOUBLE = 1.0 / (1LL << 32);
 
-struct UnionFind {
-	vi set;
-
-	UnionFind(int n) : set(n, -1) { }
-
-	void reset(const UnionFind& other) {
-		copy(other.set.begin(), other.set.end(), set.begin());
-	}
-
-	void unite(int a, int b) {
-		int rtA = root(a);
-		int rtb = root(b);
-		if (rtA == rtb) {
-			return;
-		}
-		set[rtA] += set[rtb];
-		set[rtb] = rtA;
-	}
-
-	bool find(int a, int b) {
-		return root(a) == root(b);
-	}
-
-	int root(int a) {
-		if (set[a] < 0) {
-			return a;
-		} else {
-			set[a] = root(set[a]);
-			return set[a];
-		}
-	}
-
-	int size(int a) {
-		return -set[root(a)];
-	}
-};
-
 struct Edge {
 	int from, to, owner;
 };
@@ -275,18 +238,18 @@ struct MCTS {
 	Edge* select_move(PlayerState& st) {
 		const int EXPAND_PREV = 0, RANDOM_NODE = 1, RANDOM_EDGE = 2, EXPAND_PREV_PREV = 3;
 		int strategy = RANDOM_EDGE;
-		// if (st.prev_to == -1 || st.reachable[st.prev_to] == 0) {
-		// 	strategy = (rnd.nextUInt() & 0x330) ? RANDOM_NODE : RANDOM_EDGE;
-		// } else {
-		// 	int rv = rnd.nextUInt(32);
-		// 	if (rv < 29) {
-		// 		strategy = EXPAND_PREV;
-		// 	} else if (rv < 31) {
-		// 		strategy = RANDOM_NODE;
-		// 	} else {
-		// 		strategy = RANDOM_EDGE;
-		// 	}
-		// }
+		if (st.prev_to == -1 || st.reachable[st.prev_to] == 0) {
+			strategy = (rnd.nextUInt() & 0x330) ? RANDOM_NODE : RANDOM_EDGE;
+		} else {
+			int rv = rnd.nextUInt(32);
+			if (rv < 16) {
+				strategy = EXPAND_PREV;
+			} else if (rv < 28) {
+				strategy = RANDOM_NODE;
+			} else {
+				strategy = RANDOM_EDGE;
+			}
+		}
 		if (strategy == EXPAND_PREV) {
 			const int size = edges[st.prev_to].size();
 			int ei = rnd.nextUInt(size);

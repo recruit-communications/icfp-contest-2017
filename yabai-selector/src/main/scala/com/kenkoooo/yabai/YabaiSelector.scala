@@ -4,8 +4,11 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.core.`type`.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
+import org.apache.logging.log4j.scala.Logging
 
 import scala.collection.mutable
+import scala.collection.mutable.ArrayBuffer
+import scala.util.Random
 
 object YabaiSelector {
   type PunterId = String
@@ -15,7 +18,8 @@ object YabaiSelector {
   mapper.registerModule(DefaultScalaModule)
 
   val ILLEGAL_ZERO_SLESHHOLD = 5
-  val FEWER_SELECTED_MAP_TOP = 5
+  val FEWER_SELECTED_MAP_TOP = 10
+  val PARALLEL_BATTLE_COUNT = 5
 
   def main(args: Array[String]): Unit = {
     val resultList = mapper.readValue[List[GameResult]](YabaiUrl.get(YabaiUrl.gameLog), new TypeReference[List[GameResult]] {})
@@ -31,14 +35,18 @@ object YabaiSelector {
     })))
 
     mapSelected.foreach { case (mapId, count) => mapSelected(mapId) = count / mapMemberCount(mapId) }
+    for ((punterId, count) <- zeroCount if count > ILLEGAL_ZERO_SLESHHOLD) punterIdCount.remove(punterId)
 
-    val nullAiSet = new mutable.TreeSet[String]()
-    for((punterId,_)<-  zeroCount)yield punterId
-
-    zeroCount.foreach { case (punterId, count) => if (count >= ILLEGAL_ZERO_SLESHHOLD) nullAiSet += punterId }
-    val fewerSelectedMapIds = for ((mapId, _) <- mapSelected.toArray.sortBy { case (_, count) => count }.toList.slice(0, FEWER_SELECTED_MAP_TOP)) yield mapId
-    println(fewerSelectedMapIds)
-
+    val sortedPunters = for ((punterId, _) <- punterIdCount.toArray.sortBy { case (_, count) => count }) yield punterId
+    var pos = 0
+    Random.shuffle(mapSelected.toArray.sortBy { case (_, count) => count }.toList.take(FEWER_SELECTED_MAP_TOP)).take(PARALLEL_BATTLE_COUNT).foreach { case (mapId, _) =>
+      val punterIds = new ArrayBuffer[PunterId]()
+      for (_ <- 0 until mapMemberCount(mapId)) {
+        punterIds.append(sortedPunters(pos % sortedPunters.length))
+        pos += 1
+      }
+      YabaiUrl.get(YabaiUrl.gameExecute(mapId, punterIds.toList))
+    }
   }
 
   case class GameResult(map: LambdaMapId,
@@ -52,9 +60,15 @@ object YabaiSelector {
 }
 
 
-object YabaiUrl {
-  val gameLog = "http://13.112.208.142:3000/game/list"
+object YabaiUrl extends Logging {
+  val host = "http://13.112.208.142:3000"
+  val gameLog = s"$host/game/list"
 
-  def get(url: String): String = scala.io.Source.fromURL(url).mkString
+  def gameExecute(mapId: String, punterIds: List[String]): String = s"$host/game/execute?map_id=$mapId&punter_ids=${punterIds.mkString(",")}"
+
+  def get(url: String): String = {
+    logger.info(s"GET $url")
+    scala.io.Source.fromURL(url).mkString
+  }
 }
 

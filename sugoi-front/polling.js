@@ -44,6 +44,7 @@ db.maps().then((data) => {
 // log
 const params = {
   ScanFilter: {
+    // resultsが空 = 未完了の対戦を対象とする
     'results': {
       ComparisonOperator: 'NULL'
     }
@@ -58,8 +59,10 @@ db.games(params).then((data) => {
         r.punter = game.punter_ids[i]
         return r;
       });
+      
+      game.job.status = res.length > 0 ? 'success' :'fail';
       game.results = sortBy(res, (r) => r.score).reverse();
-      db.updateGame(game);
+      db.addGame(game);
     }).catch((e) => {
       // s3Getのエラーはスルー
       if (e.name === 'NoSuchKey') return;

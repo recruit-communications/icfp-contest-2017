@@ -519,6 +519,8 @@ $(function() {
       } else {
         loadBattleList(true);
       }
+    } else {
+      loadBattleList(false);
     }
   });
 });

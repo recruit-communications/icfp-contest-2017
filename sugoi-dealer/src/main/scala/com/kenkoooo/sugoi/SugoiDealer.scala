@@ -1,6 +1,7 @@
 package com.kenkoooo.sugoi
 
-import java.io.{File, InputStream, InputStreamReader}
+import java.io.{BufferedReader, File, InputStream, InputStreamReader}
+import java.util.stream.Collectors
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
@@ -32,10 +33,13 @@ object SugoiDealer extends Logging with BattleLogging {
     val gameState = new GameState(map, programs.length, futures)
     val deque = play(programs, gameState)
 
+    val scores = new ArrayBuffer[Score]()
     gameState.calcScore().foreach(v => {
       val (punter, score) = v
+      scores.append(Score(punter, score))
       logger.info(s"Player: $punter, Score: $score")
     })
+    battleLogger.info(s"RECV ${mapper.writeValueAsString(ScoreToPunter(Stop(deque.toArray, scores.toArray)))}")
   }
 
   /**
@@ -49,10 +53,15 @@ object SugoiDealer extends Logging with BattleLogging {
     programs.foreach(program => {
       val setupInput = mapper.writeValueAsString(SetupToPunter(program.punter, programs.size, map, LambdaSettings(true)))
       val (setupOutput, code) = program.putCommand(setupInput, 10)
-      if (code != 0) program.penaltyCount += 1
-      val output = mapper.readValue[SetupToServer](setupOutput, classOf[SetupToServer])
-      program.state = output.state
-      futureBuffer.append(output.futures)
+      if (code != 0 || setupOutput == "") {
+        program.penaltyCount += 1
+        program.state = new ArrayBuffer[String]()
+        futureBuffer.append(Array())
+      } else {
+        val output = mapper.readValue[SetupToServer](setupOutput, classOf[SetupToServer])
+        program.state = output.state
+        futureBuffer.append(output.futures)
+      }
     })
     futureBuffer
   }
@@ -72,10 +81,16 @@ object SugoiDealer extends Logging with BattleLogging {
       val playToPunterString = mapper.writeValueAsString(PlayToPunter(PreviousMoves(deque.toArray), p.state))
       deque.remove(0)
 
+      if (p.penaltyCount >= 10) {
+        // dropout
+        deque.append(PassMove(Pass(p.punter)))
+        return
+      }
+
       // play
       val (playOutput, code) = p.putCommand(playToPunterString, 2)
 
-      if (p.penaltyCount >= 10 || code != 0) {
+      if (code != 0) {
         // failed
         p.penaltyCount += 1
         deque.append(PassMove(Pass(p.punter)))
@@ -152,7 +167,6 @@ class PunterProgram(cmd: String, val punter: Int, battler: Boolean = false) exte
       // handshake
       val handshakeFromPunter = reader.next()
 
-      logSend(handshakeFromPunter)
       logger.info(s"handshake from punter: $handshakeFromPunter")
       val name = SugoiMapper.mapper.readValue(handshakeFromPunter, classOf[HandShakeFromPunter]).me
       val handShakeFromServer = SugoiMapper.mapper.writeValueAsString(HandShakeFromServer(name)) + "\n"
@@ -160,23 +174,25 @@ class PunterProgram(cmd: String, val punter: Int, battler: Boolean = false) exte
       os.write(s"${handShakeFromServer.length}:$handShakeFromServer".getBytes)
       os.flush()
 
-      logRecv(handShakeFromServer)
       logger.info(s"handshake to punter: ${handShakeFromServer.length}:$handShakeFromServer")
 
       val commandFromServer = command + "\n"
       os.write(s"${commandFromServer.length}:$commandFromServer".getBytes())
       os.flush()
 
-      logRecv(commandFromServer)
+      logRecv(SugoiMapper.purify(commandFromServer))
       logger.info(s"command to punter: ${commandFromServer.length}:$commandFromServer")
 
       val fromPunter = reader.next()
-      logSend(fromPunter)
+      logSend(SugoiMapper.purify(fromPunter))
       logger.info(s"command from punter: $fromPunter")
       (fromPunter, 0)
     } catch {
       case e: Throwable =>
         logger.catching(e)
+        val err = new BufferedReader(new InputStreamReader(proc.getErrorStream))
+        logger.error(err.lines().collect(Collectors.joining("\n")))
+        err.close()
         ("", 1)
     } finally {
       reader.close()
@@ -187,6 +203,11 @@ class PunterProgram(cmd: String, val punter: Int, battler: Boolean = false) exte
   }
 }
 
+/**
+  * Input String Reader to communicate to the bridge
+  *
+  * @param in standard input stream
+  */
 class SugoiInputReader(in: InputStream) extends Logging {
   val reader = new InputStreamReader(in)
 
@@ -215,4 +236,6 @@ class SugoiInputReader(in: InputStream) extends Logging {
 object SugoiMapper {
   val mapper = new ObjectMapper()
   mapper.registerModules(DefaultScalaModule)
+
+  def purify(line: String): String = mapper.writeValueAsString(mapper.readValue[PurifiedState](line, classOf[PurifiedState]))
 }

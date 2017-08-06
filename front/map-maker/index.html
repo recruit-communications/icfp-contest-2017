@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>&#955; Map Maker</title>
+    <link rel="stylesheet" href="../js-core/bootstrap.min.css">
+    <link rel="stylesheet" href="maker.css">
+  </head>
+
+  <body>
+    <div class="container-fluid">
+      <h1><a href="../graph-viewer/index.html">&#955; Map Viewer</a> | <a href="../puntfx/index.html"> &#955; Punter FX</a> | <a href="../battle-viewer">&#955; Battle Viewer</a> | &#955; Map Maker</h1>
+      <p class="header">How To Use</p>
+      <p><b>Lineモード </b>：<br>
+        キャンバスもしくはノードをクリックすると線を引く。(自己辺、多重辺も引ける)<br>
+        Shiftを押しながらノードをクリックすると、選択ノードを変更できる。<br>
+      </p>
+      <p><b>Mineモード</b>：<br>
+        ノードをクリックすると、Mineの付け外しができる。
+      </p>
+      <p><b>Removeモード</b>：<br>
+        ノード、エッジをクリックすると削除することができる。(ただしノード0は消せない）
+      </p>
+      <fieldset>
+        <legend>Canvas</legend>
+        <div class="container-fluid" id="controllers">
+          <div id="element-type">
+            <button class="btn" id="line-input" onclick="lineInputMode()" disabled>Line</button>
+            <button class="btn" id="mine-input" onclick="mineInputMode()">Mine</button>
+            <button class="btn" id="remove" onclick="removeMode()">Remove</button>
+          </div>
+          <div id="state-changer">
+            <button class="btn" id="undo" onclick="undoCanvas()">Undo (Ctrl+Z)</button>
+            <button class="btn" id="reset" onclick="resetCanvas()">Reset!</button>
+          </div>
+        </div>
+        <div class="container-fluid" id="cy"></div>
+        <div id="loading">
+          <span class="fa fa-refresh fa-spin"></span>
+        </div>
+        <div id="output-area">
+          <input type="radio" name="format" value="false" checked>1行で
+          <input type="radio" name="format" value="true">整形して
+          <div>
+           <button class="btn" id="download-button" onclick="processOutput()">Json形式で出力</button>
+          </div>
+          <div>
+           <textarea id="json-place" cols="140" rows="15" readonly></textarea>
+          </div>
+        </div>
+      </fieldset>
+      <div align="center" onclick="obj=document.getElementById('open').style; obj.display=(obj.display=='none')?'block':'none';">
+        <a style="cursor:pointer;">▼ 既存のグラフを追加編集</a>
+      </div>
+      <br>
+      <div class="container-fluid" id="open" style="display:none;clear:both;">
+        <fieldset>
+          <div class="container-text" align="center">
+            <div>
+              <textarea id="json-form" cols="140" rows="10" placeholder="ここにグラフデータ貼り付けてください。"></textarea>
+            </div>
+            <div>
+              <button class="btn" id="submit-button" onclick="doVisualize()">これを追加編集！</button>
+            </div>
+            <br>
+          </div>
+        </fieldset>
+      </div>
+    <!--- load scripts -->
+    <script src="../js-core/jquery.min.js"></script>
+    <script src="../js-core/bootstrap.min.js"></script>
+    <script src="../js-core/fastclick.min.js"></script>
+    <script src="../js-core/cytoscape.min.js"></script>
+    <script src="../js-core/bluebird.min.js"></script>
+    <script src="../js-core/js-core.js"></script>
+    <script src="maker.js"></script>
+    </body>
+</html>

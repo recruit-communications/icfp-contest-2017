@@ -207,9 +207,9 @@ def play():
 
     if r:
         pe(r=r)
-        pf(r)
+        pf('{} '.format(P) + r)
     else:
-        pf('-1 -1')
+        pf('{} '.format(P) + '-1 -1')
 
 def init():
     pf('iUdon2')

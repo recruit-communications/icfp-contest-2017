@@ -49,7 +49,7 @@ def test():
     read_json()
     # input()
     read_json()
-    write_obj(["aaa"])
+    write_obj({"state": ["a"]})
 
 
 if __name__ == '__main__':

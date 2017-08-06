@@ -13,7 +13,7 @@ def I(): return int(sys.stdin.readline())
 def F(): return float(sys.stdin.readline())
 def S(): return input()
 
-DEBUG = True
+DEBUG = False
 
 def pe(*a, **b):
     if not DEBUG:
@@ -23,7 +23,7 @@ def pe(*a, **b):
             f.write(str(a) + '\n')
         if b:
             s = ''
-            for k, v in sorted(b.items()):
+            for k, v in b.items():
                 if s:
                     s += ', '
                 s += '{}={}'.format(k,v)
@@ -34,11 +34,8 @@ def pf(s):
     print(s, flush=True)
 
 class UnionFind:
-    def __init__(self, size, table=None):
-        if table:
-            self.table = table
-        else:
-            self.table = [-1 for _ in range(size)]
+    def __init__(self, size):
+        self.table = [-1 for _ in range(size)]
 
     def find(self, x):
         if self.table[x] < 0:
@@ -71,13 +68,18 @@ def setup():
     C,P,F = LI()
     N, M, K = LI()
     pe(K=K)
-    e = set([tuple(LI()) for _ in range(M)])
-    ee = collections.defaultdict(set)
-    for a,b in e:
-        ee[a].add(b)
-        ee[b].add(a)
+    e = {}
+    for _ in range(M):
+        a,b = LI()
+        if a not in e:
+            e[a] = set()
+        if b not in e:
+            e[b] = set()
+        e[a].add(b)
+        e[b].add(a)
 
-    MI = max([max(_) for _ in e])
+    max_i = max(e.keys())
+    uf = UnionFind(max_i + 1)
 
     def search(s):
         d = {}
@@ -91,7 +93,7 @@ def setup():
                 continue
             v[u] = True
 
-            for uv in ee[u]:
+            for uv in e[u]:
                 if v[uv]:
                     continue
                 vd = k + 1
@@ -101,31 +103,26 @@ def setup():
                     d[uv] = vd
                     heapq.heappush(q, (vd, uv))
 
-        for k in d.keys():
-            d[k] **= 2
         return d
 
     ek = {}
+    es = {}
     esa = LI()
-    uf = UnionFind(MI + 1)
-    ufs = [UnionFind(MI+1, uf.table[:]) for _ in range(C)]
     for m in esa:
         ek[m] = search(m)
-
-    te = [set() for _ in range(C)]
+        es[m] = set([m])
 
     state = {
         'e': e,
         'ek': ek,
+        'es': es,
         'esa': esa,
         'P': P,
         'N': N,
         'M': M,
         'K': K,
         'C': C,
-        'MI': MI,
-        'te': te,
-        'ufs': ufs,
+        'uf': uf,
     }
     #pe(state)
 
@@ -134,113 +131,92 @@ def setup():
     pf('0')
 
 def play():
-    s_time = time.time()
     state = input()
     state = pickle.loads(eval(state))
     e = state['e']
     ek = state['ek']
+    es = state['es']
     esa = state['esa']
     P = state['P']
     N = state['N']
     M = state['M']
     K = state['K']
     C = state['C']
-    MI = state['MI']
-    te = state['te']
-    ufs = state['ufs']
+    uf = state['uf']
     pe(P=P,N=N,C=C)
+
+    def fr(s,v):
+        if v in e and s in e[v]:
+            e[v].remove(s)
+        if s in e and v in e[s]:
+            e[s].remove(v)
+        esa.append(v)
+        uf.union(s,v)
+        return '{} {}'.format(s,v)
 
     for i in range(C):
         s,t = LI()
         if s == -1:
             # passの場合
             continue
-        te[i].add((s,t))
-        if (s,t) in e:
-            e.remove((s,t))
-        if (t,s) in e:
-            e.remove((t,s))
-        ufs[i].union(s,t)
+        if s in e and t in e[s]:
+            e[s].remove(t)
+        if t in e and s in e[t]:
+            e[t].remove(s)
 
-    def res(te):
-        scores = [0] * C
-        for i in range(C):
-            uf = UnionFind(MI+1, ufs[i].table[:])
-            for t in te[i]:
-                uf.union(t[0], t[1])
-            tm = {}
-            st = 0
-            for m in esa:
-                mf = uf.find(m)
-                if mf not in tm:
-                    tm[mf] = [m]
-                else:
-                    tm[mf].append(m)
-            for iii in range(MI+1):
-                ii = uf.find(iii)
-                if ii not in tm:
-                    continue
-                for m in tm[ii]:
-                    st += ek[m][iii]
-            scores[i] = st
-        rs = scores[P]
-        r = 0
-        for s in scores:
-            if rs == s:
-                r += 1
-            elif rs < s:
-                r += 2
-        return (r,rs * 2 - sum(scores))
+    r = None
+    esam = esa[:K]
+    ess = set(esa)
+    et = []
+    for s in esam:
+        if r:
+            break
+        for v in list(e[s]):
+            if uf.find(s) == uf.find(v):
+                continue
+            if uf.table[s] != -1 and uf.table[v] != -1:
+                r = fr(s,v)
+                break
+            et.append([len(e[v] - ess) + 2, -len(e[s]), (s,v)])
 
-    mel = list(e)
-    el = list(e)
-    ell = len(el)
-    eil = {}
-    for i in range(ell):
-        eil[mel[i]] = i
+    esas = esa[K:]
+    for s in esas:
+        if r:
+            break
+        for v in list(e[s]):
+            if uf.find(s) == uf.find(v):
+                continue
+            if uf.table[s] != -1 and uf.table[v] != -1:
+                r = fr(s,v)
+                break
+            et.append([len(e[v] - ess), -len(e[s]), (s,v)])
 
-    ss = [0 for _ in range(ell)]
-    sc = [0 for _ in range(ell)]
-    sr = [0 for _ in range(ell)]
-    def playout():
-        random.shuffle(el)
-        nte = [set() for _ in range(C)]
-        for i in range(ell):
-            nte[(P+i) % C].add(el[i])
-        r,s = res(nte)
-        for nt in nte[P]:
-            ei = eil[nt]
-            ss[ei] += s
-            sr[ei] += r
-            sc[ei] += 1
+    if not r and et:
+        et.sort()
+        s,v = et[-1][2]
+        r = fr(s,v)
 
-    cnt = 0
-    while time.time() - s_time < 0.9:
-        cnt += 1
-        playout()
-
-    pe(cnt=cnt, time=time.time() - s_time)
-
-    mr = inf
-    ms = -1
-    mri = -1
-    for i in range(ell):
-        if sc[i] < 1:
+    for k,v in e.items():
+        if r:
+            break
+        if not v:
             continue
-        er = 1.0 * sr[i] / sc[i]
-        es = 1.0 * ss[i] / sc[i]
-        if mr > er or (mr == er and es > ms):
-            mr = er
-            ms = es
-            mri = i
+        el = list(v)
+        random.shuffle(el)
+        r = fr(k,el[0])
+
+    pe(uf=uf.table)
 
     pf(str(pickle.dumps(state)))
 
-    pe(mr=mr,ms=ms,el=mel[mri],len=ell)
-    pf('{} {} {}'.format(P, mel[mri][0], mel[mri][1]))
+    if r:
+        pe(r=r)
+        pf('{} '.format(P) + r)
+    else:
+        pf('{} '.format(P) + '-1 -1')
 
 def init():
-    pf('jUdon1')
+    pf('iUdon2')
 
 def main():
     t = input()

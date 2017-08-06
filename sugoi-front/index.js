@@ -3,6 +3,7 @@ const http = require('http').Server(app);
 const fs = require('fs');
 const db = require('./lib/db');
 const battle = require('./lib/battle');
+const url = require('url');
 
 // クライアント一覧
 app.get('/punter/list', (req, res) => {
@@ -23,14 +24,17 @@ app.get('/map/list', (req, res) => {
 
 // 対戦一覧
 app.get('/game/list', (req, res) => {
+  const query = url.parse(req.url, true).query;
   db.games().then((data) => {
     res.json(data);
   });
 });
 
 // 対戦実行
-app.get('/battle/execute', (req, res) => {
-  battle.exec().then((data) => {
+app.get('/game/execute', (req, res) => {
+  const query = url.parse(req.url, true).query;
+  if (query.punter_ids) query.punterArray = query.punter_ids.split(',');
+  battle.exec(query).then((data) => {
     res.json(data);
   });
 });

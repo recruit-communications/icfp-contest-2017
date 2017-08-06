@@ -43,7 +43,6 @@ function renderGraph(graph) {
   initCy(graph,
     function() {
       initialised = true;
-      cy.autolock(true);
       cy.edges().on("select", function(evt) {  } );
     }
   );

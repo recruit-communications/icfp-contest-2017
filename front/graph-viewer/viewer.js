@@ -1,6 +1,7 @@
 /* Global variables */
 let punter = 0;
 let num_punters = 3;
+let json = undefined;
 
 /* Graph rendering */
 
@@ -27,11 +28,11 @@ const colours =
     "#9edae5"];
 
 function renderGraph(graph) {
+  punter = 0;
   console.log(graph);
   initCy(graph,
     function() {
       initialised = true;
-      cy.autolock(true);
       cy.edges().on("select", function(evt) { handleEdgeClick(this) } );
     }
   );
@@ -69,12 +70,10 @@ function updateEdgeOwner(source, target) {
 }
 
 function updateNumPunters() {
-  punter = 0;
   num_punters = $("#num_punters").val();
   console.log(num_punters);
   cy.destroy();
-
-  selectMap($("#download-link").attr("href"));
+  renderGraph(json);
 }
 
 /* MAIN PROCEDURE */
@@ -108,13 +107,20 @@ function selectMap(url) {
   fetch(url, {mode: "no-cors"})
   .then(function(res) {
     return res.json()
-  }).then(function(json) {
+  }).then(function(_json) {
     if (cy.elements !== undefined) {
       cy.destroy();
     }
+    json = _json;
     renderGraph(json);
   });
   $("#download-link").attr("href", url);
+}
+
+function doVisualize() {
+  json = JSON.parse($("#json-form").val());
+  cy.destroy();
+  renderGraph(json);
 }
 
 $(function(){

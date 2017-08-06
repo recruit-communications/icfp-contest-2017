@@ -3,7 +3,7 @@ package com.kenkoooo.sugoi
 
 import java.util
 
-import scala.collection.mutable
+import scala.collection.{immutable, mutable}
 import scala.collection.mutable.ArrayBuffer
 
 object GameState {
@@ -15,11 +15,10 @@ class GameState(map: LambdaMap, punterNum: Int, futures: ArrayBuffer[Array[Lambd
   type Vertex = Int
   type Score = Long
 
-  val futureMap = new mutable.TreeMap[Punter, mutable.TreeMap[Vertex, Vertex]]()
+  val futureVector: immutable.IndexedSeq[mutable.TreeMap[Vertex, Vertex]] = for (_ <- 0 until punterNum) yield new mutable.TreeMap[Vertex, Vertex]()
   futures.zipWithIndex.foreach(v => {
     val (arr, i) = v
-    futureMap += (i -> new mutable.TreeMap[Vertex, Vertex]())
-    Option(arr).foreach(_.foreach(f => futureMap(i) += (f.source -> f.target)))
+    Option(arr).foreach(_.foreach(f => futureVector(i) += (f.source -> f.target)))
   })
 
   val graph = new mutable.TreeMap[Vertex, mutable.TreeMap[Vertex, Punter]]
@@ -58,7 +57,7 @@ class GameState(map: LambdaMap, punterNum: Int, futures: ArrayBuffer[Array[Lambd
   }
 
   private def calcForOne(punter: Punter): Score = {
-    val sourceToTarget = futureMap(punter)
+    val sourceToTarget = futureVector(punter)
 
     var score: Score = 0
     mines.foreach(start => {

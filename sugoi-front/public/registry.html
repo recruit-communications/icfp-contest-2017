@@ -1,0 +1,87 @@
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width">
+    <title>対戦登録</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+  </head>
+  <body>
+    <h2>対戦登録</h2>
+    <div id="map_input" class="input-group">
+      <span class="input-group-addon">マップ</span>
+      <input type="text" class="form-control" placeholder="マップを選択">
+      <span class="input-group-btn">
+        <div class="dropdown">
+          <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown">
+            選択してください
+            <span class="caret"></span>
+          </button>
+          <ul class="dropdown-menu">
+          </ul>
+        </div>
+      </span>
+    </div>
+    <div id="punter_input" class="input-group">
+      <span class="input-group-addon">クライアント</span>
+      <input type="text" class="form-control" placeholder="クライアントを選択">
+      <span class="input-group-btn">
+        <div class="dropdown">
+          <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown">
+            選択してください
+            <span class="caret"></span>
+          </button>
+          <ul class="dropdown-menu">
+          </ul>
+        </div>
+      </span>
+    </div>
+    <button id="register" class="btn btn-primary btn-lg" type="button">登録</button>
+    <h3 id="punter_limit"></h3>
+    <h3 id="punter_num"></h3>
+
+    <script src="http://code.jquery.com/jquery-3.2.1.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/js/bootstrap.min.js"></script>
+    <script>
+      $(() => {
+        function createRow(data, idx) {
+          return $('<li>', {role: 'presentation'})
+            .append($('<a>', { href: '#', text: data.id, 'data-val': data.punter_num }))
+        }
+        $.getJSON('/map/list', (res) => {
+          res.forEach((d, i) => {
+            $('#map_input .dropdown>.dropdown-menu').append(createRow(d, i));
+          });
+        });
+        $.getJSON('/punter/list', (res) => {
+          res.forEach((d, i) => {
+            $('#punter_input .dropdown>.dropdown-menu').append(createRow(d, i));
+          });
+        });
+        $(document).on('click', '#map_input a', (event) => {
+          const e = $(event.target);
+          $('#map_input input').val(e.text());
+          $('#punter_limit').text(`${e.data('val')}人マップです`);
+        });
+        $(document).on('click', '#punter_input a', (e) => {
+          const val = $('#punter_input input').val();
+          const punters = val === '' ? [] : val.split(',');
+          punters.push(e.target.innerText);
+          $('#punter_input input').val(punters.join(','));
+          $('#punter_num').text(`${punters.length}人選択中`);
+        });
+        $(document).on('click', '#register', (event) => {
+          const params = [];
+          const map = $('#map_input input').val();
+          const punter_ids = $('#punter_input input').val();
+          if (map !== '') params.push(`map=${map}`);
+          if (punter_ids !== '') params.push(`punter_ids=${punter_ids}`);
+          const query = params.length > 0 ? `?${params.join('&')}` : '';
+
+          $.getJSON(`/game/execute${query}`, (res) => {
+            location.href = './game.html';
+          });
+        });
+      });
+    </script>
+  </body>
+</html>

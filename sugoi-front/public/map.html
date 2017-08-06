@@ -8,20 +8,27 @@
   <body>
     <h2>マップ一覧</h2>
     <div id="list">
-      <table class="table table-bordered">
-        <tr>
-          <th>id</th>
-          <th>file</th>
-        </tr>
+      <table class="table table-bordered tablesorter">
+        <thead>
+          <tr>
+            <th>id</th>
+            <th>punter_num</th>
+            <th>file</th>
+          </tr>
+        </thead>
+        <tbody>
+        </tbody>
       </table>
     </div>
 
     <script src="http://code.jquery.com/jquery-3.2.1.min.js"></script>
+    <script src="./js/jquery.tablesorter.min.js"></script>
     <script>
       $(() => {
         function createRow(data, idx) {
           return $('<tr>')
             .append($('<td>', { text: data.id }))
+            .append($('<td>', { text: data.punter_num }))
             .append($('<td>').append($('<a>', {
               href: data.url,
               text: 'JSON'
@@ -29,8 +36,9 @@
         }
         $.getJSON('/map/list', (res) => {
           res.forEach((d, i) => {
-            $('#list>table').append(createRow(d, i));
+            $('#list>table tbody').append(createRow(d, i));
           });
+          $("#list>table").tablesorter();
         });
       });
     </script>

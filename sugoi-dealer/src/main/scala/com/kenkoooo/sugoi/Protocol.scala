@@ -1,5 +1,7 @@
 package com.kenkoooo.sugoi
 
+import com.fasterxml.jackson.annotation.{JsonIgnoreProperties, JsonInclude}
+
 case class HandShakeFromPunter(me: String)
 
 case class HandShakeFromServer(you: String)
@@ -34,10 +36,14 @@ case class Pass(punter: Int)
 
 case class MoveFromPunter(claim: Claim, pass: Pass, state: Object)
 
-case class ScoreToPunter(stop: Stop, state: Object)
+case class ScoreToPunter(stop: Stop)
 
 case class Stop(moves: Array[Move], scores: Array[Score])
 
 case class Score(punter: Int, score: Long)
 
 case class TimeoutToPunter(timeout: Int)
+
+@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonIgnoreProperties(ignoreUnknown = true)
+case class PurifiedState(claim: Object, pass: Object, move: Object, ready: Object, futures: Object, punter: Object, punters: Object, map: Object, settings: Object)

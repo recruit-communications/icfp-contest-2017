@@ -257,7 +257,7 @@ class Process:
             m, s = map(int, splited[i].split())
             m = sorted_site_ids[m]
             s = sorted_site_ids[s]
-            F.append(tuple(m, s))
+            F.append((m, s))
         return state, sorted_site_ids, F
 
     def G(self, G, state, sorted_site_ids):

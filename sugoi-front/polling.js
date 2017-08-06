@@ -28,6 +28,11 @@ db.maps().then((data) => {
   const suffix = '.json'
   db.s3List(prefix).then((list) => {
     list.filter((e) => e.LastModified.getTime() > last).forEach((e) => {
+      // map情報を取得
+      db.s3Get(e.Key).then((obj) => {
+      });
+
+      // DBに登録
       db.addMap({
         id: db.p2i(e.Key, prefix, suffix),
         created_at: e.LastModified.getTime()
@@ -49,7 +54,7 @@ db.games(params).then((data) => {
     const key = db.i2p(game.id, 'logs/app.', '.log');
     db.s3Get(key).then((obj) => {
       // ログから結果を反映
-      const res = log.parse(obj.Body.utf8Slice()).map((r, i) => {
+      const res = log.parseLog(obj.Body.utf8Slice()).map((r, i) => {
         r.punter = game.punter_ids[i]
         return r;
       });

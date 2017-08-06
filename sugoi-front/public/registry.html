@@ -78,9 +78,9 @@
         });
         $(document).on('click', '#register', (event) => {
           const params = [];
-          const map = $('#map_input input').val();
+          const map_id = $('#map_input input').val();
           const punter_ids = $('#punter_input input').val();
-          if (map !== '') params.push(`map=${map}`);
+          if (map_id !== '') params.push(`map_id=${map_id}`);
           if (punter_ids !== '') params.push(`punter_ids=${punter_ids}`);
           const query = params.length > 0 ? `?${params.join('&')}` : '';
 

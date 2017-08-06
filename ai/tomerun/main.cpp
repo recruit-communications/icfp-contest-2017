@@ -209,7 +209,12 @@ struct Game {
 		}
 
 		vector<pair<i64, int>> scores(cand_edges.size());
-		vi weights = {15, 10, 5, 70};
+		vi weights;
+		if (turn < M / C / 3) {
+			weights = {5, 1, 0, 50}; // in early phase, prior connecting mines
+		} else {
+			weights = {3, 2, 1, 10};
+		}
 		for (int i = 0; i < cand_edges.size(); ++i) {
 			scores[i].first = connect_score[i] * weights[0] + order_score[i] * weights[1] + expand_score[i] * weights[2] + approach_score[i] * weights[3];
 			scores[i].second = i;

@@ -18,7 +18,7 @@
       <table class="table table-bordered tablesorter">
         <thead>
           <tr>
-            <th>id (DL)</th>
+            <th>id (ビジュアライザリンク)</th>
             <th>標準対戦人数</th>
             <th>sites</th>
             <th>mines</th>
@@ -37,10 +37,12 @@
       $(() => {
         function createRow(data, idx) {
           const info = data.info || {};
-          const thumb = `https://s3-ap-northeast-1.amazonaws.com/icfp2017-kst3-jp/maps/thumbs/${data.id}.png`;
+          const urlBase = 'https://s3-ap-northeast-1.amazonaws.com/icfp2017-kst3-jp/maps/';
+          const vUrl = `http://13.112.208.142:8080/graph-viewer/index.html?log=${urlBase}boston-sparse.json`;
+          const thumb = `${urlBase}thumbs/${data.id}.png`;
           return $('<tr>')
             .append($('<td>').append($('<a>', {
-              href: data.url,
+              href: vUrl,
               text: data.id
             })))
             .append($('<td>', { text: data.punter_num }))

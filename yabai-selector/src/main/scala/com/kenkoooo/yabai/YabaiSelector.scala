@@ -10,7 +10,7 @@ import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 import scala.util.Random
 
-object YabaiSelector {
+object YabaiSelector extends Logging {
   type PunterId = String
   type LambdaMapId = String
 
@@ -38,9 +38,16 @@ object YabaiSelector {
     })))
 
     mapSelected.foreach { case (mapId, count) => mapSelected(mapId) = count / mapMemberCount(mapId) }
-    for ((punterId, _) <- zeroCount if punterIdCount(punterId).toDouble == 0 || zeroCount(punterId).toDouble / punterIdCount(punterId).toDouble > ILLEGAL_ZERO_RATIO) punterIdCount.remove(punterId)
+    zeroCount.foreach { case (punterId, count) =>
+      if (punterIdCount(punterId) > 10 && count.toDouble / punterIdCount(punterId).toDouble > ILLEGAL_ZERO_RATIO) {
+        punterIdCount.remove(punterId)
+        logger.info(s"zero point ratio: $punterId: ${count.toDouble / punterIdCount(punterId).toDouble}")
+      } else if (!validPunterIds.contains(punterId)) {
+        punterIdCount.remove(punterId)
+      }
+    }
 
-    val sortedPunters = for ((punterId, _) <- punterIdCount.toArray.sortBy { case (_, count) => count } if validPunterIds.contains(punterId)) yield punterId
+    val sortedPunters = for ((punterId, _) <- punterIdCount.toArray.sortBy { case (_, count) => count }) yield punterId
     var pos = 0
     Random.shuffle(mapSelected.toArray.sortBy { case (_, count) => count }.toList.take(FEWER_SELECTED_MAP_TOP)).take(PARALLEL_BATTLE_COUNT).foreach { case (mapId, _) =>
       val punterIds = new ArrayBuffer[PunterId]()

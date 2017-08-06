@@ -42,12 +42,10 @@ object YabaiSelector extends Logging {
       if (punterIdCount(punterId) > 10 && count.toDouble / punterIdCount(punterId).toDouble > ILLEGAL_ZERO_RATIO) {
         logger.info(s"zero point ratio: $punterId: $count / ${punterIdCount(punterId)} = ${count.toDouble / punterIdCount(punterId).toDouble}")
         punterIdCount.remove(punterId)
-      } else if (!validPunterIds.contains(punterId)) {
-        punterIdCount.remove(punterId)
       }
     }
 
-    val sortedPunters = for ((punterId, _) <- punterIdCount.toArray.sortBy { case (_, count) => count }) yield punterId
+    val sortedPunters = for ((punterId, _) <- punterIdCount.toArray.sortBy { case (_, count) => count } if validPunterIds.contains(punterId)) yield punterId
     var pos = 0
     Random.shuffle(mapSelected.toArray.sortBy { case (_, count) => count }.toList.take(FEWER_SELECTED_MAP_TOP)).take(PARALLEL_BATTLE_COUNT).foreach { case (mapId, _) =>
       val punterIds = new ArrayBuffer[PunterId]()

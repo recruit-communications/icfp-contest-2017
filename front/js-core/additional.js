@@ -15,7 +15,6 @@ $(function() {
   }
 
   $('html').keydown(function(e) {
-    console.log(e.which);
     switch(e.which) {
       case 39: // Key[->]
       case 190:

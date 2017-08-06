@@ -220,7 +220,7 @@ def play():
             sc[ei] += 1
 
     cnt = 0
-    while time.time() - s_time < 0.9:
+    while time.time() - s_time < 0.5:
         cnt += 1
         playout()
 

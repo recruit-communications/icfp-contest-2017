@@ -99,6 +99,7 @@ public:
 class State {
 public:
     int number_of_players, punter_id, future_enabled, splurge_enabled;
+    int T;
     int V, E, M;
     vector<int> sources, targets;
     vector<int> mines;
@@ -116,6 +117,7 @@ public:
     State() { // {{{
         cin >> number_of_players >> punter_id >> future_enabled >> splurge_enabled;
         cin >> V >> E >> M;
+        T = 0;
         for (int i = 0; i < E; i++) {
             int a, b;
             cin >> a >> b;
@@ -159,6 +161,7 @@ public:
         punter_id = json["pid"].int_value();
         future_enabled = json["future_enabled"].int_value();
         splurge_enabled = json["splurge_enabled"].int_value();
+        T = json["t"].int_value();
 
         V = json["v"].int_value();
         E = json["e"].int_value();
@@ -197,6 +200,7 @@ public:
             {"pid", punter_id},
             {"future_enabled", future_enabled},
             {"splurge_enabled", splurge_enabled},
+            {"t", T+1},
             {"v", V},
             {"e", E},
             {"m", M},
@@ -297,7 +301,7 @@ public:
                     if (i == punter_id) {
                         e.weight += lnow;
                     } else {
-                        e.weight += (lnow * 1.0 / (number_of_players - 1));
+                        e.weight += (lnow * 0.5 / (number_of_players - 1));
                     }
 
                     // add edge weight
@@ -423,6 +427,90 @@ public:
         }
     }
 
+    // O(MVE)
+    pair<int, int> choose_steiner() {
+        vector<double> edge_weight(E, 0);
+
+        for(int mi = 0; mi < M; mi++) {
+            deque<int> q;
+            vector<int> dist(V, -1);
+            vector<int> from_e(V, -1);
+            vector<int> from_v(V, -1);
+            int m = mines[mi];
+
+            q.push_back(m);
+            dist[m] = 0;
+
+            while(!q.empty()) {
+                int v = q.front();
+                q.pop_front();
+
+                for(const Edge &e: G[v]) {
+                    if(dist[e.to] != -1) continue;
+
+                    if(used[e.idx] == punter_id + 1) {
+                        dist[e.to] = dist[v];
+                        from_e[e.to] = e.idx;
+                        from_v[e.to] = v;
+                        q.push_front(e.to);
+                    } else if(used[e.idx] == 0) {
+                        dist[e.to] = dist[v] + 1;
+                        from_e[e.to] = e.idx;
+                        from_v[e.to] = v;
+                        q.push_back(e.to);
+                    }
+                }
+            }
+
+            for(int mj = 0; mj < M; mj++) {
+                if(mi == mj) continue;
+
+                int cur = mines[mj];
+                // いけない or すでにれんけつ
+                if(dist[cur] <= 0) continue;
+
+                // 逆数なのはとくべつないみはあに
+                double w = 1e6 *pow(0.99, T) / dist[cur];
+
+                while(cur != m) {
+                    int edge = from_e[cur];
+                    int vert = from_v[cur];
+
+                    edge_weight[edge] += w;
+                    cur = vert;
+                }
+            }
+        }
+
+        init_union_find();
+        add_next_score_weight_kai();
+
+        for(int v = 0; v < V; v++) {
+            for(Edge &e: G[v]) {
+                edge_weight[e.idx] += e.weight;
+            }
+        }
+
+        double max_weight = 0;
+        int idx = -1;
+        for(int v = 0; v < V; v++) {
+            for(Edge &e: G[v]) {
+                if(used[e.idx]) continue;
+                if(max_weight < edge_weight[e.idx]) {
+                    max_weight = edge_weight[e.idx];
+                    idx = e.idx;
+                }
+            }
+        }
+
+        if (idx == -1) {
+            return make_pair(-1, -1);
+            // return choose_randomly();
+        } else {
+            return make_pair(sources[idx], targets[idx]);
+        }
+    }
+
     pair<int, int> choose_greedily() {
         // O(ME)
         if (M * 1.0 * number_of_players * E > 1e8) {
@@ -488,7 +576,8 @@ void doit_first(State &s) {
 void doit(State &s) {
     cout << s.to_json() << endl; // print new state
 
-    auto e = s.choose_greedily();
+    //auto e = s.choose_greedily();
+    auto e = s.choose_steiner();
     // if(e.first == -1 && e.second == -1) e = s.choose_randomly();
     cout << s.punter_id << " " << e.second << " " << e.first
          << endl; // print edge

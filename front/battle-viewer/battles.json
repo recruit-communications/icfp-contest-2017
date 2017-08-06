@@ -8,15 +8,15 @@
             "num_punters": 2
         },
         {
-            "filename": "../battles/test.json",
-            "name": "test",
+            "filename": "../battles/splurge.json",
+            "name": "splurge",
             "num_edges": 12,
             "num_nodes": 8,
             "num_punters": 2
         },
         {
-            "filename": "../battles/testes.json",
-            "name": "testes",
+            "filename": "../battles/test.json",
+            "name": "test",
             "num_edges": 12,
             "num_nodes": 8,
             "num_punters": 2

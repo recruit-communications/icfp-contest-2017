@@ -18,4 +18,4 @@
 
 `python3 bridge.py Kenkoooo 'java PassOnlyAI' 'java PassOnlyAI' 'java PassOnlyAI'`
 
-`def decision(bridge):` の内部で、超点数やプレイヤー数などで、プログラムを切り分ける(ここは提出前に調整する)
+`def decision(bridge):` の内部で、頂点数やプレイヤー数などで、プログラムを切り分ける(ここは提出前に調整する)

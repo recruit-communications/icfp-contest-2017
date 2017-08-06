@@ -25,7 +25,7 @@ object YabaiSelector extends Logging {
   def main(args: Array[String]): Unit = {
     val illegalCount = new mutable.TreeMap[PunterId, Int]().withDefaultValue(0)
     val mapSelected = new mutable.TreeMap[LambdaMapId, Int]().withDefaultValue(0)
-    val mapMemberCount = new mutable.TreeMap[LambdaMapId, Int]().withDefaultValue(2)
+    val mapMemberCount = new mutable.TreeMap[LambdaMapId, Int]().withDefaultValue(0)
     val punterIdCount = new mutable.TreeMap[PunterId, Int]().withDefaultValue(0)
     val illegalMapCount = new mutable.TreeMap[LambdaMapId, Int]().withDefaultValue(0)
 
@@ -33,14 +33,14 @@ object YabaiSelector extends Logging {
     validPunterIds.foreach(punterId => punterIdCount(punterId) = 0)
 
     mapper.readValue[List[MapEntry]](YabaiUrl.get(YabaiUrl.mapList), new TypeReference[List[MapEntry]] {}).foreach(entry => {
-      mapMemberCount(entry.id) = math.min(entry.punterNum, 2)
+      mapMemberCount(entry.id) = entry.punterNum
       mapSelected(entry.id) = 0
     })
     mapper.readValue[List[GameResult]](YabaiUrl.get(YabaiUrl.gameLog), new TypeReference[List[GameResult]] {})
       .foreach(r => Option(r.results) match {
         case Some(result) => result.foreach(g =>
           if (validPunterIds.contains(g.punter)) {
-            if (g.score <= 0) illegalCount(g.punter) += 1
+            if (g.score >= 0) illegalCount(g.punter) += 1
             punterIdCount(g.punter) += 1
             mapSelected(r.map) += 1
           })

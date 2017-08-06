@@ -94,7 +94,7 @@ function logPass(pass) {
 
 function logSplurge(splurge) {
   console.log(splurge);
-  writeLog("splurge: punter #" + splurge.punter + " splurge " + (splurge.route.length - 1) + " edges and splurge gage decreased to" + splurges[splurge.punter] + ".");
+  writeLog("splurge: punter #" + splurge.punter + " splurge " + (splurge.route.length - 1) + " edges and splurge gage decreased to " + splurges[splurge.punter] + ".");
 }
 
 function logScore(punter_id, score) {
@@ -146,6 +146,7 @@ function start() {
   let move_start = 0;
   moves = undefined;
   row = 0;
+  col = 0;
   punterId = -1;
   doPlay = false;
   $("#game-scores").empty();
@@ -161,8 +162,8 @@ function start() {
       punterId = battleEnv.punter;
       numPunters = battleEnv.punters;
 
-      if (battleEnv.map.settings != undefined && battleEnv.map.settings.splurge != undefined)
-        canSplurge = battleEnv.map.settings.splurge;
+      if (battleEnv.map.settings != undefined && battleEnv.map.settings.splurges != undefined)
+        canSplurge = battleEnv.map.settings.splurges;
       splurges = []
       for (let i = 0; i < numPunters; i++) {
         splurges.push(canSplurge ? 0:"-");
@@ -197,7 +198,7 @@ function start() {
     setScores(scores, punterId);
 
     // Read moves and process battle play log
-    moves = []
+    moves = [];
     let firstMove = true;
     for (let i = move_start; i < jsons.length - 1; i++) {
 
@@ -224,7 +225,7 @@ function start() {
           }
         }
       }
-      moves.push(move);
+      if (move.length > 0) moves.push(move);
       firstMove = false;
     }
     let move = [];
@@ -235,6 +236,9 @@ function start() {
       } else if (stop.moves[i].pass !== undefined) {
         if (stop.moves[i].pass.punter < punterId) continue;
         move.push(stop.moves[i]);
+      } else if (stop.moves[i].splurge != undefined) {
+        if (stop.moves[i].splurge.punter < punterId) continue;
+        move.push(xtop.moves[i]);
       }
     }
     if (move.length > 0) moves.push(move);

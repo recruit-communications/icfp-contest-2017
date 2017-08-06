@@ -356,7 +356,7 @@ public:
     }
 
     void init_union_find() {
-        for (int i = 0; i < M; i++) {
+        for (int i = 0; i < number_of_players; i++) {
             uf.push_back(UnionFind(V));
             for (const int &eidx : claim[i]) {
                 uf[i].unite(sources[eidx], targets[eidx]);

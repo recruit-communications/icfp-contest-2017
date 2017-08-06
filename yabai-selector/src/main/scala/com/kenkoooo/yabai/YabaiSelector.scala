@@ -43,7 +43,7 @@ object YabaiSelector extends Logging {
           if (validPunterIds.contains(g.punter)) {
             if (g.score <= 0) illegalCount(g.punter) += 1
             punterIdCount(g.punter) += 1
-            mapSelected(r.map) += 1
+            if (mapSelected.contains(r.map)) mapSelected(r.map) += 1
           })
         case _ =>
           illegalMapCount(r.map) += 1

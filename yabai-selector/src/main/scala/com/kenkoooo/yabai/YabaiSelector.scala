@@ -111,7 +111,7 @@ object YabaiUrl extends Logging {
   val punterList = s"$host/punter/list"
   val mapList = s"$host/map/list"
 
-  def gameExecute(mapId: String, punterIds: List[String]): String = s"$host/game/execute?map_id=$mapId&punter_ids=${punterIds.mkString(",")}"
+  def gameExecute(mapId: String, punterIds: List[String]): String = s"$host/game/execute?map_id=$mapId&punter_ids=${Random.shuffle(punterIds).mkString(",")}"
 
   def get(url: String): String = {
     logger.info(s"GET $url")

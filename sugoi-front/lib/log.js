@@ -11,8 +11,8 @@ function parseMap(str) {
   const json = JSON.parse(str);
   return {
     sites: json.sites.length,
-    mines: json.sites.length,
-    rivers: json.sites.length,
+    mines: json.mines.length,
+    rivers: json.rivers.length,
   };
 }
 

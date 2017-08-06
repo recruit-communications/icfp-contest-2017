@@ -32,6 +32,7 @@ app.get('/game/list', (req, res) => {
 
 // 対戦実行
 app.get('/game/execute', (req, res) => {
+  console.log(req.url);
   const query = url.parse(req.url, true).query;
   if (query.punter_ids) query.punterArray = query.punter_ids.split(',');
   battle.exec(query).then((data) => {

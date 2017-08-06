@@ -5,7 +5,7 @@ import subprocess
 import shlex
 
 JUNCTION = False
-DEBUG = False
+LAST_INPUT = ''
 
 
 def compress(sorted_site_ids):
@@ -189,11 +189,11 @@ class Process:
         self.cmdline = shlex.split(cmd)
 
     def exec(self, input):
-        proc = subprocess.Popen(self.cmdline, stdout=subprocess.PIPE, stdin=subprocess.PIPE)
-        if DEBUG:
-            with open('dump.in', 'w') as dump_f:
-                print(input, file=dump_f)
-        stdout = proc.communicate(input=input.encode())[0]
+        proc = subprocess.Popen(self.cmdline, stdout=subprocess.PIPE, stdin=subprocess.PIPE, stderr=subprocess.PIPE)
+        global LAST_INPUT
+        LAST_INPUT = input
+        stdout, stderr = proc.communicate(input=input.encode())
+        sys.stderr.print(stderr.decode().rstrip())
         return stdout.decode().rstrip()
 
     def handshake(self):
@@ -361,9 +361,13 @@ def junction():
 
 
 if __name__ == '__main__':
-    if JUNCTION:
-        junction()
-    elif len(sys.argv) == 3:
-        offline()
-    elif len(sys.argv) == 4:
-        online()
+    try:
+        if JUNCTION:
+            junction()
+        elif len(sys.argv) == 3:
+            offline()
+        elif len(sys.argv) == 4:
+            online()
+    except:
+        sys.stderr.print(LAST_INPUT)
+        raise

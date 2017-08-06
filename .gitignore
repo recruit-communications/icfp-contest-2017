@@ -7,5 +7,7 @@ sugoi-dealer/*.log
 
 ai/uwi/bin/
 
+yabai-util/matrix/
+
 .DS_Store
 

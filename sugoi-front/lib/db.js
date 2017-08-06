@@ -122,11 +122,11 @@ module.exports = {
         league_id: league_id,
         created_at: created_at,
         punter_ids: punter_ids,
-        map: map_id,
+        map_id: map_id,
         job: job,
-        results: results,
       }
     };
+    if (results) params.Item.results = results;
     return dbPut(params);
   },
   updateGame: ({id, created_at, results, job}) => {

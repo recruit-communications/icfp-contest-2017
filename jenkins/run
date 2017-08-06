@@ -1,0 +1,70 @@
+#!/bin/bash -xe
+
+DEFAULT_DIR=`dirname $(realpath $0)`
+cd $DEFAULT_DIR
+rm -f app*.log
+S3_PREFIX="s3://icfp2017-kst3-jp"
+APP_LOG_PATH="battle.log"
+
+trap finally EXIT
+
+### upload log
+# 排他制御が必要かは後から考える
+function finally {
+	if [ -f $APP_LOG_PATH ]; then
+		aws s3 cp --content-type text/plain $APP_LOG_PATH s3://icfp2017-kst3-jp/logs/app.$GAME_ID.log
+		rm $APP_LOG_PATH
+	fi
+}
+
+if [ $# -lt 3 ]; then
+	echo "`basename $0` game-id map-id punter1,punter2,...,punterN"
+	exit 1
+fi
+
+GAME_ID=$1
+
+### download map
+MAP_ID=$2
+MAP_PATH="maps/$MAP_ID.json"
+mkdir -p maps
+echo "downloading map $MAP_ID.json..."
+aws s3 cp $S3_PREFIX/maps/$MAP_ID.json maps/
+
+### split punters
+IFS_ORIGINAL="$IFS"
+IFS=,
+punters=($3)
+IFS="$IFS_ORIGINAL"
+
+### setup punters
+PUNTER_PATHS=""
+for PUNTER_ID in "${punters[@]}"
+do
+	PUNTER_PATHS="$PUNTER_PATHS $PUNTER_ID/punter"
+#	if [ -f $PUNTER_ID/punter ]; then
+#		echo "$PUNTER_ID/punter found. skipping..."
+#		continue
+#	fi
+
+	cd $DEFAULT_DIR
+	mkdir -p $PUNTER_ID
+	cd $PUNTER_ID
+
+	echo "downloading $PUNTER_ID.tar.gz..."
+	TAR_NAME="$PUNTER_ID.tar.gz"
+	aws s3 cp $S3_PREFIX/clients/$TAR_NAME .
+	tar --warning=no-unknown-keyword -zxf $TAR_NAME
+
+	echo "installing $PUNTER_ID..."
+	./install
+
+	echo "$PUNTER_ID completed."
+done
+
+cd $DEFAULT_DIR
+### game start
+JAR_NAME="sugoi-dealer-assembly-1.0.jar"
+aws s3 cp $S3_PREFIX/jar/$JAR_NAME .
+java -jar $JAR_NAME $MAP_PATH $PUNTER_PATHS
+

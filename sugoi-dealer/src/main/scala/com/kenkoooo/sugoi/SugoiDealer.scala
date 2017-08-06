@@ -108,6 +108,7 @@ object SugoiDealer extends Logging with BattleLogging {
       val target = moveFromPunter.claim.target
       if (gameState.isUsed(source, target)) {
         logger.error(s"$source -- $target is already used!!!")
+        p.penaltyCount += 1
         deque.append(PassMove(Pass(p.punter)))
       } else {
         logger.info(s"$source -- $target")
@@ -116,7 +117,13 @@ object SugoiDealer extends Logging with BattleLogging {
       }
     }
 
-    for (_ <- 0 until gameState.edgeCount) programs.foreach(p => playOneTurn(p))
+    var turn = 0
+    while (turn < gameState.edgeCount) {
+      programs.foreach(p => {
+        playOneTurn(p)
+        turn += 1
+      })
+    }
     deque
   }
 }

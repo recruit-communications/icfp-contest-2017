@@ -4,6 +4,7 @@ import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -18,14 +19,70 @@ public class LocalSimulator {
 	static Logger logger = new Logger("/tmp/icfpclog", LocalDateTime.now());
 	
 	public static void main(String[] args) {
+//		onegame();
+		manygames();
+		
+//		{
+////			int N = 50, M = 80, K = 20;
+//			int N = 10, M = 20, K = 3;
+//			SplittableRandom gen = new SplittableRandom(0);
+//			int[][] es = genGraph(gen, N, M, false);
+//			int[] mines = distinct(N, K, gen);
+//			print(N, M, K, mines, es, IntStream.generate(() -> -1).limit(M).toArray());
+//		}
+//		if(true)return;
+		
+	}
+	
+	
+	static class Instanciator
+	{
+		Class<?> clazz;
+		Class[] constructorArgtypes;
+		Object[] constructorArgs;
+		
+		public Instanciator(Class<?> clazz, Class[] constructorArgtypes, Object[] constructorArgs) {
+			this.clazz = clazz;
+			this.constructorArgtypes = constructorArgtypes;
+			this.constructorArgs = constructorArgs;
+		}
+		
+		public Instanciator(Class<?> clazz) {
+			this.clazz = clazz;
+		}
+	}
+	
+	static void onegame()
+	{
+		int N = 10, M = 20, K = 3;
+//		int N = 5, M = 8, K = 2;
+//		int N = 8, M = 12, K = 3;
+		long[] scores = game(-1, N, M, K, true, 
+//				new Instanciator(PassOnlyAI2.class),
+				new Instanciator(GrowAI.class, new Class[]{int.class}, new Object[]{3}),
+				new Instanciator(MeijinAI.class, new Class[]{int.class}, new Object[]{3})
+//				new Instanciator(GrowAI.class, new Class[]{int.class}, new Object[]{0})
+				);
+		tr(scores);
+	}
+	
+	static void manygames()
+	{
 		int win = 0, lose = 0, draw = 0;
-		for(int i = 0;i < 1000;i++){
+		for(int i = 0;i < 100;i++){
+			tr("GAME:" + i);
 //			int N = 10, M = 20, K = 5;
 //			int N = 10, M = 15, K = 5;
-			int N = 50, M = 80, K = 20;
+//			int N = 50, M = 80, K = 20;
+			int N = 10, M = 20, K = 3;
 //			int N = 5, M = 8, K = 2;
 //			int N = 8, M = 12, K = 3;
-			long[] scores = game(i, N, M, K, GrowAI.class, GrowAI.class);
+			long[] scores = game(i, N, M, K, false, 
+//					new Instanciator(PassOnlyAI2.class),
+					new Instanciator(GrowAI.class, new Class[]{int.class}, new Object[]{3}),
+					new Instanciator(MeijinAI.class, new Class[]{int.class}, new Object[]{6})
+//					new Instanciator(GrowAI.class, new Class[]{int.class}, new Object[]{0})
+					);
 			if(scores[0] > scores[1]){
 				win++;
 			}else if(scores[0] == scores[1]){
@@ -33,11 +90,12 @@ public class LocalSimulator {
 			}else{
 				lose++;
 			}
+			tr(win, draw, lose);
 		}
-		tr(win, draw, lose);
+		
 	}
 	
-	static long[] game(long seed, int N, int M, int K, Class<?>... players)
+	static long[] game(long seed, int N, int M, int K, boolean detailed, Instanciator... players)
 	{
 		int C = players.length;
 		
@@ -108,7 +166,9 @@ public class LocalSimulator {
 						sb.append(prevs[j][0] + " " + prevs[j][1] + "\n");
 					}
 				}
+				long el = -System.nanoTime();
 				String res = run(players[i], sb.toString());
+				el += System.nanoTime();
 				try(Scanner in = new Scanner(res)){
 					states[i] = in.next();
 					int P = ni(in);
@@ -136,7 +196,7 @@ public class LocalSimulator {
 					}else{
 						prevs[i] = null;
 					}
-					tr("HAND", i, x, y, calcScore(C, N, M, K, es, mines, futures, colors));
+					tr("HAND", i, x, y, (el/1000000)+"ms", calcScore(C, N, M, K, es, mines, futures, colors));
 				}
 				if(--rem == 0)break game;
 			}
@@ -145,12 +205,13 @@ public class LocalSimulator {
 		//// スコア計算
 		long[] scores = calcScore(C, N, M, K, es, mines, futures, colors);
 		
-		logger.log("Game seed #" + seed);
+//		logger.log("Game seed #" + seed);
+		tr("Game seed #" + seed);
 		for(int i = 0;i < C;i++){
-//			tr(String.format("score[%d]: %d", i, scores[i]));
-			logger.log(String.format("score[%d]: %d", i, scores[i]));
+			tr(String.format("score[%d]: %d", i, scores[i]));
+//			logger.log(String.format("score[%d]: %d", i, scores[i]));
 		}
-		print(N, M, K, mines, es, colors);
+		if(detailed)print(N, M, K, mines, es, colors);
 		return scores;
 	}
 	
@@ -296,6 +357,26 @@ public class LocalSimulator {
 		void log(String s) { time();out.println(s); out.flush(); }
 	}
 
+	
+	static String run(Instanciator player, String input)
+	{
+		if(player.constructorArgtypes == null)return run(player.clazz, input);
+		try {
+			Constructor<?> constructor = player.clazz.getConstructor(player.constructorArgtypes);
+			Object instance = constructor.newInstance(player.constructorArgs);
+			player.clazz.getField("is").set(instance, new ByteArrayInputStream(input.getBytes()));
+			StringWriter sw = new StringWriter();
+			PrintWriter pw = new PrintWriter(sw);
+			player.clazz.getField("out").set(instance, pw);
+			player.clazz.getMethod("solve").invoke(instance);
+			pw.flush();
+			return sw.toString();
+		} catch (InstantiationException | IllegalAccessException | IllegalArgumentException | NoSuchFieldException
+				| SecurityException | InvocationTargetException | NoSuchMethodException e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
 	
 	static String run(Class<?> player, String input)
 	{

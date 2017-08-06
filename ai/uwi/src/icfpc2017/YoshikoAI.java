@@ -17,8 +17,6 @@ import java.util.InputMismatchException;
 import java.util.List;
 import java.util.Queue;
 
-import icfpc2017.PassOnlyAI2.Edge;
-
 class YoshikoAI {
 	public InputStream is;
 	public PrintWriter out;

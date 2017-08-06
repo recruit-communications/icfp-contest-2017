@@ -27,14 +27,13 @@ public:
 class UnionFind {
     vector<int> par;
 
+public:
+    UnionFind(int size) : par(size) { iota(begin(par), end(par), 0); }
     int root(int a) {
         if (a == par[a])
             return a;
         return par[a] = root(par[a]);
     }
-
-public:
-    UnionFind(int size) : par(size) { iota(begin(par), end(par), 0); }
     void unite(int A, int B) { par[root(B)] = root(A); }
     bool eq(int a, int b) { return root(a) == root(b); }
 };
@@ -65,6 +64,11 @@ public:
                 dist[w] = dist[v] + 1;
                 q.push(w);
             }
+        }
+
+        for (int i = 0; i < n; i++) {
+            if (dist[i] == -1)
+                dist[i] = 0;
         }
 
         return dist;
@@ -210,67 +214,13 @@ public:
     }
     // }}}
 
-    // O(EMV)
-    void add_next_score_weight() {
-        for (int mi = 0; mi < M; mi++) {
-            int m = mines[mi];
-            vector<Edge> elist;
-
-            for (int v = 0; v < V; v++) {
-                if (uf[punter_id].eq(m, v)) {
-                    for (Edge &e : G[v]) {
-                        if (used[e.idx] != 0)
-                            continue;
-                        if (uf[punter_id].eq(v, e.to))
-                            continue;
-
-                        e.weight += score[mi][e.to] * 1.0 * score[mi][e.to];
-                        // 本当は他のマインとの兼ね合いも含めて出すべき
-                        // elist.push_back(e); //
-                        // 次数や周囲も評価に入れるために格納
-                    }
-                }
-            }
-
-            // for (Edge &e : elist) {
-            //     int v = e.to;
-            //     queue<int> q;
-            //     vector<int> dist(V, -1);
-            //     dist[v] = 0;
-            //     q.push(v);
-
-            //     while (!q.empty()) {
-            //         int w = q.front();
-            //         q.pop();
-
-            //         if (dist[w] < 5) {
-            //             for (Edge &f : G[w]) {
-            //                 if (used[f.idx] != -1)
-            //                     continue; // 自分のでなければ。
-
-            //                 int u = f.to;
-            //                 if (dist[u] != -1)
-            //                     continue;
-            //                 dist[u] = dist[w] + 1;
-            //                 if (dist[u] < 5)
-            //                     q.push(u);
-
-            //                 e.weight += score[mi][u] / 1000000.0 *
-            //                 score[mi][u];
-            //             }
-            //         }
-            //     }
-            // }
-        }
-    }
-
     // O(MV)
     long long calc_score(int uid, UnionFind &u) {
         long long res = 0;
-        for(int mi = 0; mi < M; mi++) {
+        for (int mi = 0; mi < M; mi++) {
             int m = mines[mi];
-            for(int v = 0; v < V; v++) {
-                if(u.eq(m, v)) {
+            for (int v = 0; v < V; v++) {
+                if (u.eq(m, v)) {
                     res += score[mi][v] * 1LL * score[mi][v];
                 }
             }
@@ -278,27 +228,54 @@ public:
         return res;
     }
 
-    // O(EMV)
+    // O(MNV)
     void add_next_score_weight_kai() {
-        for (int i = 0; i < number_of_players; i++) {
-            for (int v = 0; v < V; v++) {
-                for (Edge &e : G[v]) {
+        for (int i = 0; i < number_of_players; i++) { // O(N)
+            vector<vector<long long>> addm(M, vector<long long>(V, 0));
 
+            for (int mi = 0; mi < M; mi++) {
+                for (int v = 0; v < V; v++) {
+                    addm[mi][uf[i].root(v)] += score[mi][v];
+                }
+            }
+
+            // long long lprev = calc_score(i, uf[i]); // O(V)
+
+            long long lprev = 0;
+            for (int mi = 0; mi < M; mi++) {
+                int m = mines[mi];
+                lprev += addm[mi][uf[i].root(m)];
+            }
+
+            for (int v = 0; v < V; v++) {
+                for (Edge &e : G[v]) { // O(E)
                     if (used[e.idx] != 0)
                         continue;
                     if (v >= e.to)
                         continue;
+                    if (uf[i].eq(v, e.to))
+                        continue;
+                    //// O(V)
+                    // UnionFind u = uf[i];
+                    // u.unite(v, e.to); // O(V)
+                    // long long lnow = calc_score(i, u);
 
-                    // O(V)
-                    UnionFind u = uf[i];
+                    long long lnow = lprev;
+                    for (int mi = 0; mi < M; mi++) {
+                        int m = mines[mi];
+                        if (uf[i].eq(m, v)) {
+                            lnow += addm[mi][uf[i].root(e.to)];
+                        }
+                        if (uf[i].eq(m, e.to)) {
+                            lnow += addm[mi][uf[i].root(v)];
+                        }
+                    }
 
-                    long long lprev = calc_score(i, u);
-                    u.unite(v, e.to);
-                    long long lnow = calc_score(i, u);
                     lnow -= lprev;
 
                     e.weight += (lnow * 1.0 / number_of_players);
-                    if(i == punter_id) {
+
+                    if (i == punter_id) {
                         e.weight += lnow;
                     }
                 }
@@ -308,7 +285,6 @@ public:
 
     void add_near_lambda() {
         // m(lambda)に近い頂点に高い得点を与える
-
         for (int mi = 0; mi < M; mi++) {
 
             int m = mines[mi];
@@ -335,7 +311,7 @@ public:
                 q.pop();
 
                 for (Edge &e : G[v]) {
-                    if (used[e.idx] != 0 && used[e.idx] != punter_id+1)
+                    if (used[e.idx] != 0 && used[e.idx] != punter_id + 1)
                         continue;
                     if (dist[e.to] != -1)
                         continue;
@@ -349,7 +325,6 @@ public:
             }
         }
     }
-
 
     void add_enemy_gain() {}
 
@@ -366,7 +341,6 @@ public:
             }
         }
 
-        // add_next_score_weight();
         add_next_score_weight_kai();
         add_near_lambda();
 
@@ -394,6 +368,8 @@ public:
     }
 
     void set_used_edge(int u, int v, int uid) {
+        if (u == -1 && v == -1)
+            return;
         // TODO あとで高速化？
         for (int i = 0; i < used.size(); i++) {
             if (used[i] != 0)

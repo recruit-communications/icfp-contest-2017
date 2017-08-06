@@ -2,7 +2,7 @@ require('dotenv').config();
 
 const uuid = require('uuid/v4');
 const db = require('./db');
-const http = require('http');
+const request = require('request');
 
 // マップから対戦人数を取得
 function getPunterNum(map_id) {
@@ -38,7 +38,8 @@ function exec({id = uuid(), num = null, map_id = null, punterArray = null} = {})
       map_id: map_id
     };
     return postJenkins(params);
-  }).then(() => {
+  }).then((jobUrl) => {
+    params.job = {url: jobUrl};
     return db.addGame(params);
   }).then(() => {
     return params
@@ -53,16 +54,28 @@ function postJenkins({id, map_id, punter_ids}) {
     `punter_ids=${punter_ids.join(',')}`,
   ].join('&')
   const options = {
-    host: '52.198.25.234',
-    port: 8080,
-    path: `/job/run/buildWithParameters?${params}`,
-    method: 'POST',
+    uri: `http://52.198.25.234:8080/job/run/buildWithParameters?${params}`
   };
 
   return new Promise((fulfill, reject) => {
-    const req = http.request(options);
-    req.end();
-    fulfill();
+    request.post(options, (err, res, body) => {
+      if (err) {
+        reject(err);
+        return;
+      }
+      const queue = `${res.caseless.dict.location}api/json`;
+      // queueはすぐ処理されないので、waitを入れてリクエスト
+      setTimeout(() => {
+        request.get({uri: queue}, (err, res, body) => {
+          if (err) {
+            // ジョブ自体は登録されているはずなので成功扱いでも良いのかも？
+            reject(err);
+            return;
+          }
+          fulfill(JSON.parse(body).executable.url);
+        });
+      }, 7000);
+    });
   });
 }
 
@@ -102,4 +115,5 @@ module.exports = {
   exec: exec,
   pick: pickMap,
   randomLeague: randomLeague,
+  postJenkins: postJenkins,
 };

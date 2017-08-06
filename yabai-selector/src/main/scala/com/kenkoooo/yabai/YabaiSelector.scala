@@ -17,7 +17,7 @@ object YabaiSelector extends Logging {
   val mapper = new ObjectMapper()
   mapper.registerModule(DefaultScalaModule)
 
-  val ILLEGAL_PUNTER_RATIO = 0.5
+  val ILLEGAL_PUNTER_RATIO = 0.9
   val ILLEGAL_MAP_COUNT = 10
   val FEWER_SELECTED_MAP_TOP = 10
 

@@ -84,7 +84,7 @@ module.exports = {
     params.TableName = 'icfp-punter';
     return dbScan(params);
   },
-  addPunter: ({id, created_at, punter_num = 2}) => {
+  addPunter: ({id, created_at}) => {
     const params = {
       TableName: 'icfp-punter',
       Item: {
@@ -98,13 +98,14 @@ module.exports = {
     params.TableName = 'icfp-map';
     return dbScan(params);
   },
-  addMap: ({id, created_at, punter_num}) => {
+  addMap: ({id, created_at, punter_num = 2, info}) => {
     const params = {
       TableName: 'icfp-map',
       Item: {
         id: id,
         created_at: created_at,
-        punter_num: punter_num
+        info: info,
+        punter_num: punter_num,
       }
     };
     return dbPut(params);
@@ -113,7 +114,7 @@ module.exports = {
     params.TableName = 'icfp-game';
     return dbScan(params);
   },
-  addGame: ({id, league_id, created_at = (new Date).getTime(), punter_ids, map}) => {
+  addGame: ({id, league_id, created_at = (new Date).getTime(), punter_ids, map_id}) => {
     const params = {
       TableName: 'icfp-game',
       Item: {
@@ -121,7 +122,7 @@ module.exports = {
         league_id: league_id,
         created_at: created_at,
         punter_ids: punter_ids,
-        map: map
+        map: map_id
       }
     };
     return dbPut(params);

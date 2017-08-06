@@ -447,7 +447,7 @@ function doVisualize() {
 
 function initPunterColours() {
   for (let i = 0; i < colours.length; i++) {
-    $("#punter-colours").append("<div class=\"colours" + i + "\">" +("   " + i).substr(-3).replace(/ /g, "&nbsp;") + "&nbsp;&nbsp;</div>");
+    $("#punter-colours").append("<div class=\"colours" + i + "\">" +("  " + i).substr(-2).replace(/ /g, "&ensp;") + "&nbsp;</div>");
     $(".colours" + i).css({"background-color":colours[i], "display":"inline"});
   }
 }

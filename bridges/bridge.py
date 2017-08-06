@@ -4,6 +4,9 @@ import json
 import subprocess
 import shlex
 
+JUNCTION = False
+DEBUG = False
+
 
 def compress(sorted_site_ids):
     """
@@ -60,8 +63,8 @@ class OfflineBridge:
         if 'settings' in obj and 'futures' in obj['settings']:
             self.future = 1 if obj['settings']['futures'] else 0
 
-    def ready(self, F, state, sorted_site_ids):
-        obj = {'ready': self.punter_id, 'state': [state, sorted_site_ids]}
+    def ready(self, F, state, sorted_site_ids, proc_idx=-1):
+        obj = {'ready': self.punter_id, 'state': [state, sorted_site_ids, proc_idx]}
         if F:
             futures = []
             for m, s in F:
@@ -71,7 +74,7 @@ class OfflineBridge:
 
     def recmove(self, move):
         moves = move['move']['moves']
-        state, sorted_site_ids = move['state']
+        state, sorted_site_ids, _ = move['state']
 
         G = []
         for move in moves:
@@ -87,12 +90,12 @@ class OfflineBridge:
         G.sort()
         return G, state, sorted_site_ids
 
-    def sendmove(self, pid, s, t, state, sorted_site_ids):
+    def sendmove(self, pid, s, t, state, sorted_site_ids, proc_idx=-1):
         if s == -1 or t == -1:
             obj = {'pass': {'punter': pid}}
         else:
             obj = {'claim': {'punter': pid, 'source': s, 'target': t}}
-        obj['state'] = [state, sorted_site_ids]
+        obj['state'] = [state, sorted_site_ids, proc_idx]
         self.send_json(obj)
 
 
@@ -187,10 +190,13 @@ class Process:
 
     def exec(self, input):
         proc = subprocess.Popen(self.cmdline, stdout=subprocess.PIPE, stdin=subprocess.PIPE)
+        if DEBUG:
+            with open('dump.in', 'w') as dump_f:
+                print(input, file=dump_f)
         stdout = proc.communicate(input=input.encode())[0]
         return stdout.decode().rstrip()
 
-    def start(self):
+    def handshake(self):
         return self.exec('?\n')
 
     def I(self, num_players, punter_id, future, ma):
@@ -299,8 +305,65 @@ def online():
     bridge.close()
 
 
+def decision(bridge):
+    """
+    bridge を受けて、何番のAIが処理を担当するかを決定する。
+    ここの決定にかかる時間は、初期化の10秒に含まれる
+    """
+
+    future = bridge.future
+    punter_id = bridge.punter_id
+    punter_count = bridge.punters
+    ma = bridge.map
+    n = len(ma['sites'])
+    m = len(ma['rivers'])
+    k = len(ma['mines'])
+
+    return 0
+
+
+def junction():
+    name = sys.argv[1]
+    cmds = sys.argv[2:]
+
+    procs = [Process(cmd) for cmd in cmds]
+    # warmup?
+
+    bridge = OfflineBridge()
+
+    bridge.handshake(name)
+    obj = bridge.read_json()
+
+    proc = None
+
+    if 'punter' in obj:
+        # Setup
+        # まだ実行プログラム未定
+        bridge.setup(obj)
+        proc_idx = decision(bridge)
+        proc = procs[proc_idx]
+        state, sorted_site_ids, futures = proc.I(bridge.punters, bridge.punter_id, bridge.future, bridge.map)
+        bridge.ready(futures, state, sorted_site_ids, proc_idx)
+    elif 'move' in obj:
+        # Gameplay
+        proc_idx = obj['state'][2]
+        proc = procs[proc_idx]
+        G, state, sorted_site_ids = bridge.recmove(obj)
+        pid, s, t, state = proc.G(G, state, sorted_site_ids)
+        bridge.sendmove(pid, s, t, state, sorted_site_ids, proc_idx)
+    elif 'stop' in obj:
+        # Scoreing
+        pass
+
+    for p in procs:
+        if p != proc:
+            p.handshake()
+
+
 if __name__ == '__main__':
-    if len(sys.argv) == 3:
+    if JUNCTION:
+        junction()
+    elif len(sys.argv) == 3:
         offline()
     elif len(sys.argv) == 4:
         online()

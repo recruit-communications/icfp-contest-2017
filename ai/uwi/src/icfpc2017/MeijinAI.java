@@ -13,21 +13,20 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.BitSet;
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.InputMismatchException;
 import java.util.List;
+import java.util.Map;
 import java.util.Queue;
-import java.util.Random;
-import java.util.Set;
 
-class GrowAI {
+class MeijinAI {
 	public InputStream is;
 	public PrintWriter out;
 	String INPUT = "";
 	
 	int level;
 	
-	public GrowAI(int level)
+	public MeijinAI(int level)
 	{
 		this.level = level;
 	}
@@ -36,173 +35,121 @@ class GrowAI {
 	
 	public String guess(State s)
 	{
+		if(s.C != 2)return "-1 -1"; // 2人対戦じゃないと拗ねる。
+		
 		int n = s.g.size();
-//		DJSetList ds = new DJSetList(n);
-		RestorableDisjointSet2 rds = new RestorableDisjointSet2(n, n+5);
-		for(List<Edge> row : s.g){
-			for(Edge e : row){
-				if(e.owner == s.P)rds.union(e.x, e.y);
+		RestorableDisjointSet2[] rdss = new RestorableDisjointSet2[2];
+		for(int i = 0;i < 2;i++){
+			rdss[i] = new RestorableDisjointSet2(n, n+5);
+			for(List<Edge> row : s.g){
+				for(Edge e : row){
+					if(e.owner == i)rdss[i].union(e.x, e.y);
+				}
 			}
 		}
 		
-		long ec = go(level, level, s, rds);
+		Map<Long, Edge> map = new HashMap<>();
+		for(int i = 0;i < n;i++){
+			List<Edge> row = s.g.get(i);
+			for(Edge e : row){
+				// 未所有の辺をcansに追加
+				if(e.x == i && e.owner == -1){
+					long code = (long)Math.min(e.x, e.y)<<32|Math.max(e.x, e.y);
+					if(!map.containsKey(code)){
+						map.put(code, e);
+						e.dup = 1;
+					}else{
+						map.get(code).dup++;
+					}
+				}
+			}
+		}
+		List<Edge> cans = new ArrayList<>(map.values());
+		
+		long ec = go(level, level, s.P, s, cans, rdss, Long.MIN_VALUE/2, Long.MAX_VALUE/2);
 		if(ec == -1)return "-1 -1";
 		return (ec>>>32) + " " + ((int)ec);
 	}
 	
-	Random gen = new Random(114514);
-	
-	long go(int rem, int dep, State s, RestorableDisjointSet2 rds)
+	static class Datum
 	{
-		int n = s.g.size();
-		List<Edge> cans = new ArrayList<>();
-		Set<Long> set = new HashSet<>();
-		for(int i = 0;i < n;i++){
-			List<Edge> row = s.g.get(i);
-			for(Edge e : row){
-				// 未所有で自分のクラスタ同士をくっつける辺をcansに追加
-				if(e.x == i && e.owner == -1 && !rds.equiv(e.x, e.y) && set.add((long)Math.min(e.x, e.y)<<32|Math.max(e.x, e.y))){
-					cans.add(e);
-				}
-			}
-		}
-		
-		// TODO 候補辺がない場合は妨害に回る
-		
-		// 候補辺がない場合適当に返す
-		if(cans.size() == 0){
-			if(rem == dep){
-				if(PASS_WHEN_CHECKMATE == 1){
-					return -1;
-				}else{
-					for(int i = 0;i < n;i++){
-						List<Edge> row = s.g.get(i);
-						for(Edge e : row){
-							if(e.x == i && e.owner == -1){
-								return (long)e.x<<32|e.y;
-							}
-						}
-					}
-					throw new RuntimeException();
-				}
-			}else{
-				return 0;
-			}
-		}
-		
-		// 候補辺を選んだときの追加スコア
-//		tr("START");
-		for(Edge e : cans){
-			long plus = 0;
-			{
-				int rx = rds.root(e.x);
-				for(int cur = rx;cur != -1;cur = rds.next[cur]){
-					if(s.mines.get(cur)){
-//						long cha = plus;
-						int ry = rds.root(e.y);
-						for(int tar = ry;tar != -1; tar = rds.next[tar]){
-							long d = s.mindistss.get(cur).get(tar);
-							plus += d*d;
-						}
-//						tr(plus-cha, cur);
-					}
-				}
-			}
-			{
-				int rx = rds.root(e.y);
-				for(int cur = rx;cur != -1;cur = rds.next[cur]){
-					if(s.mines.get(cur)){
-//						long cha = plus;
-						int ry = rds.root(e.x);
-						for(int tar = ry;tar != -1; tar = rds.next[tar]){
-							long d = s.mindistss.get(cur).get(tar);
-							plus += d*d;
-						}
-//						tr(plus-cha, cur);
-					}
-				}
-			}
-//			tr(e, plus);
-			e.score = plus;
-		}
-		
-		cans.sort((x, y) -> -Long.compare(x.score, y.score)); // スコア降順にソート
-		if(rem < dep){
-			int ohp = rds.hp;
-			long ret = 0;
-			for(int i = Math.min(cans.size()-1, 20);i >= 0;i--){
-				Edge e = cans.get(i);
-				rds.union(e.x, e.y);
-				long val = e.score + (rem > 0 ? go(rem-1, dep, s, rds) : 0);
-				rds.revert(ohp);
-				ret = ret * 2 / 3 + val;
-			}
-			return ret;
-		}else{
-			int ohp = rds.hp;
-			long ret = 0;
-			long arg = -1;
-			for(int i = Math.min(cans.size()-1, 20);i >= 0;i--){
-				Edge e = cans.get(i);
-				rds.union(e.x, e.y);
-				long val = e.score + (rem > 0 ? go(rem-1, dep, s, rds) : 0);
-				if(val > ret){
-					ret = val;
-					arg = (long)e.x<<32|e.y;
-				}
-				rds.revert(ohp);
-			}
-//			tr("ret", ret);
-			return arg;
+		Edge e;
+		long score;
+		public Datum(Edge e, long score) {
+			this.e = e;
+			this.score = score;
 		}
 	}
 	
-	public static class DJSetList {
-		public int[] upper;
-		public int[] next;
-		public int[] tail;
-
-		public DJSetList(int n) {
-			upper = new int[n];
-			Arrays.fill(upper, -1);
-			next = new int[n];
-			tail = new int[n];
-			Arrays.fill(next, -1);
-			for(int i = 0;i < n;i++)tail[i] = i;
-		}
-
-		public int root(int x) {
-			return upper[x] < 0 ? x : (upper[x] = root(upper[x]));
-		}
-
-		public boolean equiv(int x, int y) {
-			return root(x) == root(y);
-		}
-
-		public boolean union(int x, int y) {
-			x = root(x);
-			y = root(y);
-			if (x != y) {
-				if (upper[y] < upper[x]) {
-					int d = x;
-					x = y;
-					y = d;
+	long go(int rem, int dep, int turn, State s, List<Edge> cans, RestorableDisjointSet2[] rdss, long alpha, long beta)
+	{
+		if(rem == 0)return 0;
+		List<Datum> data = new ArrayList<>();
+		
+		// 候補辺を選んだときの追加スコア
+		for(Edge e : cans){
+			if(e.dup == 0)continue;
+			long plus = 0;
+			if(!rdss[turn].equiv(e.x, e.y)){
+				{
+					int rx = rdss[turn].root(e.x);
+					for(int cur = rx;cur != -1;cur = rdss[turn].next[cur]){
+						if(s.mines.get(cur)){
+							int ry = rdss[turn].root(e.y);
+							for(int tar = ry;tar != -1; tar = rdss[turn].next[tar]){
+								long d = s.mindistss.get(cur).get(tar);
+								plus += d*d;
+							}
+						}
+					}
 				}
-				next[tail[x]] = y;
-				tail[x] = tail[y];
-				
-				upper[x] += upper[y];
-				upper[y] = x;
+				{
+					int rx = rdss[turn].root(e.y);
+					for(int cur = rx;cur != -1;cur = rdss[turn].next[cur]){
+						if(s.mines.get(cur)){
+							int ry = rdss[turn].root(e.x);
+							for(int tar = ry;tar != -1; tar = rdss[turn].next[tar]){
+								long d = s.mindistss.get(cur).get(tar);
+								plus += d*d;
+							}
+						}
+					}
+				}
 			}
-			return x == y;
+			data.add(new Datum(e, plus));
 		}
-
-		public int count() {
-			int ct = 0;
-			for (int u : upper)
-				if (u < 0)
-					ct++;
-			return ct;
+		if(data.isEmpty())return 0;
+		
+		data.sort((x, y) -> -Long.compare(x.score, y.score)); // スコア降順にソート
+		if(rem < dep){
+			int ohp = rdss[turn].hp;
+			for(Datum d : data){
+				rdss[turn].union(d.e.x, d.e.y);
+				d.e.dup--;
+				long val = d.score - (rem > 0 ? go(rem-1, dep, turn^1, s, cans, rdss, -beta, -alpha) : 0);
+				alpha = Math.max(alpha, val);
+				d.e.dup++;
+				rdss[turn].revert(ohp);
+				if(alpha >= beta)return alpha; // alpha-beta cut
+			}
+			return alpha;
+		}else{
+			// 手をかえす
+			int ohp = rdss[turn].hp;
+			long ret = Long.MIN_VALUE;
+			long arg = -1;
+			for(Datum d : data){
+				rdss[turn].union(d.e.x, d.e.y);
+				d.e.dup--;
+				long val = d.score - (rem > 0 ? go(rem-1, dep, turn^1, s, cans, rdss, -beta, -alpha) : 0);
+				if(val > ret){
+					ret = val;
+					arg = (long)d.e.x<<32|d.e.y;
+				}
+				d.e.dup++;
+				rdss[turn].revert(ohp);
+			}
+			return arg;
 		}
 	}
 	
@@ -460,7 +407,7 @@ class GrowAI {
 		private static final long serialVersionUID = 5180071263476967427L;
 		int x, y;
 		int owner; // 辺の所有者。いないときは-1
-		transient long score;
+		transient int dup;
 		
 		public Edge(int x, int y) {
 			this.x = x;
@@ -486,7 +433,7 @@ class GrowAI {
 	}
 
 	public static void main(String[] args) throws Exception {
-		new GrowAI(3).run();
+		new MeijinAI(3).run();
 	}
 
 	private byte[] inbuf = new byte[1024];

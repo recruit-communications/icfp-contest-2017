@@ -108,6 +108,7 @@ object SugoiDealer extends Logging with BattleLogging {
       val target = moveFromPunter.claim.target
       if (gameState.isUsed(source, target)) {
         logger.error(s"$source -- $target is already used!!!")
+        p.penaltyCount += 1
         deque.append(PassMove(Pass(p.punter)))
       } else {
         logger.info(s"$source -- $target")
@@ -116,7 +117,13 @@ object SugoiDealer extends Logging with BattleLogging {
       }
     }
 
-    for (_ <- 0 until gameState.edgeCount) programs.foreach(p => playOneTurn(p))
+    var turn = 0
+    while (turn < gameState.edgeCount) {
+      programs.foreach(p => {
+        playOneTurn(p)
+        turn += 1
+      })
+    }
     deque
   }
 }
@@ -163,6 +170,8 @@ class PunterProgram(cmd: String, val punter: Int, battler: Boolean = false) exte
     val proc = pb.start()
     val os = proc.getOutputStream
     val reader = new SugoiInputReader(proc.getInputStream)
+
+    var lastCommand: String = ""
     try {
       // handshake
       val handshakeFromPunter = reader.next()
@@ -171,13 +180,16 @@ class PunterProgram(cmd: String, val punter: Int, battler: Boolean = false) exte
       val name = SugoiMapper.mapper.readValue(handshakeFromPunter, classOf[HandShakeFromPunter]).me
       val handShakeFromServer = SugoiMapper.mapper.writeValueAsString(HandShakeFromServer(name)) + "\n"
 
-      os.write(s"${handShakeFromServer.length}:$handShakeFromServer".getBytes)
+      lastCommand = s"${handShakeFromServer.length}:$handShakeFromServer"
+      os.write(lastCommand.getBytes)
       os.flush()
 
       logger.info(s"handshake to punter: ${handShakeFromServer.length}:$handShakeFromServer")
 
       val commandFromServer = command + "\n"
-      os.write(s"${commandFromServer.length}:$commandFromServer".getBytes())
+
+      lastCommand = s"${commandFromServer.length}:$commandFromServer"
+      os.write(lastCommand.getBytes())
       os.flush()
 
       logRecv(SugoiMapper.purify(commandFromServer))
@@ -192,6 +204,7 @@ class PunterProgram(cmd: String, val punter: Int, battler: Boolean = false) exte
         logger.catching(e)
         val err = new BufferedReader(new InputStreamReader(proc.getErrorStream))
         logger.error(err.lines().collect(Collectors.joining("\n")))
+        logger.error(s"Last input from server: $lastCommand")
         err.close()
         ("", 1)
     } finally {

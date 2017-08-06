@@ -9,29 +9,28 @@
   </head>
 
   <body>
+    <!-- START: Viwer Settings -->
     <div class="container-fluid">
       <h1><a href="../graph-viewer/index.html">&#955; Map Viewer</a> | &#955; Battle Viewer | <a href="../map-maker/index.html">&#955; Map Maker</a></h1>
       <div class="row">
         <div class="col-md-4">
-          <fieldset>
-            <legend>Viewer settings</legend>
-            <table class="settings-table">
-              <tr>
-                <td>Punter colores:
-                  <div id="punter-colours"></div>
-                </td>
-              </tr>
-              <tr>
-                <td>Select Battle:
-                  <div id="dropdown">
-                    <select id="battles-select" class="form-control">
-                    </select>
-                  </div>
-                </td>
-              </tr>
-            </table>
-            <a id="download-link" href="#">Download</a>
-          </fieldset>
+          <legend>Viewer settings</legend>
+          <table class="settings-table">
+            <tr>
+              <td>Punter colores:
+                <div id="punter-colours"></div>
+              </td>
+            </tr>
+            <tr>
+              <td>Select Battle:
+                <div id="dropdown">
+                  <select id="battles-select" class="form-control">
+                  </select>
+                </div>
+              </td>
+            </tr>
+          </table>
+          <a id="download-link" href="#">Download</a>
         </div>
         <div class="col-md-8">
           <fieldset>
@@ -41,71 +40,55 @@
         </div>
       </div>
     </div>
-    <fieldset>
-      <div class="container-fluid"  id="viewer-container">
-      <legend>Viewer</legend>
-        <ul>
-          <li id="cy-container">
-            <div class="container-fluid" id="cy"></div>
-            <div id="loading">
-              <span class="fa fa-refresh fa-spin"></span>
-            </div>
-          </li>
-          <li id="game-controllers">
-            <div id="settings-table" align="center">
-              <div id="controlers-header">Controllers</div>
-              <table>
-                <tr>
-                  <td>
-                    <button class="btn" id="reset-button" onclick="handleReset()" disabled>&lt;&lt;</button>
-                    <button class="btn" id="back-button" onclick="handleBack()" disabled>&lt;</button>
-                    <button class="btn" id="go-button" onclick="handleGo()" disabled>&gt;</button>
-                    <button class="btn" id="end-button" onclick="handleEnd()" disabled>&gt;&gt;</button>
-                    <span>&nbsp;&nbsp;</span>
-                    <button class="btn" id="pause-button" onclick="handlePause()" disabled>| |</button>
-                    <button class="btn" id="play-button" onclick="handlePlay()" disabled>-&gt;</button>
-                  </td>
-                </tr>
-              </table>
-            </div>
-            <div id="visualise-settings" align="center">
-              <table>
-                <tr>
-                  <td>
-                    線の太さ<input type="number" name="line-width" id="line-width" value="20" step="2" min="2" readonly onchange="updateWidth()">
-                  </td>
-                  <td>&nbsp;&nbsp;</td>
-                  <td>
-                    更新間隔 <input type="number" name="time-span" id="time-span" value="500" step="50" min="50" onchange="updateSpan()">ms
-                  </td>
-                </tr>
-              </table>
-            </div>
-            <div>
-              <p align="center" id="score-header"> Final Scores </p>
-              <table id="game-scores" border="1" align="center">
-              </table>
-            </div>
-          </li>
-        </ul>
-      </div>
-    </fieldset>
+    <!-- END: Viwer Settings -->
+    <!-- START: Viewer -->
     <div class="container-fluid">
-      <fieldset>
-        <legend>Bridge stdout submit form</legend>
-        <div class="container-text" align="center">
-          <div>
-            <button class="btn" id="submit-button" onclick="doVisualize()" cursor="allowed">ヴィジュアライズ！</button>
+      <legend>Viewer</legend>
+      <div class="col-md-8">
+        <div class="container-fluid" id="cy"></div>
+        <div id="loading">
+          <span class="fa fa-refresh fa-spin"></span>
+        </div>
+      </div>
+      <div class="col-md-4" align="center">
+        <h4>Controllers</h4>
+        <div class="form-inline form-group">
+          <button class="btn" id="reset-button" onclick="handleReset()" disabled>&lt;&lt;</button>
+          <button class="btn" id="back-button" onclick="handleBack()" disabled>&lt;</button>
+          <button class="btn" id="go-button" onclick="handleGo()" disabled>&gt;</button>
+          <button class="btn" id="end-button" onclick="handleEnd()" disabled>&gt;&gt;</button>
+          &nbsp;&nbsp;
+          <button class="btn" id="pause-button" onclick="handlePause()" disabled>| |</button>
+          <button class="btn" id="play-button" onclick="handlePlay()" disabled>-&gt;</button>
+        </div>
+        <div class="form-inline">
+          <div class="form-group">
+            <label>線の太さ：</label><input type="number" name="line-width" id="line-width" value="20" step="2" min="2" readonly onchange="updateWidth()">
           </div>
-          <br>
-          <div>
-            <textarea id="json-form" cols="140" rows="10" placeholder="ここにbridgeの出力を貼り付けてください"></textarea>
+          <div class="form-group">
+            <label>更新間隔：</label><input type="number" name="time-span" id="time-span" value="500" step="50" min="50" onchange="updateSpan()">ms
           </div>
         </div>
-        <br><br><br><br>
-      </fieldset>
+        <div>
+          <h4> Final Scores </h4>
+          <table id="game-scores" border="1" align="center">
+          </table>
+        </div>
+      </div>
     </div>
-    <!-- load scripts -->
+    <!-- END: Viewer -->
+    <div class="container-fluid">
+        <legend>Bridge stdout submit form</legend>
+        <fieldset class="container-text">
+          <div>
+            <button class="btn btn-primary" id="submit-button" onclick="doVisualize()" cursor="allowed">ヴィジュアライズ！</button>
+          </div>
+          <div>
+            <textarea class="text-area" id="json-form" placeholder="ここにbridgeの出力を貼り付けてください"></textarea>
+          </div>
+        </fieldset>
+    </div>
+    <!--- load scripts -->
     <script src="../js-core/jquery.min.js"></script>
     <script src="../js-core/bootstrap.min.js"></script>
     <script src="../js-core/fastclick.min.js"></script>

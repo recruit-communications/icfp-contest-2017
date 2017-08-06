@@ -1,5 +1,5 @@
 /* GLOBALS */
-let punterID = -1;
+let punterId = -1;
 let numPunters = -1;
 let initialised = false;
 
@@ -9,11 +9,12 @@ let jsons = undefined;
 let moves = undefined;
 let doPlay = false;
 let timeSpan = 500;
+let splurges = [];
+let canSplurge = false;
 
 /* Graph rendering */
 
 function renderGraph(graph) {
-  console.log(graph);
   initCy(graph,
     function() {
       initialised = true;
@@ -51,13 +52,20 @@ function getRank(scores) {
   return rank;
 }
 
-function setScores(scores, punterID) {
-  $("#game-scores").append("<tr><th>punter No</th><th>Score</th><th>Rank</th>/tr>");
+function setScores(scores, punterId) {
+  $("#game-scores").append("<tr><th>punter No</th><th>Score</th><th>Rank</th><th>Splurge</th></tr>");
   let rank = getRank(scores);
   for (let i = 0; i < scores.length; i++) {
-    $("#game-scores").append("<tr><td class=\"c0 colours" + scores[i].punter + "\" >punter #" + scores[i].punter + (punterID - scores[i].punter == 0 ? " (You)":"")
-      + "</td><td class='c1'>" + scores[i].score + "&nbsp;&nbsp;</td><td class='c2'>" + rank[i] +"</td></tr>");
-    $(".colours" + i).css({"background-color":colours[scores[i].punter]});
+    $("#game-scores").append("<tr><td class=\"c0 punter" + scores[i].punter + "\" >punter #" + scores[i].punter + (punterId - scores[i].punter == 0 ? " (You)":"")
+      + "</td><td class='c1'>" + scores[i].score + "</td><td class='c2'>" + rank[i] +"</td><td class='c3' id='splurge" + scores[i].punter + "'>" + splurges[scores[i].punter] + "</td></tr>");
+    $(".punter" + i).css({"background-color":colours[scores[i].punter]});
+  }
+}
+
+function updateSplurge(punterId) {
+  if (canSplurge) {
+    console.log(punterId, splurges[punterId]);
+    $("#splurge" + punterId).text(splurges[punterId]);
   }
 }
 
@@ -80,8 +88,13 @@ function logClaim(claim) {
 }
 
 function logPass(pass) {
-  writeLog("pass: punter #" + pass.punter + ".");
+  writeLog("pass: punter #" + pass.punter + (canSplurge ? (" splurge gage increased to " + splurges[pass.punter]):"") + ".");
   return;
+}
+
+function logSplurge(splurge) {
+  console.log(splurge);
+  writeLog("splurge: punter #" + splurge.punter + " splurge " + (splurge.route.length - 1) + " edges and splurge gage decreased to" + splurges[splurge.punter] + ".");
 }
 
 function logScore(punter_id, score) {
@@ -93,6 +106,8 @@ function logMove(move) {
     logClaim(move.claim);
   } else if (move.pass != undefined) {
     logPass(move.pass);
+  } else if (move.splurge != undefined) {
+    logSplurge(move.splurge);
   }
 }
 
@@ -107,11 +122,17 @@ function logUnPass(pass) {
   return;
 }
 
+function logUnSplurge(splurge) {
+  writeLog("unsplurge: punter #" + splurge.punter + ".");
+}
+
 function logRemove(move) {
   if (move.claim != undefined) {
     logUnClaim(move.claim);
   } else if (move.pass != undefined) {
     logUnPass(move.pass);
+  } else if (move.splurge != undefined) {
+    logUnSplurge(move.splurge);
   }
 }
 
@@ -125,59 +146,66 @@ function start() {
   let move_start = 0;
   moves = undefined;
   row = 0;
-  punterID = -1;
+  punterId = -1;
   doPlay = false;
   $("#game-scores").empty();
   bindResetHandlers();
 
   try {
     for (let i = 0; i < jsons.length; i++) {
-      move_start++;
       // Read settings (punters, map)
-      console.log(jsons[i].substring(5));
-      let settings = JSON.parse(jsons[i].substring(5));
-      if (settings.punter == undefined) continue;
-      punterID = settings.punter;
-      numPunters = settings.punters;
+      let battleEnv = JSON.parse(jsons[i].substring(5));
+
+      if (battleEnv.punter == undefined) continue;
+
+      punterId = battleEnv.punter;
+      numPunters = battleEnv.punters;
+
+      if (battleEnv.map.settings != undefined && battleEnv.map.settings.splurge != undefined)
+        canSplurge = battleEnv.map.settings.splurge;
+      splurges = []
+      for (let i = 0; i < numPunters; i++) {
+        splurges.push(canSplurge ? 0:"-");
+      }
+
       logInfo("number of punters: " + numPunters);
-      logInfo("received initial game graph: " + JSON.stringify(settings.map));
+      logInfo("received initial game graph: " + JSON.stringify(battleEnv.map));
       graph = {
-        "sites": settings.map.sites,
-        "rivers": settings.map.rivers,
-        "mines": settings.map.mines,
+        "sites": battleEnv.map.sites,
+        "rivers": battleEnv.map.rivers,
+        "mines": battleEnv.map.mines,
       };
       logInfo("rendering game graph...");
       renderGraph(graph);
-      logInfo("You are punter #" + punterID);
+      logInfo("You are punter #" + punterId);
+      move_start = i + 1;
       break;
     }
 
-    if (punterID == -1) {
-      logError("no battle settings line!!!");
+    if (punterId == -1) {
+      logError("no battle enviroment line!!!");
       return;
     }
 
     // Read scores and print final scores
-    console.log(jsons[jsons.length - 1].substring(5));
     let stop = JSON.parse(jsons[jsons.length - 1].substring(5)).stop;
     let scores = stop.scores;
     if (scores == undefined) {
       logError("no scores values!!!");
       return;
     }
-    setScores(scores, punterID);
-
-    //console.log(numPunters, move_start);
+    setScores(scores, punterId);
 
     // Read moves and process battle play log
     moves = []
+    let firstMove = true;
     for (let i = move_start; i < jsons.length - 1; i++) {
 
       let json = JSON.parse(jsons[i].substring(5));
       if (json.move == undefined) continue;
       let move = [];
       for (let j = 0; j < numPunters; j++) {
-        let punter = (punterID + j) % numPunters;
+        let punter = (punterId + j) % numPunters;
         //console.log(punter);
         for (let k = 0; k < json.move.moves.length; k++) {
           let ele = json.move.moves[k];
@@ -186,20 +214,26 @@ function start() {
             break;
           }
           if (ele.pass != undefined && ele.pass.punter == punter) {
+            if (firstMove && punterId <= punter) continue;
+            move.push(ele);
+            break;
+          }
+          if (ele.splurge != undefined && ele.splurge.punter == punter) {
             move.push(ele);
             break;
           }
         }
       }
       moves.push(move);
+      firstMove = false;
     }
     let move = [];
     for (let i = 0; i < stop.moves.length; i++) {
       if (stop.moves[i].claim !== undefined) {
-        if (stop.moves[i].claim.punter < punterID) continue;
+        if (stop.moves[i].claim.punter < punterId) continue;
         move.push(stop.moves[i]);
       } else if (stop.moves[i].pass !== undefined) {
-        if (stop.moves[i].pass.punter < punterID) continue;
+        if (stop.moves[i].pass.punter < punterId) continue;
         move.push(stop.moves[i]);
       }
     }
@@ -239,6 +273,18 @@ function handleBack() {
   let data = moves[row][col];
   if (data.claim != undefined) {
     removeEdgeOwner(data.claim.punter, data.claim.source, data.claim.target);
+  } else if (data.pass != undefined) {
+    splurges[data.pass.punter]--;
+    updateSplurge(data.pass.punter);
+  } else if (data.splurge !=undefined) {
+    let source = data.splurge.route[0];
+    for (let i = 1; i < data.splurge.route.length; i++) {
+      let target = data.splurge.route[i];
+      removeEdgeOwner(data.splurge.puter, source, target);
+      source = target;
+    }
+    splurges[data.splurge.punter] += data.splurge.route.length - 2;
+    updateSplurge(data.splurge.punter);
   }
   logRemove(data);
 
@@ -260,8 +306,26 @@ function forwardBattle(logging) {
   let data = moves[row][col];
   if (data.claim != undefined) {
     updateEdgeOwner(data.claim.punter, data.claim.source, data.claim.target);
+  } else if (data.pass != undefined) {
+    splurges[data.pass.punter]++;
+    updateSplurge(data.pass.punter);
+  } else if (data.splurge != undefined) {
+    let source = data.splurge.route[0];
+    for (let i = 1; i < data.splurge.route.length; i++) {
+      let target = data.splurge.route[i];
+      updateEdgeOwner(data.splurge.punter, source, target)
+      source = target;
+    }
+    // splurgeは(指定した辺の数 - 1)だけsplurge gageを消費する。
+    splurges[data.splurge.punter] -= data.splurge.route.length - 2;
+    if (logging) {
+      updateSplurge(data.splurge.punter);
+    }
   }
-  if (logging) logMove(data);
+
+  if (logging) {
+    logMove(data);
+  }
 
   col++;
   if (col == moves[row].length) {
@@ -296,6 +360,7 @@ function handleEnd() {
   while (row < moves.length) {
     forwardBattle(false);
   }
+  for (let i = 0; i < numPunters; i++) updateSplurge(i);
   logInfo("Moves End...");
   bindEndHandlers();
 }

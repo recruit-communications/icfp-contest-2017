@@ -12,7 +12,8 @@ libraryDependencies ++= Seq(
   "org.apache.logging.log4j" %% "log4j-api-scala" % "11.0",
   "com.fasterxml.jackson.module" % "jackson-module-scala_2.12" % "2.9.0.pr3",
   "com.fasterxml.jackson.core" % "jackson-core" % "2.9.0.pr3",
-  "org.scalatest" %% "scalatest" % "3.0.1" % "test"
+  "org.scalatest" %% "scalatest" % "3.0.1" % "test",
+  "org.mockito" % "mockito-core" % "2.8.47" % "test"
 )
 
 parallelExecution := false

@@ -6,14 +6,24 @@
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
   </head>
   <body>
+    <h1>
+      <a href="top.html">トップ</a> | 
+      <a href="game.html">対戦一覧</a> | 
+      <a href="registry.html">対戦登録</a> | 
+      <a href="punter.html">クライアント一覧</a> |
+      マップ一覧 |
+    </h1>
     <h2>マップ一覧</h2>
     <div id="list">
       <table class="table table-bordered tablesorter">
         <thead>
           <tr>
-            <th>id</th>
-            <th>punter_num</th>
-            <th>file</th>
+            <th>id (ビジュアライザリンク)</th>
+            <th>標準対戦人数</th>
+            <th>sites</th>
+            <th>mines</th>
+            <th>rivers</th>
+            <th>thumb</th>
           </tr>
         </thead>
         <tbody>
@@ -26,13 +36,24 @@
     <script>
       $(() => {
         function createRow(data, idx) {
+          const info = data.info || {};
+          const urlBase = 'https://s3-ap-northeast-1.amazonaws.com/icfp2017-kst3-jp/maps/';
+          const vUrl = `http://13.112.208.142:8080/graph-viewer/index.html?log=${urlBase}${data.id}.json`;
+          const thumb = `${urlBase}thumbs/${data.id}.png`;
           return $('<tr>')
-            .append($('<td>', { text: data.id }))
-            .append($('<td>', { text: data.punter_num }))
             .append($('<td>').append($('<a>', {
-              href: data.url,
-              text: 'JSON'
-            })));
+              href: vUrl,
+              text: data.id
+            })))
+            .append($('<td>', { text: data.punter_num }))
+            .append($('<td>', { text: info.sites }))
+            .append($('<td>', { text: info.mines }))
+            .append($('<td>', { text: info.rivers }))
+            .append($('<td>').append($('<img>', {
+              src: thumb,
+              style: 'height: 200px;'
+            })))
+          ;
         }
         $.getJSON('/map/list', (res) => {
           res.forEach((d, i) => {

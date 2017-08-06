@@ -15,7 +15,7 @@ let json = {
 
 function initParams() {
   for (site of json.sites) {
-    id = Math.max(id, site.id) + 1;
+    id = Math.max(id, site.id + 1);
   }
   select = 0;
   eles = [];

@@ -5,28 +5,6 @@ let json = undefined;
 
 /* Graph rendering */
 
-const colours =
-  ["#1f77b4",
-    "#aec7e8",
-    "#ff7f0e",
-    "#ffbb78",
-    "#2ca02c",
-    "#98df8a",
-    "#d62728",
-    "#ff9896",
-    "#9467bd",
-    "#c5b0d5",
-    "#8c564b",
-    "#c49c94",
-    "#e377c2",
-    "#f7b6d2",
-    "#7f7f7f",
-    "#c7c7c7",
-    "#bcbd22",
-    "#dbdb8d",
-    "#17becf",
-    "#9edae5"];
-
 function renderGraph(graph) {
   punter = 0;
   console.log(graph);
@@ -40,10 +18,6 @@ function renderGraph(graph) {
 }
 
 /* EVENT HANDLING LOGIC */
-
-function getPunterColour(punter) {
-  return colours[punter % colours.length];
-}
 
 function handleEdgeClick(edge) {
   const source = edge.data("source");

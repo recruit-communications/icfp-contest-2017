@@ -5,6 +5,7 @@ import subprocess
 import shlex
 
 JUNCTION = False
+LAST_INPUT = ''
 
 
 def compress(sorted_site_ids):
@@ -19,6 +20,8 @@ def compress(sorted_site_ids):
 class OfflineBridge:
     def __init__(self):
         self.buffer = b''
+        self.future = 0
+        self.splurge = 0
 
     def send_json(self, obj):
         d = json.dumps(obj) + '\n'
@@ -58,9 +61,10 @@ class OfflineBridge:
         self.punter_id = obj['punter']
         self.punters = obj['punters']
         self.map = obj['map']
-        self.future = 0
         if 'settings' in obj and 'futures' in obj['settings']:
             self.future = 1 if obj['settings']['futures'] else 0
+        if 'settings' in obj and 'splurge' in obj['settings']:
+            self.splurge = 1 if obj['settings']['splurge'] else 0
 
     def ready(self, F, state, sorted_site_ids, proc_idx=-1):
         obj = {'ready': self.punter_id, 'state': [state, sorted_site_ids, proc_idx]}
@@ -77,23 +81,31 @@ class OfflineBridge:
 
         G = []
         for move in moves:
-            if 'pass' in move:
-                pid = move['pass']['punter']
-                G.append((pid, -1, -1))
-            else:
+            if 'claim' in move:
                 claim = move['claim']
                 pid = claim['punter']
                 s = claim['source']
                 t = claim['target']
-                G.append((pid, s, t))
+                G.append((pid, [s, t]))
+            elif 'pass' in move:
+                pid = move['pass']['punter']
+                G.append((pid, []))
+            elif 'splurge' in move:
+                splurge = move['splurge']
+                pid = splurge['punter']
+                route = splurge['route']
+                G.append((pid, route))
         G.sort()
         return G, state, sorted_site_ids
 
-    def sendmove(self, pid, s, t, state, sorted_site_ids, proc_idx=-1):
-        if s == -1 or t == -1:
+    def sendmove(self, pid, vs, state, sorted_site_ids, proc_idx=-1):
+        if len(vs) == 2:
+            obj = {'claim': {'punter': pid, 'source': vs[0], 'target': vs[1]}}
+        elif len(vs) == 0:
             obj = {'pass': {'punter': pid}}
         else:
-            obj = {'claim': {'punter': pid, 'source': s, 'target': t}}
+            # splurge
+            obj = {'splurge': {'punter': pid, 'route': vs}}
         obj['state'] = [state, sorted_site_ids, proc_idx]
         self.send_json(obj)
 
@@ -102,13 +114,15 @@ class OnlineBridge:
     def __init__(self, host, port):
         self.telnet = telnetlib.Telnet(host, port)
         self.buffer = b''
+        self.future = 0
+        self.splurge = 0
 
     def close(self):
         self.telnet.close()
 
     def send_json(self, obj):
         d = json.dumps(obj)
-        print('SEND', d)
+        print('SEND', d.rstrip())
         bytes = d.encode()
         n = len(bytes)
         self.telnet.write(str(n).encode())
@@ -130,7 +144,7 @@ class OnlineBridge:
             self.buffer += self.telnet.read_some()
 
         json_string = self.buffer[:n].decode().rstrip()
-        print('RECV', json_string)
+        print('RECV', json_string.rstrip())
         self.buffer = self.buffer[n:]
         obj = json.loads(json_string)
         return obj
@@ -144,9 +158,10 @@ class OnlineBridge:
         self.punter_id = sup['punter']
         self.punters = sup['punters']
         self.map = sup['map']
-        self.future = 0
         if 'settings' in sup and 'futures' in sup['settings']:
             self.future = 1 if sup['settings']['futures'] else 0
+        if 'settings' in sup and 'splurge' in sup['settings']:
+            self.splurge = 1 if sup['settings']['splurge'] else 0
 
     def ready(self, F):
         obj = {'ready': self.punter_id}
@@ -164,23 +179,32 @@ class OnlineBridge:
         moves = move['move']['moves']
         G = []
         for move in moves:
-            if 'pass' in move:
-                pid = move['pass']['punter']
-                G.append((pid, -1, -1))
-            else:
+            if 'claim' in move:
                 claim = move['claim']
                 pid = claim['punter']
                 s = claim['source']
                 t = claim['target']
-                G.append((pid, s, t))
+                G.append((pid, [s, t]))
+            elif 'pass' in move:
+                pid = move['pass']['punter']
+                G.append((pid, []))
+            elif 'splurge' in move:
+                splurge = move['splurge']
+                pid = splurge['punter']
+                route = splurge['route']
+                G.append((pid, route))
         G.sort()
         return G
 
-    def sendmove(self, s, t, state, sorted_site_ids):
-        if s == -1 or t == -1:
-            self.send_json({'pass': {'punter': self.punter_id}})
+    def sendmove(self, vs, state, sorted_site_ids):
+        if len(vs) == 2:
+            obj = {'claim': {'punter': self.punter_id, 'source': vs[0], 'target': vs[1]}}
+        elif len(vs) == 0:
+            obj = {'pass': {'punter': self.punter_id}}
         else:
-            self.send_json({'claim': {'punter': self.punter_id, 'source': s, 'target': t}})
+            # splurge
+            obj = {'splurge': {'punter': self.punter_id, 'route': vs}}
+        self.send_json(obj)
 
 
 class Process:
@@ -188,14 +212,17 @@ class Process:
         self.cmdline = shlex.split(cmd)
 
     def exec(self, input):
-        proc = subprocess.Popen(self.cmdline, stdout=subprocess.PIPE, stdin=subprocess.PIPE)
-        stdout = proc.communicate(input=input.encode())[0]
+        proc = subprocess.Popen(self.cmdline, stdout=subprocess.PIPE, stdin=subprocess.PIPE, stderr=subprocess.PIPE)
+        global LAST_INPUT
+        LAST_INPUT = input
+        stdout, stderr = proc.communicate(input=input.encode())
+        print(stderr.decode().rstrip(), file=sys.stderr)
         return stdout.decode().rstrip()
 
     def handshake(self):
         return self.exec('?\n')
 
-    def I(self, num_players, punter_id, future, ma):
+    def I(self, num_players, punter_id, future, splurge, ma):
         n = len(ma['sites'])
         m = len(ma['rivers'])
         k = len(ma['mines'])
@@ -215,7 +242,7 @@ class Process:
             T.append(t)
         M = [conv[m] for m in ma['mines']]
 
-        lines = ['I', ' '.join(map(str, [num_players, punter_id, future])), ' '.join(map(str, [n, m, k]))]
+        lines = ['I', ' '.join(map(str, [num_players, punter_id, future, splurge])), ' '.join(map(str, [n, m, k]))]
         for i in range(m):
             lines.append(' '.join(map(str, [S[i], T[i]])))
         lines.append(' '.join(map(str, M)))
@@ -230,26 +257,24 @@ class Process:
             m, s = map(int, splited[i].split())
             m = sorted_site_ids[m]
             s = sorted_site_ids[s]
-            F.append(tuple(m, s))
+            F.append((m, s))
         return state, sorted_site_ids, F
 
     def G(self, G, state, sorted_site_ids):
         conv = compress(sorted_site_ids)
         lines = ['G', state]
-        for g in G:
-            if g[1] == -1:
-                lines.append('-1 -1')
-            else:
-                lines.append(' '.join(map(str, [conv[g[1]], conv[g[2]]])))
+        for pid, vs in G:
+            lis = [len(vs)]
+            for v in vs:
+                lis.append(conv[v])
+            lines.append(' '.join(map(str, lis)))
         txt = '\n'.join(lines)
         recv = self.exec(txt)
-        l1, l2 = recv.split('\n')
-        pid, s, t = map(int, l2.split(' '))
-        if s != -1:
-            s = sorted_site_ids[s]
-            t = sorted_site_ids[t]
-        new_state = l1
-        return pid, s, t, new_state
+        new_state, vline = recv.split('\n')
+        pid_vs = list(map(int, vline.split(' ')))
+        pid, vs = pid_vs[0], pid_vs[1:]
+        vs = [sorted_site_ids[v] for v in vs]
+        return pid, vs, new_state
 
 
 def offline():
@@ -265,13 +290,13 @@ def offline():
     if 'punter' in obj:
         # Setup
         bridge.setup(obj)
-        state, sorted_site_ids, futures = proc.I(bridge.punters, bridge.punter_id, bridge.future, bridge.map)
+        state, sorted_site_ids, futures = proc.I(bridge.punters, bridge.punter_id, bridge.future, bridge.splurge, bridge.map)
         bridge.ready(futures, state, sorted_site_ids)
     elif 'move' in obj:
         # Gameplay
         G, state, sorted_site_ids = bridge.recmove(obj)
-        pid, s, t, state = proc.G(G, state, sorted_site_ids)
-        bridge.sendmove(pid, s, t, state, sorted_site_ids)
+        pid, vs, state = proc.G(G, state, sorted_site_ids)
+        bridge.sendmove(pid, vs, state, sorted_site_ids)
     elif 'stop' in obj:
         # Scoreing
         pass
@@ -289,15 +314,15 @@ def online():
     bridge.handshake(name)
     bridge.setup()
 
-    state, sorted_site_ids, futures = proc.I(bridge.punters, bridge.punter_id, bridge.future, bridge.map)
+    state, sorted_site_ids, futures = proc.I(bridge.punters, bridge.punter_id, bridge.future, bridge.splurge, bridge.map)
     bridge.ready(futures)
 
     while 1:
         G = bridge.recmove()
         if G is None:
             break
-        pid, s, t, state = proc.G(G, state, sorted_site_ids)
-        bridge.sendmove(s, t, state, sorted_site_ids)
+        pid, vs, state = proc.G(G, state, sorted_site_ids)
+        bridge.sendmove(vs, state, sorted_site_ids)
     bridge.close()
 
 
@@ -338,15 +363,15 @@ def junction():
         bridge.setup(obj)
         proc_idx = decision(bridge)
         proc = procs[proc_idx]
-        state, sorted_site_ids, futures = proc.I(bridge.punters, bridge.punter_id, bridge.future, bridge.map)
+        state, sorted_site_ids, futures = proc.I(bridge.punters, bridge.punter_id, bridge.future, bridge.splurge, bridge.map)
         bridge.ready(futures, state, sorted_site_ids, proc_idx)
     elif 'move' in obj:
         # Gameplay
         proc_idx = obj['state'][2]
         proc = procs[proc_idx]
         G, state, sorted_site_ids = bridge.recmove(obj)
-        pid, s, t, state = proc.G(G, state, sorted_site_ids)
-        bridge.sendmove(pid, s, t, state, sorted_site_ids, proc_idx)
+        pid, vs, state = proc.G(G, state, sorted_site_ids)
+        bridge.sendmove(pid, vs, state, sorted_site_ids, proc_idx)
     elif 'stop' in obj:
         # Scoreing
         pass
@@ -357,9 +382,13 @@ def junction():
 
 
 if __name__ == '__main__':
-    if JUNCTION:
-        junction()
-    elif len(sys.argv) == 3:
-        offline()
-    elif len(sys.argv) == 4:
-        online()
+    try:
+        if JUNCTION:
+            junction()
+        elif len(sys.argv) == 3:
+            offline()
+        elif len(sys.argv) == 4:
+            online()
+    except:
+        print(LAST_INPUT, file=sys.stderr)
+        raise

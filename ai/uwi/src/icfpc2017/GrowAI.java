@@ -13,12 +13,15 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.BitSet;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.InputMismatchException;
 import java.util.List;
 import java.util.Queue;
 import java.util.Random;
 import java.util.Set;
+
+import icfpc2017.PassOnlyAI2.Edge;
 
 class GrowAI {
 	public InputStream is;
@@ -32,7 +35,7 @@ class GrowAI {
 		this.level = level;
 	}
 	
-	final int PASS_WHEN_CHECKMATE = 1;
+	final int PASS_WHEN_CHECKMATE = 0;
 	
 	public String guess(State s)
 	{
@@ -46,7 +49,7 @@ class GrowAI {
 		}
 		
 		long ec = go(level, level, s, rds);
-		if(ec == -1)return "-1 -1";
+		if(ec == -1)return "";
 		return (ec>>>32) + " " + ((int)ec);
 	}
 	
@@ -92,6 +95,7 @@ class GrowAI {
 		
 		// 候補辺を選んだときの追加スコア
 //		tr("START");
+		List<Datum> data = new ArrayList<>();
 		for(Edge e : cans){
 			long plus = 0;
 			{
@@ -123,32 +127,37 @@ class GrowAI {
 				}
 			}
 //			tr(e, plus);
-			e.score = plus;
+			data.add(new Datum(e, plus));
 		}
 		
-		cans.sort((x, y) -> -Long.compare(x.score, y.score)); // スコア降順にソート
+		data.sort((x, y) -> -Long.compare(x.score, y.score)); // スコア降順にソート
 		if(rem < dep){
 			int ohp = rds.hp;
-			long ret = 0;
-			for(int i = Math.min(cans.size()-1, 20);i >= 0;i--){
-				Edge e = cans.get(i);
+			List<Long> list = new ArrayList<>();
+			for(int i = 0;i < data.size() && i <= 20;i++){
+				Edge e = data.get(i).e;
 				rds.union(e.x, e.y);
-				long val = e.score + (rem > 0 ? go(rem-1, dep, s, rds) : 0);
+				long val = data.get(i).score + (rem > 0 ? go(rem-1, dep, s, rds) : 0);
 				rds.revert(ohp);
-				ret = ret * 2 / 3 + val;
+				list.add(val);
 			}
+			Collections.sort(list);
+			long ret = 0;
+			for(int i = list.size()-1;i >= 0;i--){
+				ret = ret * 2 / 3 + list.get(i);
+			};
 			return ret;
 		}else{
 			int ohp = rds.hp;
 			long ret = 0;
 			long arg = -1;
 			for(int i = Math.min(cans.size()-1, 20);i >= 0;i--){
-				Edge e = cans.get(i);
-				rds.union(e.x, e.y);
-				long val = e.score + (rem > 0 ? go(rem-1, dep, s, rds) : 0);
+				Datum d = data.get(i);
+				rds.union(d.e.x, d.e.y);
+				long val = d.score + (rem > 0 ? go(rem-1, dep, s, rds) : 0);
 				if(val > ret){
 					ret = val;
-					arg = (long)e.x<<32|e.y;
+					arg = (long)d.e.x<<32|d.e.y;
 				}
 				rds.revert(ohp);
 			}
@@ -326,7 +335,7 @@ class GrowAI {
 			out.flush();
 		}else if(phase == 'I'){
 			// 初回入力2
-			int C = ni(), P = ni(), F = ni();
+			int C = ni(), P = ni(), F = ni(), S = ni();
 			int N = ni(), M = ni(), K = ni();
 			List<List<Edge>> g = new ArrayList<>();
 			for(int i = 0;i < N;i++)g.add(new ArrayList<>());
@@ -354,30 +363,38 @@ class GrowAI {
 			state.mines = mines;
 			state.C = C;
 			state.P = P;
+			state.F = F;
+			state.S = S;
 			state.mindistss = mindistss;
 			if(F == 1){
 				state.futures = new ArrayList<>();
 				for(int i = 0;i < N;i++)state.futures.add(null);
 			}
-			out.println(toBase64(state));
-			if(F == 1){
-				out.println(0);
+			if(S == 1){
+				state.charges = new ArrayList<>();
+				for(int i = 0;i < C;i++)state.charges.add(0);
 			}
+			out.println(toBase64(state));
+			out.println(0);
 		}else if(phase == 'G'){
 			// ゲーム中入力
 			State state = (State)fromBase64(ns());
-			int N = state.C;
+			int C = state.C;
 			outer:
-			for(int i = 0;i < N;i++){
-				int s = ni(), t = ni();
-				if(s != -1 && t != -1){
+			for(int i = 0;i < C;i++){
+				int L = ni();
+				int[] a = new int[L];
+				for(int j = 0;j < L;j++){
+					a[j] = ni();
+				}
+				for(int j = 0;j < L-1;j++){
+					int s = a[j], t = a[j+1];
 					for(Edge e : state.g.get(s)){
 						if((e.x^e.y^s) == t && e.owner == -1){
 							e.owner = i;
 							continue outer;
 						}
 					}
-					throw new RuntimeException(); // ここにはこない
 				}
 			}
 			
@@ -439,7 +456,9 @@ class GrowAI {
 		private static final long serialVersionUID = -4623606164150300132L;
 		int C; // プレー人数
 		int P; // お前のID(0~N-1)
+		int F, S; // future splurge対応フラグ
 		List<List<Edge>> g; // グラフ
+		List<Integer> charges; // splurgeチャージ量
 		BitSet mines; // mineかどうか
 		List<List<Integer>> mindistss; // 最短経路長
 		List<Integer> futures;
@@ -455,12 +474,21 @@ class GrowAI {
 		}
 	}
 	
+	static class Datum
+	{
+		Edge e;
+		long score;
+		public Datum(Edge e, long score) {
+			this.e = e;
+			this.score = score;
+		}
+	}
+	
 	static class Edge implements Serializable
 	{
 		private static final long serialVersionUID = 5180071263476967427L;
 		int x, y;
 		int owner; // 辺の所有者。いないときは-1
-		transient long score;
 		
 		public Edge(int x, int y) {
 			this.x = x;

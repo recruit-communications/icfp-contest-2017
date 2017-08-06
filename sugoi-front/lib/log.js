@@ -7,7 +7,7 @@ function parseLog(str) {
 }
 
 // マップJSONから情報を取得
-function parseLog(str) {
+function parseMap(str) {
   const json = JSON.parse(str);
   return {
     sites: json.sites.length,
@@ -18,4 +18,5 @@ function parseLog(str) {
 
 module.exports = {
   parseLog: parseLog,
+  parseMap: parseMap,
 };

@@ -15,6 +15,7 @@
             <th>id</th>
             <th>score</th>
             <th>history</th>
+            <th></th>
           </tr>
         </thead>
         <tbody>
@@ -35,13 +36,23 @@
             .append($('<td>').append($('<a>', {
               href: `/public/punter.html?cid=${data.id}`,
               text: '対戦履歴'
-            })));
+            })))
+            .append($('<td>', {class: 'delete-punter'})
+              .append($('<input>', { type: 'button', value: '削除', 'data-id': data.id}))
+            );
         }
         $.getJSON('/punter/list', (res) => {
           res.forEach((d, i) => {
             $('#list>table tbody').append(createRow(d, i));
           });
           $("#list>table").tablesorter();
+          $('.delete-punter input').on('click', function(){
+            if (confirm("削除しても良いですか？")) {
+              $.post("/punter/delete", {id: $(this).data('id')}, function(data){
+                location.reload();
+              });
+            }
+          })
         });
       });
     </script>

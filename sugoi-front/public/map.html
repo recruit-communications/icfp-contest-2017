@@ -38,7 +38,7 @@
         function createRow(data, idx) {
           const info = data.info || {};
           const urlBase = 'https://s3-ap-northeast-1.amazonaws.com/icfp2017-kst3-jp/maps/';
-          const vUrl = `http://13.112.208.142:8080/graph-viewer/index.html?log=${urlBase}boston-sparse.json`;
+          const vUrl = `http://13.112.208.142:8080/graph-viewer/index.html?log=${urlBase}${data.id}.json`;
           const thumb = `${urlBase}thumbs/${data.id}.png`;
           return $('<tr>')
             .append($('<td>').append($('<a>', {

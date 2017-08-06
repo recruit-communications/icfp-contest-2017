@@ -64,6 +64,7 @@ function postJenkins({id, map_id, punter_ids}) {
         return;
       }
       const queue = `${res.caseless.dict.location}api/json`;
+
       // queueはすぐ処理されないので、waitを入れてリクエスト
       setTimeout(() => {
         request.get({uri: queue}, (err, res, body) => {
@@ -74,7 +75,7 @@ function postJenkins({id, map_id, punter_ids}) {
           }
           fulfill(JSON.parse(body).executable.url);
         });
-      }, 7500);
+      }, 10000);
     });
   });
 }

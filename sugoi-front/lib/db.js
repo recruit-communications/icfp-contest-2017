@@ -114,7 +114,7 @@ module.exports = {
     params.TableName = 'icfp-game';
     return dbScan(params);
   },
-  addGame: ({id, league_id, created_at = (new Date).getTime(), punter_ids, map_id, job}) => {
+  addGame: ({id, league_id, created_at = (new Date).getTime(), punter_ids, map_id, job = {}, results = null}) => {
     const params = {
       TableName: 'icfp-game',
       Item: {
@@ -124,18 +124,21 @@ module.exports = {
         punter_ids: punter_ids,
         map: map_id,
         job: job,
+        results: results,
       }
     };
     return dbPut(params);
   },
-  updateGame: ({id, created_at, results}) => {
+  updateGame: ({id, created_at, results, job}) => {
     const params = {
       TableName: 'icfp-game',
       ExpressionAttributeNames: {
-        '#R': 'results'
+        '#R': 'results',
+        '#J': 'job',
       },
       ExpressionAttributeValues: {
-        ':r': results
+        ':r': results,
+        ':j': job
       },
       UpdateExpression: 'SET #R = :r',
       Key: {

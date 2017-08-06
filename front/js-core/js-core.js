@@ -10,8 +10,9 @@ const graphStyle = [
       "height": 20,
       "min-zoomed-font-size": 12,
       "color": "#fff",
-      "font-size": 16,
-      "z-index": 2
+      "font-size": 32,
+      "z-index": 2,
+      "content": "data(id)",
     }
   },
 
@@ -28,7 +29,7 @@ const graphStyle = [
       "z-index": 9999,
       "text-valign": "center",
       "text-halign": "center",
-      "content": "λ"
+      "content": "data(id)",
       }
   },
 

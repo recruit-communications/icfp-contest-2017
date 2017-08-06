@@ -24,10 +24,49 @@ class SugoiDealerSuite extends FunSuite with Matchers with MockitoSugar {
     val program = mock[PunterProgram]
     val gameState = mock[GameState]
 
-    when(program.punter).thenReturn(0)
-    when(program.penaltyCount).thenReturn(0)
-    when(program.putCommand(any(), any())).thenReturn(("{\"pass\":{\"punter\":0}}", 0L))
+    when(program.punter).thenReturn(1)
+    when(program.penaltyCount).thenReturn(9)
+    when(program.putCommand(any(), any())).thenReturn(("{\"pass\":{\"punter\":1}}", 0L))
     when(gameState.edgeCount).thenReturn(1)
-    SugoiDealer.play(Seq(program), gameState)
+    val deque = SugoiDealer.play(Seq(program), gameState)
+    deque(0) shouldBe a[PassMove]
+    deque(0).asInstanceOf[PassMove].pass.punter shouldBe 1
+  }
+
+  test("move test") {
+    val program = mock[PunterProgram]
+    val gameState = mock[GameState]
+
+    when(program.punter).thenReturn(1)
+    when(program.penaltyCount).thenReturn(9)
+    when(program.putCommand(any(), any())).thenReturn(("{\"claim\":{\"punter\":1,\"source\":5,\"target\":7},\"state\":[\"test\"]}", 0L))
+    when(gameState.edgeCount).thenReturn(1)
+    val deque = SugoiDealer.play(Seq(program), gameState)
+    deque(0) shouldBe a[ClaimMove]
+    deque(0).asInstanceOf[ClaimMove].claim.punter shouldBe 1
+    deque(0).asInstanceOf[ClaimMove].claim.source shouldBe 5
+    deque(0).asInstanceOf[ClaimMove].claim.target shouldBe 7
+
+    verify(gameState, times(1)).addEdge(5, 7, 1)
+  }
+
+  test("used edge move test") {
+    val program = mock[PunterProgram]
+    val gameState = mock[GameState]
+
+    when(program.punter).thenReturn(1)
+    when(program.penaltyCount).thenReturn(9)
+    when(program.putCommand(any(), any())).thenReturn(("{\"claim\":{\"punter\":1,\"source\":5,\"target\":7},\"state\":[\"test\"]}", 0L))
+    when(gameState.edgeCount).thenReturn(1)
+    when(gameState.isUsed(5, 7)).thenReturn(true)
+    val deque = SugoiDealer.play(Seq(program), gameState)
+    deque(0) shouldBe a[PassMove]
+    deque(0).asInstanceOf[PassMove].pass.punter shouldBe 1
+
+    verify(gameState, times(0)).addEdge(anyInt(), anyInt(), anyInt())
+  }
+
+  test("splurge test"){
+
   }
 }

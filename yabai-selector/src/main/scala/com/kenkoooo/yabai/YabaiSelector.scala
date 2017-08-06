@@ -30,12 +30,15 @@ object YabaiSelector extends Logging {
     val validPunterIds = (for (entry <- mapper.readValue[List[PunterEntry]](YabaiUrl.get(YabaiUrl.punterList), new TypeReference[List[PunterEntry]] {})) yield entry.id).toSet
     validPunterIds.foreach(punterId => punterIdCount(punterId) = 0)
 
+    mapper.readValue[List[MapEntry]](YabaiUrl.get(YabaiUrl.mapList), new TypeReference[List[MapEntry]] {}).foreach(entry => {
+      mapMemberCount(entry.id) = entry.punterNum
+      mapSelected(entry.id) = 0
+    })
     mapper.readValue[List[GameResult]](YabaiUrl.get(YabaiUrl.gameLog), new TypeReference[List[GameResult]] {}).foreach(r => Option(r.results).foreach(_.foreach(g =>
       if (validPunterIds.contains(g.punter)) {
         if (g.score == 0) zeroCount(g.punter) += 1
         punterIdCount(g.punter) += 1
         mapSelected(r.map) += 1
-        if (mapMemberCount(r.map) < r.results.length) mapMemberCount(r.map) = r.results.length
       })))
 
     mapSelected.foreach { case (mapId, count) => mapSelected(mapId) = count / mapMemberCount(mapId) }
@@ -70,6 +73,10 @@ object YabaiSelector extends Logging {
 
   case class Job(url: String)
 
+  case class MapEntry(info: MapInfo, @JsonProperty("created_at") createdAt: Long, id: String, @JsonProperty("punter_num") punterNum: Int, url: String)
+
+  case class MapInfo(rivers: Long, mines: Int, sites: Int)
+
 }
 
 
@@ -77,6 +84,7 @@ object YabaiUrl extends Logging {
   val host = "http://13.112.208.142:3000"
   val gameLog = s"$host/game/list"
   val punterList = s"$host/punter/list"
+  val mapList = s"$host/map/list"
 
   def gameExecute(mapId: String, punterIds: List[String]): String = s"$host/game/execute?map_id=$mapId&punter_ids=${punterIds.mkString(",")}"
 

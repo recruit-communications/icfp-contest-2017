@@ -63,8 +63,8 @@ class OfflineBridge:
         self.map = obj['map']
         if 'settings' in obj and 'futures' in obj['settings']:
             self.future = 1 if obj['settings']['futures'] else 0
-        if 'settings' in obj and 'splurge' in obj['settings']:
-            self.splurge = 1 if obj['settings']['splurge'] else 0
+        if 'settings' in obj and 'splurges' in obj['settings']:
+            self.splurge = 1 if obj['settings']['splurges'] else 0
 
     def ready(self, F, state, sorted_site_ids, proc_idx=-1):
         obj = {'ready': self.punter_id, 'state': [state, sorted_site_ids, proc_idx]}

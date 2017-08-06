@@ -1,15 +1,30 @@
 const app = require('express')();
+const bodyParser = require('body-parser');
 const http = require('http').Server(app);
 const fs = require('fs');
 const db = require('./lib/db');
 const battle = require('./lib/battle');
 const url = require('url');
 
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json());
+
 // クライアント一覧
 app.get('/punter/list', (req, res) => {
   db.punters().then((data) => {
     res.json(data);
   });
+});
+
+// クライアント削除
+app.post('/punter/delete', (req, res) => {
+  if (req.body.id) {
+    db.deletePunter(req.body.id).then((data) => {
+      res.json(data);
+    })
+  } else {
+    res.status(400).json({message: 'Punter ID is required.'});
+  }
 });
 
 // マップ一覧

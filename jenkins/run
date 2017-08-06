@@ -54,7 +54,7 @@ do
 	echo "downloading $PUNTER_ID.tar.gz..."
 	TAR_NAME="$PUNTER_ID.tar.gz"
 	aws s3 cp $S3_PREFIX/clients/$TAR_NAME .
-	tar zxf $TAR_NAME
+	tar --warning=no-unknown-keyword -zxf $TAR_NAME
 
 	echo "installing $PUNTER_ID..."
 	./install

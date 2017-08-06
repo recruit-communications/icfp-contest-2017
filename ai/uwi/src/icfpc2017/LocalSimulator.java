@@ -66,11 +66,13 @@ public class LocalSimulator {
 		int N = 8, M = 25, K = 3;
 		long[] scores = game(-1, N, M, K, true, 
 //				new Instanciator(PassOnlyAI2.class),
+//				new Instanciator(PassOnlyAI2.class)
 //				new Instanciator(YoshikoAI.class),
-//				new Instanciator(GrowAI.class, new Class[]{int.class}, new Object[]{2}),
+//				new Instanciator(YoshikoAI.class),
+//				new Instanciator(YoshikoAI.class)
+				new Instanciator(GrowAI.class, new Class[]{int.class}, new Object[]{2}),
 //				new Instanciator(MeijinAI.class, new Class[]{int.class}, new Object[]{5})
-//				new Instanciator(MeijinAI.class, new Class[]{int.class}, new Object[]{5})
-				new Instanciator(MeijinAI.class, new Class[]{int.class}, new Object[]{8}),
+//				new Instanciator(MeijinAI.class, new Class[]{int.class}, new Object[]{8}),
 				new Instanciator(MeijinIDAI.class, new Class[]{long.class}, new Object[]{900L})
 //				new Instanciator(GrowAI.class, new Class[]{int.class}, new Object[]{0})
 				);
@@ -156,7 +158,7 @@ public class LocalSimulator {
 		for(int i = 0;i < C;i++){
 			StringBuilder sb = new StringBuilder();
 			sb.append("I\n");
-			sb.append(C + " " + i + " " + 1 + "\n");
+			sb.append(C + " " + i + " " + 1 + " " + 1 + "\n");
 			sb.append(N + " " + M + " " + K + "\n");
 			for(int j = 0;j < M;j++){
 				sb.append(es[0][j] + " " + es[1][j] + "\n");
@@ -192,9 +194,9 @@ public class LocalSimulator {
 				
 				for(int j = 0;j < C;j++){
 					if(prevs[j] == null){
-						sb.append(-1 + " " + -1 + "\n");
+						sb.append(0 + "\n");
 					}else{
-						sb.append(prevs[j][0] + " " + prevs[j][1] + "\n");
+						sb.append(2 + " " + prevs[j][0] + " " + prevs[j][1] + "\n");
 					}
 				}
 				long el = -System.nanoTime();
@@ -202,10 +204,12 @@ public class LocalSimulator {
 				el += System.nanoTime();
 				try(Scanner in = new Scanner(res)){
 					states[i] = in.next();
-					int P = ni(in);
+					in.nextLine();
+					String[] sp = in.nextLine().split(" ");
+					int P = Integer.parseInt(sp[0]);
 					assert P == i;
-					int x = ni(in), y = ni(in);
-					if(x != -1){
+					if(sp.length > 1){
+						int x = Integer.parseInt(sp[1]), y = Integer.parseInt(sp[2]);
 						prevs[i] = new int[]{x, y};
 						boolean ok = false;
 						for(int j = 0;j < M;j++){
@@ -227,7 +231,7 @@ public class LocalSimulator {
 					}else{
 						prevs[i] = null;
 					}
-					tr("HAND", i, x, y, (el/1000000)+"ms", calcScore(C, N, M, K, es, mines, futures, colors));
+					tr("HAND", i, sp, (el/1000000)+"ms", calcScore(C, N, M, K, es, mines, futures, colors));
 				}
 				if(--rem == 0)break game;
 			}

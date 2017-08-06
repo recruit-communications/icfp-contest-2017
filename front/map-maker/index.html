@@ -24,8 +24,8 @@
       </p>
 
       <legend>Canvas</legend>
-      <div class="container-fluid float-container">
-        <ul>
+      <div class="container-fluid">
+        <ul class="float-container">
           <li><button class="btn" id="line-input" onclick="lineInputMode()" disabled>Line</button></li>
           <li><button class="btn" id="mine-input" onclick="mineInputMode()">Mine</button></li>
           <li><button class="btn" id="remove" onclick="removeMode()">Remove</button></li>
@@ -38,7 +38,7 @@
       <div id="loading">
         <span class="fa fa-refresh fa-spin"></span>
       </div>
-      <fieldset class="container-text">
+      <fieldset class="container-text margin20">
         <input type="radio" name="format" value="false" checked>1行で
         <input type="radio" name="format" value="true">整形して
         <div>

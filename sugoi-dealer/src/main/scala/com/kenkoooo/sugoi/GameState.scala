@@ -3,6 +3,8 @@ package com.kenkoooo.sugoi
 
 import java.util
 
+import org.apache.logging.log4j.scala.Logging
+
 import scala.collection.mutable.ArrayBuffer
 import scala.collection.{immutable, mutable}
 
@@ -10,7 +12,7 @@ object GameState {
   val UNUSED: Int = -1
 }
 
-class GameState(map: LambdaMap, punterNum: Int, futures: ArrayBuffer[Array[LambdaFuture]]) {
+class GameState(map: LambdaMap, punterNum: Int, futures: ArrayBuffer[Array[LambdaFuture]]) extends Logging {
   type Punter = Int
   type Vertex = Int
   type Score = Long
@@ -53,18 +55,44 @@ class GameState(map: LambdaMap, punterNum: Int, futures: ArrayBuffer[Array[Lambd
     * @return Map[Player, Score]
     */
   def calcScore(): mutable.TreeMap[Punter, Score] = {
+    val futureDist: mutable.TreeMap[Vertex, mutable.TreeMap[Vertex, Long]] = {
+      val res = new mutable.TreeMap[Vertex, mutable.TreeMap[Vertex, Long]]()
+      val startSet = new mutable.TreeSet[Vertex]
+      futureVector.foreach(_.foreach { case (v, u) =>
+        if (mines.contains(v)) startSet.add(v)
+        if (mines.contains(u)) startSet.add(u)
+      })
+
+      startSet.foreach(start => {
+        val deque = new util.ArrayDeque[Vertex]()
+        val dist = new mutable.TreeMap[Vertex, Long]
+        dist += (start -> 0)
+        deque.add(start)
+        while (!deque.isEmpty) {
+          val v = deque.poll()
+          for ((u, _) <- graph(v)) {
+            if (!dist.contains(u)) {
+              dist += (u -> (dist(v) + 1))
+              deque.add(u)
+            }
+          }
+        }
+
+        res += (start -> dist)
+      })
+      res
+    }
+
     val map = new mutable.TreeMap[Punter, Score]()
-    for (punter <- 0 until punterNum) map += (punter -> calcForOne(punter))
+    for (punter <- 0 until punterNum) map += (punter -> calcForOne(punter, futureDist))
     map
   }
 
-  private def calcForOne(punter: Punter): Score = {
+  private def calcForOne(punter: Punter, futureDist: mutable.TreeMap[Vertex, mutable.TreeMap[Vertex, Long]]): Score = {
     val sourceToTarget = futureVector(punter)
 
     var score: Score = 0
     mines.foreach(start => {
-      val mapOption = sourceToTarget.get(start)
-
       // naive BFS
       val dist = new mutable.TreeMap[Vertex, Int]()
       dist += (start -> 0)
@@ -81,18 +109,22 @@ class GameState(map: LambdaMap, punterNum: Int, futures: ArrayBuffer[Array[Lambd
 
               val s = dist(v) + 1
               score += (s * s)
-
-              mapOption.foreach(target => {
-                if (target == u) {
-                  score += (s * s * s)
-                } else {
-                  score -= (s * s * s)
-                }
-              })
             }
           }
         }
       }
+
+      // future
+      sourceToTarget.get(start).foreach(target => {
+        val d = futureDist(start)(target)
+        if (dist.contains(target)) {
+          score += d * d * d
+          logger.info(s"future bonus $punter: ${d * d * d}")
+        } else {
+          score -= d * d * d
+          logger.info(s"future penalty $punter: ${d * d * d}")
+        }
+      })
     })
 
     score

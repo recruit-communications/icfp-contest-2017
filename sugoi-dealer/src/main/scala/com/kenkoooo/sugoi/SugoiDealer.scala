@@ -216,7 +216,7 @@ class PunterProgram(cmd: String, val punter: Int, battler: Boolean = false) exte
       // handshake
       val handshakeFromPunter = reader.next()
 
-      logger.info(s"handshake from punter: $handshakeFromPunter")
+      logger.debug(s"handshake from punter: $handshakeFromPunter")
       val name = SugoiMapper.mapper.readValue(handshakeFromPunter, classOf[HandShakeFromPunter]).me
       val handShakeFromServer = SugoiMapper.mapper.writeValueAsString(HandShakeFromServer(name)) + "\n"
 
@@ -224,7 +224,7 @@ class PunterProgram(cmd: String, val punter: Int, battler: Boolean = false) exte
       os.write(lastCommand.getBytes)
       os.flush()
 
-      logger.info(s"handshake to punter: ${handShakeFromServer.length}:$handShakeFromServer")
+      logger.debug(s"handshake to punter: ${handShakeFromServer.length}:$handShakeFromServer")
 
       val commandFromServer = command + "\n"
 
@@ -233,11 +233,11 @@ class PunterProgram(cmd: String, val punter: Int, battler: Boolean = false) exte
       os.flush()
 
       logRecv(SugoiMapper.purify(commandFromServer))
-      logger.info(s"command to punter: ${commandFromServer.length}:$commandFromServer")
+      logger.debug(s"command to punter: ${commandFromServer.length}:$commandFromServer")
 
       val fromPunter = reader.next()
       logSend(SugoiMapper.purify(fromPunter))
-      logger.info(s"command from punter: $fromPunter")
+      logger.debug(s"command from punter: $fromPunter")
       (fromPunter, 0)
     } catch {
       case e: Throwable =>

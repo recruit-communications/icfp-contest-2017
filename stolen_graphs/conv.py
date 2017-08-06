@@ -19,7 +19,7 @@ def solve(fn):
         rivers = []
         for i in range(m):
             u, v = map(int, input().split())
-            rivers.append({'source': u, 'target': v})
+            rivers.append({'source': u - 1, 'target': v - 1})
 
         obj = {'sites': sites, 'rivers': rivers}
 

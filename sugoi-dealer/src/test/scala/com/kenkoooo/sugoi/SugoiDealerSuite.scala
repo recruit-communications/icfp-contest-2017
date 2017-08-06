@@ -66,7 +66,20 @@ class SugoiDealerSuite extends FunSuite with Matchers with MockitoSugar {
     verify(gameState, times(0)).addEdge(anyInt(), anyInt(), anyInt())
   }
 
-  test("splurge test"){
+  test("splurge test") {
+    val program = mock[PunterProgram]
+    val gameState = mock[GameState]
 
+    when(program.punter).thenReturn(1)
+    when(program.penaltyCount).thenReturn(9)
+    when(program.putCommand(any(), any())).thenReturn(("{\"claim\":{\"punter\":1,\"source\":5,\"target\":7},\"state\":[\"test\"]}", 0L))
+    when(gameState.edgeCount).thenReturn(1)
+    val deque = SugoiDealer.play(Seq(program), gameState)
+    deque(0) shouldBe a[ClaimMove]
+    deque(0).asInstanceOf[ClaimMove].claim.punter shouldBe 1
+    deque(0).asInstanceOf[ClaimMove].claim.source shouldBe 5
+    deque(0).asInstanceOf[ClaimMove].claim.target shouldBe 7
+
+    verify(gameState, times(1)).addEdge(5, 7, 1)
   }
 }

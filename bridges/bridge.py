@@ -63,8 +63,8 @@ class OfflineBridge:
         self.map = obj['map']
         if 'settings' in obj and 'futures' in obj['settings']:
             self.future = 1 if obj['settings']['futures'] else 0
-        if 'settings' in obj and 'splurge' in obj['settings']:
-            self.splurge = 1 if obj['settings']['splurge'] else 0
+        if 'settings' in obj and 'splurges' in obj['settings']:
+            self.splurge = 1 if obj['settings']['splurges'] else 0
 
     def ready(self, F, state, sorted_site_ids, proc_idx=-1):
         obj = {'ready': self.punter_id, 'state': [state, sorted_site_ids, proc_idx]}
@@ -257,7 +257,7 @@ class Process:
             m, s = map(int, splited[i].split())
             m = sorted_site_ids[m]
             s = sorted_site_ids[s]
-            F.append(tuple(m, s))
+            F.append((m, s))
         return state, sorted_site_ids, F
 
     def G(self, G, state, sorted_site_ids):

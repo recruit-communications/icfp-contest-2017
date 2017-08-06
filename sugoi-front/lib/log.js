@@ -3,7 +3,8 @@
 // 対戦ログ文字列から結果を取得
 function parseLog(str) {
   const json = JSON.parse(str.split("\n").splice(-2, 1)[0].substr('RECV '.length));
-  return json.stop.scores;
+  // ログ末尾に結果が含まれていなければ空で返す
+  return json.stop ? json.stop.scores : [];
 }
 
 // マップJSONから情報を取得

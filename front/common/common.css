@@ -39,6 +39,7 @@ svg {
 }
 
 #cy {
+    text-align: left;
     width: 1000px;
     height: 700px;
     display: block;
@@ -51,23 +52,16 @@ svg {
 /*****************************************/
 
 .float-container {
-    position: relative;
-    overflow: hidden;
-    margin-bottom: 5px;
+    text-align: center;
+    margin: 15px;
 }
 
-.float-container ul {
-    position: relative;
+.float-container {
     list-style: none;
-    float: left;
-    left: 50%;
 }
 
-.float-container ul li {
-    position: relative;
-    float: left;
-    left: -50%;
-    margin: 5px;
+.float-container li {
+    display: inline-block;
 }
 
 .form-inline input[type="number"] {
@@ -87,6 +81,6 @@ svg {
     height: 100px;
 }
 
-fieldset {
+.margin20 {
     margin: 20px;
 }

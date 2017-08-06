@@ -23,7 +23,7 @@ object YabaiSelector extends Logging {
   val PARALLEL_BATTLE_COUNT = 5
 
   def main(args: Array[String]): Unit = {
-    val zeroCount = new mutable.TreeMap[PunterId, Int]().withDefaultValue(0)
+    val illegalCount = new mutable.TreeMap[PunterId, Int]().withDefaultValue(0)
     val mapSelected = new mutable.TreeMap[LambdaMapId, Int]().withDefaultValue(0)
     val mapMemberCount = new mutable.TreeMap[LambdaMapId, Int]().withDefaultValue(0)
     val punterIdCount = new mutable.TreeMap[PunterId, Int]().withDefaultValue(0)
@@ -40,18 +40,16 @@ object YabaiSelector extends Logging {
       .foreach(r => Option(r.results) match {
         case Some(result) => result.foreach(g =>
           if (validPunterIds.contains(g.punter)) {
-            if (g.score == 0) zeroCount(g.punter) += 1
+            if (g.score >= 0) illegalCount(g.punter) += 1
             punterIdCount(g.punter) += 1
             mapSelected(r.map) += 1
           })
         case _ =>
           illegalMapCount(r.map) += 1
-      }
-
-      )
+      })
 
     mapSelected.foreach { case (mapId, count) => mapSelected(mapId) = count / mapMemberCount(mapId) }
-    zeroCount.foreach { case (punterId, count) =>
+    illegalCount.foreach { case (punterId, count) =>
       if (punterIdCount(punterId) > 10 && count.toDouble / punterIdCount(punterId).toDouble > ILLEGAL_PUNTER_RATIO) {
         logger.info(s"zero point ratio: $punterId: $count / ${punterIdCount(punterId)} = ${count.toDouble / punterIdCount(punterId).toDouble}")
         punterIdCount.remove(punterId)

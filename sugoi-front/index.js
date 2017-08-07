@@ -43,6 +43,10 @@ app.get('/game/list', (req, res) => {
   const query = url.parse(req.url, true).query;
   db.games(query).then((data) => {
     const count = query.count || 100;
+	if (query.status) {
+	  data = data.filter((e) => e.job.status === query.status);
+	}
+	
     const sortedData = sortBy(data, (d) => d.created_at).reverse().slice(0, count);
     res.json(sortedData);
   });

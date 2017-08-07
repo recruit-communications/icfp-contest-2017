@@ -40,9 +40,11 @@ object YabaiLeague extends Logging {
       val mapId = gameResult.map
       if (gameResult.createdAtMillis > Instant.parse("2017-08-07T03:30:00Z").getEpochSecond * 1000 && mapIds.contains(mapId)) Option(gameResult.results).foreach { results =>
         val member = results.length
+        var rank: Int = 0
         if (member > 1) results.zipWithIndex.foreach { case (result, i) =>
           val punterId = result.punter
-          val point = 1.0 - i.toDouble / (member.toDouble - 1.0)
+          if (i > 0 && results(rank).score != results(i).score) rank = i
+          val point = 1.0 - rank.toDouble / (member.toDouble - 1.0)
 
           punterScore(punterId) += point
           punterCount(punterId) += 1

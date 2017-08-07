@@ -10,10 +10,24 @@ const clientPrefix = 'clients/';
 const mapPrefix = 'maps/';
 
 function dbScan(params) {
-  return new Promise((fulfill, reject) => {
+  // ページング対応
+  function scan(fulfill, reject, params, items) {
     db.scan(params, (err, data) => {
-      err ? reject(err) : fulfill(data.Items);
+      if (err) {
+        reject(err)
+        return
+      }
+      Array.prototype.push.apply(items, data.Items);
+      if (data.LastEvaluatedKey) {
+        params.ExclusiveStartKey = data.LastEvaluatedKey;
+        scan(fulfill, reject, params, items);
+      } else {
+        fulfill(items);
+      }
     });
+  }
+  return new Promise((fulfill, reject) => {
+    scan(fulfill, reject, params, []);
   });
 }
 

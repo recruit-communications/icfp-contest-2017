@@ -47,37 +47,45 @@ class MeijinIDAI {
 			rdss[i] = new RestorableDisjointSet2(n, n+5);
 			for(List<Edge> row : s.g){
 				for(Edge e : row){
-					if(e.owner == i)rdss[i].union(e.x, e.y);
+					if(e.owner == i || e.owner2 == i)rdss[i].union(e.x, e.y);
 				}
 			}
 		}
 		
-		Map<Long, Edge> map = new HashMap<>();
-		for(int i = 0;i < n;i++){
-			List<Edge> row = s.g.get(i);
-			for(Edge e : row){
-				// 未所有の辺をcansに追加
-				if(e.x == i && e.owner == -1){
-					long code = (long)Math.min(e.x, e.y)<<32|Math.max(e.x, e.y);
-					if(!map.containsKey(code)){
-						map.put(code, e);
-						e.dup = 1;
-					}else{
-						map.get(code).dup++;
+		List<List<Edge>> cans = new ArrayList<>();
+		for(int o = 0;o < 2;o++){
+			Map<Long, Edge> map = new HashMap<>();
+			for(int i = 0;i < n;i++){
+				List<Edge> row = s.g.get(i);
+				for(Edge e : row){
+					// 未所有の辺をcansに追加
+					if(e.x == i && s.ok(e, o) != -1){
+						long code = (long)Math.min(e.x, e.y)<<32|Math.max(e.x, e.y);
+						if(!map.containsKey(code)){
+							map.put(code, e);
+							e.dup = 1;
+						}else{
+							map.get(code).dup++;
+						}
 					}
 				}
 			}
+			cans.add(new ArrayList<>(map.values()));
 		}
-		List<Edge> cans = new ArrayList<>(map.values());
 		cache.add(new HashMap<>());
 		cache.add(new HashMap<>());
+		
+		int[] ops = new int[s.options.size()];
+		for(int i = 0;i < s.options.size();i++){
+			ops[i] = s.options.get(i);
+		}
 		
 		long ec = -1;
 		for(int level = 1;level <= s.remturn && System.currentTimeMillis() - START <= TL;level++){
 //			int maxdep = Math.min(s.remturn, level);
 			try{
 				long lstart = System.currentTimeMillis();
-				ec = go(level, level, s.P, s, cans, rdss, Long.MIN_VALUE/2, Long.MAX_VALUE/2);
+				ec = go(level, level, s.P, s, cans, ops, rdss, Long.MIN_VALUE/2, Long.MAX_VALUE/2);
 				tr("LEVEL: " + level +" " + (System.currentTimeMillis() - lstart) + "ms");
 			}catch(TimeoutException tle){
 			}
@@ -99,14 +107,27 @@ class MeijinIDAI {
 	
 	List<Map<Long, Long>> cache = new ArrayList<>();
 	
-	long go(int rem, int dep, int turn, State s, List<Edge> cans, RestorableDisjointSet2[] rdss, long alpha, long beta) throws TimeoutException
+	int ok(Edge e, int who, int[] ops, int so)
+	{
+		if(e.owner == -1){
+			return 0;
+		}else if(e.owner != who && e.owner2 == -1){
+			if(so == 1 && ops[who] > 0)return 1;
+			return -1;
+		}else{
+			return -1;
+		}
+	}
+	
+	long go(int rem, int dep, int turn, State s, List<List<Edge>> cans, int[] ops, RestorableDisjointSet2[] rdss, long alpha, long beta) throws TimeoutException
 	{
 		if(rem == 0)return 0;
 		List<Datum> data = new ArrayList<>();
 		
 		// 候補辺を選んだときの追加スコア
-		for(Edge e : cans){
+		for(Edge e : cans.get(turn)){
 			if(e.dup == 0)continue;
+			if(ok(e, turn, ops, s.O) == -1)continue;
 			long plus = 0;
 			if(!rdss[turn].equiv(e.x, e.y)){
 				{
@@ -149,6 +170,7 @@ class MeijinIDAI {
 			}
 			data.add(new Datum(e, plus));
 		}
+//		tr("data", data);
 		if(data.isEmpty())return 0;
 		
 		data.sort((x, y) -> -Long.compare(x.score, y.score)); // スコア降順にソート
@@ -158,8 +180,12 @@ class MeijinIDAI {
 			for(Datum d : data){
 				rdss[turn].union(d.e.x, d.e.y);
 				d.e.dup--;
-				long val = d.score - (rem > 0 ? go(rem-1, dep, turn^1, s, cans, rdss, -beta, -alpha) : 0);
+				int lok = ok(d.e, turn, ops, s.O);
+				assert lok != -1;
+				ops[turn] -= lok;
+				long val = d.score - (rem > 0 ? go(rem-1, dep, turn^1, s, cans, ops, rdss, -beta, -alpha) : 0);
 				alpha = Math.max(alpha, val);
+				ops[turn] += lok;
 				d.e.dup++;
 				rdss[turn].revert(ohp);
 				if(alpha >= beta)return alpha; // alpha-beta cut
@@ -175,11 +201,14 @@ class MeijinIDAI {
 			for(Datum d : data){
 				rdss[turn].union(d.e.x, d.e.y);
 				d.e.dup--;
-				long val = d.score - (rem > 0 ? go(rem-1, dep, turn^1, s, cans, rdss, -beta, -alpha) : 0);
+				int lok = ok(d.e, turn, ops, s.O);
+				ops[turn] -= lok;
+				long val = d.score - (rem > 0 ? go(rem-1, dep, turn^1, s, cans, ops, rdss, -beta, -alpha) : 0);
 				if(val > ret){
 					ret = val;
 					arg = (long)d.e.x<<32|d.e.y;
 				}
+				ops[turn] += lok;
 				d.e.dup++;
 				rdss[turn].revert(ohp);
 			}
@@ -332,7 +361,7 @@ class MeijinIDAI {
 			out.flush();
 		}else if(phase == 'I'){
 			// 初回入力2
-			int C = ni(), P = ni(), F = ni(), S = ni();
+			int C = ni(), P = ni(), F = ni(), S = ni(), O = ni();
 			int N = ni(), M = ni(), K = ni();
 			List<List<Edge>> g = new ArrayList<>();
 			for(int i = 0;i < N;i++)g.add(new ArrayList<>());
@@ -362,6 +391,7 @@ class MeijinIDAI {
 			state.P = P;
 			state.F = F;
 			state.S = S;
+			state.O = O;
 			state.phase = 0;
 			state.mindistss = mindistss;
 			state.remturn = (M-P+C-1)/C;
@@ -392,6 +422,11 @@ class MeijinIDAI {
 				state.charges = new ArrayList<>();
 				for(int i = 0;i < C;i++)state.charges.add(0);
 			}
+			if(O == 1){
+				state.options = new ArrayList<>();
+				int z = mines.cardinality();
+				for(int i = 0;i < C;i++)state.options.add(z);
+			}
 			out.println(toBase64(state));
 			if(F == 0){
 				out.println(0);
@@ -412,21 +447,35 @@ class MeijinIDAI {
 			START = System.currentTimeMillis();
 			State state = (State)fromBase64(ns());
 			int C = state.C;
+			int[][] moves = new int[C][];
 			for(int i = 0;i < C;i++){
 				int L = ni();
-				if(state.S == 1 && L == 0 && (state.phase > 0 || state.phase == 0 && i < state.P)){
-					state.charges.set(i, state.charges.get(i)+1);
-				}
 				int[] a = new int[L];
 				for(int j = 0;j < L;j++){
 					a[j] = ni();
+				}
+				moves[i] = a;
+			}
+			
+			for(int z = 0, i = state.P;z < C;z++,i++){
+				if(i == C)i = 0;
+				int[] a = moves[i];
+				int L = a.length;
+				if(state.S == 1 && L == 0 && (state.phase > 0 || state.phase == 0 && i < state.P)){
+					// 初回のダミーpassに注意してチャージ
+					inc(state.charges, i, 1);
 				}
 				inner:
 				for(int j = 0;j < L-1;j++){
 					int s = a[j], t = a[j+1];
 					for(Edge e : state.g.get(s)){
-						if((e.x^e.y^s) == t && e.owner == -1){
-							e.owner = i;
+						if((e.x^e.y^s) == t){
+							if(e.owner == -1){
+								e.owner = i;
+							}else if(state.O == 1 && state.options.get(i) >= 1){
+								inc(state.options, i, -1);
+								e.owner2 = i;
+							}
 							continue inner;
 						}
 					}
@@ -441,6 +490,11 @@ class MeijinIDAI {
 		}else{
 			throw new RuntimeException();
 		}
+	}
+	
+	public static void inc(List<Integer> list, int id, int x)
+	{
+		if(x != 0)list.set(id, list.get(id) + x);
 	}
 	
 	public static List<Integer> mindists(List<List<Edge>> g, int start)
@@ -553,14 +607,27 @@ class MeijinIDAI {
 		private static final long serialVersionUID = -4623606164150300132L;
 		int C; // プレー人数
 		int P; // お前のID(0~N-1)
-		int F, S; // future splurge対応フラグ
+		int F, S, O; // future splurge option対応フラグ
 		int remturn; // 残りターン
 		int phase; // 何回目か
 		List<List<Edge>> g; // グラフ
 		List<Integer> charges; // splurgeチャージ量
+		List<Integer> options; // option残り回数
 		BitSet mines; // mineかどうか
 		List<List<Integer>> mindistss; // 最短経路長
 		List<Integer> futures;
+		
+		int ok(Edge e, int who)
+		{
+			if(e.owner == -1){
+				return 0;
+			}else if(e.owner != who && e.owner2 == -1){
+				if(O == 1 && options.get(who) > 0)return 1;
+				return -1;
+			}else{
+				return -1;
+			}
+		}
 	}
 	
 	static class Future implements Serializable
@@ -578,17 +645,19 @@ class MeijinIDAI {
 		private static final long serialVersionUID = 5180071263476967427L;
 		int x, y;
 		int owner; // 辺の所有者。いないときは-1
+		int owner2;
 		transient int dup;
 		
 		public Edge(int x, int y) {
 			this.x = x;
 			this.y = y;
 			this.owner = -1;
+			this.owner2 = -1;
 		}
 
 		@Override
 		public String toString() {
-			return "Edge [x=" + x + ", y=" + y + ", owner=" + owner + "]";
+			return "Edge [x=" + x + ", y=" + y + ", owner=" + owner + ", owner2=" + owner2 + "]";
 		}
 	}
 

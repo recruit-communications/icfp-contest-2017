@@ -8,7 +8,6 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.PrintWriter;
 import java.io.Serializable;
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
@@ -17,11 +16,13 @@ import java.util.HashMap;
 import java.util.InputMismatchException;
 import java.util.List;
 import java.util.Map;
-import java.util.Queue;
 import java.util.concurrent.TimeoutException;
 
 // alpha-beta
 // 連結成分をメモ化
+// TODO
+// 大規模対策
+// 初手future
 class MeijinIDAI2 {
 	public InputStream is;
 	public PrintWriter out;
@@ -75,9 +76,11 @@ class MeijinIDAI2 {
 		cache.add(new HashMap<>());
 		cache.add(new HashMap<>());
 		
-		int[] ops = new int[s.options.size()];
-		for(int i = 0;i < s.options.size();i++){
-			ops[i] = s.options.get(i);
+		int[] ops = new int[s.C];
+		if(s.O == 1){
+			for(int i = 0;i < s.options.size();i++){
+				ops[i] = s.options.get(i);
+			}
 		}
 		
 		long ec = -1;
@@ -145,7 +148,7 @@ class MeijinIDAI2 {
 							if(!cache.get(turn).containsKey(code)){
 								long lplus = 0;
 								for(int tar = ry;tar != -1; tar = rdss[turn].next[tar]){
-									long d = s.mindistss.get(cur).get(tar);
+									long d = s.mindistss[cur][tar];
 									lplus += d*d;
 								}
 								cache.get(turn).put(code, lplus);
@@ -163,7 +166,7 @@ class MeijinIDAI2 {
 							if(!cache.get(turn).containsKey(code)){
 								long lplus = 0;
 								for(int tar = ry;tar != -1; tar = rdss[turn].next[tar]){
-									long d = s.mindistss.get(cur).get(tar);
+									long d = s.mindistss[cur][tar];
 									lplus += d*d;
 								}
 								cache.get(turn).put(code, lplus);
@@ -381,14 +384,6 @@ class MeijinIDAI2 {
 			for(int i = 0;i < K;i++){
 				mines.set(ni());
 			}
-			List<List<Integer>> mindistss = new ArrayList<>();
-			for(int i = 0;i < N;i++){
-				if(mines.get(i)){
-					mindistss.add(mindists(g, i));
-				}else{
-					mindistss.add(null);
-				}
-			}
 			
 			State state = new State();
 			state.g = g;
@@ -399,7 +394,6 @@ class MeijinIDAI2 {
 			state.S = S;
 			state.O = O;
 			state.phase = 0;
-			state.mindistss = mindistss;
 			state.remturn = (M-P+C-1)/C;
 			state.futures = new ArrayList<>();
 			for(int i = 0;i < N;i++)state.futures.add(null);
@@ -407,12 +401,13 @@ class MeijinIDAI2 {
 				if(N <= 100 && check4EC(g)){ // 調子乗りすぎ
 					for(int i = 0;i < N;i++){
 						if(mines.get(i)){
+							int[] mindists = mindistsfast(g, i);
 							int maxd = 0;
 							int arg = -1;
 							for(int j = 0;j < N;j++){
 								if(!mines.get(j)){
-									if(mindistss.get(i).get(j) > maxd){
-										maxd = mindistss.get(i).get(j);
+									if(mindists[j] > maxd){
+										maxd = mindists[j];
 										arg = j;
 									}
 								}
@@ -462,7 +457,7 @@ class MeijinIDAI2 {
 				}
 				moves[i] = a;
 			}
-			tr("INPUT MOVES: " + Arrays.deepToString(moves));
+//			tr("INPUT MOVES: " + Arrays.deepToString(moves));
 			
 			for(int z = 0, i = state.P;z < C;z++,i++){
 				if(i == C)i = 0;
@@ -489,14 +484,22 @@ class MeijinIDAI2 {
 					throw new RuntimeException("invalid input");
 				}
 			}
-			tr("MY EDGES:");
-			for(List<Edge> row : state.g){
-				for(Edge e : row){
-					if(e.x < e.y){
-						tr(e);
-					}
+//			tr("MY EDGES:");
+//			for(List<Edge> row : state.g){
+//				for(Edge e : row){
+//					if(e.x < e.y){
+//						tr(e);
+//					}
+//				}
+//			}
+			
+			int[][] mindistss = new int[state.g.size()][];
+			for(int i = 0;i < state.g.size();i++){
+				if(state.mines.get(i)){
+					mindistss[i] = mindistsfast(state.g, i);
 				}
 			}
+			state.mindistss = mindistss;
 			
 			String output = guess(state);
 			state.phase++;
@@ -513,23 +516,24 @@ class MeijinIDAI2 {
 		if(x != 0)list.set(id, list.get(id) + x);
 	}
 	
-	public static List<Integer> mindists(List<List<Edge>> g, int start)
+	public static int[] mindistsfast(List<List<Edge>> g, int start)
 	{
 		int n = g.size();
 		int I = 99999999;
-		List<Integer> ds = new ArrayList<>();
-		for(int i = 0;i < n;i++)ds.add(I);
-		ds.set(start, 0);
+		int[] ds = new int[n];
+		Arrays.fill(ds, I);
+		ds[start] = 0;
 		
-		Queue<Integer> q = new ArrayDeque<>();
-		q.add(start);
-		while(!q.isEmpty()){
-			int cur = q.poll();
+		int[] q = new int[n];
+		int p = 0;
+		q[p++] = start;
+		for(int z = 0;z < p;z++){
+			int cur = q[z];
 			for(Edge e : g.get(cur)){
 				int to = e.x^e.y^cur;
-				if(ds.get(to) == I){
-					ds.set(to, ds.get(cur) + 1);
-					q.add(to);
+				if(ds[to] == I){
+					ds[to] = ds[cur] + 1;
+					q[p++] = to;
 				}
 			}
 		}
@@ -630,7 +634,7 @@ class MeijinIDAI2 {
 		List<Integer> charges; // splurgeチャージ量
 		List<Integer> options; // option残り回数
 		BitSet mines; // mineかどうか
-		List<List<Integer>> mindistss; // 最短経路長
+		transient int[][] mindistss; // 最短経路長
 		List<Integer> futures;
 		
 		int ok(Edge e, int who)

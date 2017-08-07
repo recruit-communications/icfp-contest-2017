@@ -76,9 +76,11 @@ class MeijinIDAI {
 		cache.add(new HashMap<>());
 		cache.add(new HashMap<>());
 		
-		int[] ops = new int[s.options.size()];
-		for(int i = 0;i < s.options.size();i++){
-			ops[i] = s.options.get(i);
+		int[] ops = new int[s.C];
+		if(s.O == 1){
+			for(int i = 0;i < s.options.size();i++){
+				ops[i] = s.options.get(i);
+			}
 		}
 		
 		long ec = -1;

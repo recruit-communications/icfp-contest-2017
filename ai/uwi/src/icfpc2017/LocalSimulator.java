@@ -60,9 +60,9 @@ public class LocalSimulator {
 //		int N = 50, M = 70, K = 5;
 //		int N = 30000, M = 30000, K = 300;
 //		int N = 5000, M = 5000, K = 300;
-//		int N = 500, M = 500, K = 30;
+		int N = 500, M = 500, K = 30;
 //		int N = 50, M = 50, K = 5;
-		int N = 20, M = 30, K = 2;
+//		int N = 20, M = 30, K = 2;
 //		int N = 15, M = 25, K = 2;
 //		int N = 5, M = 8, K = 2;
 //		int N = 12, M = 12, K = 3;
@@ -82,7 +82,7 @@ public class LocalSimulator {
 //				new Instanciator(MeijinAI.class, new Class[]{int.class}, new Object[]{5})
 //				new Instanciator(MeijinAI.class, new Class[]{int.class}, new Object[]{8}),
 				new Instanciator(MeijinIDAI.class, new Class[]{long.class}, new Object[]{800L}),
-				new Instanciator(MeijinIDAI.class, new Class[]{long.class}, new Object[]{800L})
+				new Instanciator(MeijinIDAI2.class, new Class[]{long.class}, new Object[]{800L})
 //				new Instanciator(MeijinIDAI.class, new Class[]{long.class}, new Object[]{800L})
 //				new Instanciator(GrowAI.class, new Class[]{int.class}, new Object[]{0})
 				);
@@ -132,7 +132,7 @@ public class LocalSimulator {
 	{
 		int FUTURE = 1;
 		int SPLURGE = 1;
-		int OPTION = 1;
+		int OPTION = 0;
 		int C = players.length;
 		
 		// 環境作成
@@ -190,6 +190,7 @@ public class LocalSimulator {
 			String res = run(players[i], sb.toString());
 			try(Scanner in = new Scanner(res)){
 				states[i] = in.next();
+				tr("STATE SIZE", i, states[i].length());
 				int F = ni(in);
 				futures[i] = new int[F][];
 				Set<Integer> mineset = new HashSet<>();

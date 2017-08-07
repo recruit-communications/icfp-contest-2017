@@ -166,13 +166,46 @@ struct Game {
 		}
 	}
 
+	vi count_area(int distance) const {
+		vi ret(N);
+		vi q;
+		vector<bool> visited(N);
+		for (int i = 0; i < N; ++i) {
+			q.clear();
+			q.push_back(i);
+			visited[i] = true;
+			int dist = 0;
+			int dist_end = q.size();
+			for (int i = 0; i < q.size(); ++i) {
+				if (i == dist_end) {
+					dist++;
+					if (dist == distance) break;
+					dist_end = q.size();
+				}
+				for (const Edge& e : edges[q[i]]) {
+					if (e.owner != NOT_OWNED) continue;
+					if (visited[e.to]) continue;
+					visited[e.to] = true;
+					q.push_back(e.to);
+				}
+			}
+			ret[i] = q.size();
+			for (int v : q) {
+				visited[v] = false;
+			}
+		}
+
+		return ret;
+	}
+
 	pair<int, int> create_move() const {
-		vector<int> orders(N);
+		vi orders(N);
 		for (int i = 0; i < N; ++i) {
 			for (const Edge& e : edges[i]) {
 				if (e.owner == NOT_OWNED) orders[i]++;
 			}
 		}
+		vi area_size = count_area(8);
 
 		vi reachable(N); // i-th bit of reachable[j] := vertex j is reachable from mine i
 		vi approach_node_score(N);
@@ -211,6 +244,7 @@ struct Game {
 		vector<i64> order_score;
 		vector<i64> expand_score;
 		vector<i64> approach_score;
+		vector<i64> area_score;
 
 		for (int i = 0; i < N; ++i) {
 			for (const Edge& e : edges[i]) {
@@ -236,6 +270,7 @@ struct Game {
 						approach_score.back() += approach_node_score[e.to];
 					}
 				}
+				area_score.push_back(area_size[e.to] * SCORE_SCALE / 10);
 			}
 		}
 
@@ -253,16 +288,20 @@ struct Game {
 		vector<pair<i64, int>> scores(cand_edges.size());
 		vi weights;
 		if (turn < M / C / 3) {
-			weights = {50, 1, 0, 5}; // in early phase, prior connecting mines
+			weights = {50, 1, 0, 5, 1}; // in early phase, prior connecting mines
 		} else if (turn < M / C * 4 / 5) {
-			weights = {5, 2, 1, 3};
+			weights = {5, 2, 1, 3, 1};
 		} else {
-			weights = {5, 2, 5, 1};
+			weights = {5, 2, 5, 1, 1};
 		}
 		for (int i = 0; i < cand_edges.size(); ++i) {
 			// cerr << "(" << cand_edges[i].first << " " << cand_edges[i].second->to << ") ";
 			// cerr << connect_score[i] << " " << order_score[i] << " " << expand_score[i] << " " << approach_score[i] << endl;
-			scores[i].first = connect_score[i] * weights[0] + order_score[i] * weights[1] + expand_score[i] * weights[2] + approach_score[i] * weights[3];
+			scores[i].first = connect_score[i] * weights[0]
+			                  + order_score[i] * weights[1]
+			                  + expand_score[i] * weights[2]
+			                  + approach_score[i] * weights[3]
+			                  + area_score[i] * weights[4];
 			scores[i].second = i;
 		}
 		int idx = max_element(scores.begin(), scores.end())->second;

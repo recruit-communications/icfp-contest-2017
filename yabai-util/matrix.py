@@ -30,31 +30,27 @@ if len(sys.argv) > 1:
 timestamp = int((origin - zero).total_seconds()) * 1000
 print "origin timestamp: %d"%timestamp
 
-os.system("curl -s http://13.112.208.142:3000/game/list?count=999999 > /tmp/gamelist.txt")
+os.system("curl -s \"http://13.112.208.142:3000/game/list?count=999999&all=1\" > /tmp/gamelist.txt")
 shutil.rmtree("./matrix")
 os.makedirs("./matrix")
-maplist = commands.getoutput("curl -s http://13.112.208.142:3000/map/list | jq -r '.[].id'").split("\n")
+maplist = [tuple(line.split("\t")) for line in commands.getoutput("curl -s http://13.112.208.142:3000/map/list | jq -r '.[] | [.id, .punter_num] | @tsv'").split("\n")]
+puntlist = set(commands.getoutput("curl -s http://13.112.208.142:3000/punter/list | jq -r '.[].id'").split("\n"))
 
-for mapname in maplist:
-  tsv = commands.getoutput("cat /tmp/gamelist.txt | jq -r '.[] | if .job.status == \"success\" and .map_id == \"%s\" then . else empty end | (.created_at | tostring) + \"\t\" + .id + \"\t\" + (.results | sort_by(.score) | reverse | map(.punter) | @tsv)'" % mapname).split("\n")
-
-  if tsv[0] == '': continue
-
-  count = collections.defaultdict(int)
-  rate = collections.defaultdict(float)
-  win = collections.defaultdict(int)
-  ratesum = collections.defaultdict(float)
-
+def cumulate(count, win, tsv):
   for line in tsv:
     ary = line.split()
     t, id, punters = ary[0], ary[1], ary[2:]
     if int(t) < timestamp: continue
     for i in xrange(len(punters)):
       for j in xrange(i+1, len(punters)):
+        if punters[i] not in puntlist or punters[j] not in puntlist: continue
         count[(punters[i], punters[j])] += 1
         win[punters[i]] += 1
         win[punters[j]] += 0
 
+def output(count, win, name):
+  rate = collections.defaultdict(float)
+  ratesum = collections.defaultdict(float)
   punters = win.keys()
   denom = {}
 
@@ -76,5 +72,48 @@ for mapname in maplist:
       ary.append(str(rate[(p1, p2)]) if denom[(p1, p2)] > 0 else '-')
     ans.append(",".join(ary))
 
-  with open("./matrix/%s.csv"%mapname, 'w') as f:
+  with open("./matrix/%s.csv"%name, 'w') as f:
     f.write("\n".join(ans))
+
+  ans = ["," + ",".join(punters)]
+  for p1 in punters:
+    ary = [p1]
+    for p2 in punters:
+      ary.append(str(count[(p1, p2)]) if denom[(p1, p2)] > 0 else '-')
+    ans.append(",".join(ary))
+
+  with open("./matrix/_%s.csv"%name, 'w') as f:
+    f.write("\n".join(ans))
+
+
+subtotal = {}
+for i in [2,4,8,16]:
+  subtotal[i] = {
+    "count" : collections.defaultdict(int),
+    "win" : collections.defaultdict(int)
+  }
+
+
+for mapname, punter_num in maplist:
+  tsv = commands.getoutput("cat /tmp/gamelist.txt | jq -r '.[] | if .job.status == \"success\" and .map_id == \"%s\" then . else empty end | (.created_at | tostring) + \"\t\" + .id + \"\t\" + (.results | sort_by(.score) | reverse | map(.punter) | @tsv)'" % mapname).split("\n")
+
+  if tsv[0] == '': continue
+
+  count = collections.defaultdict(int)
+  win = collections.defaultdict(int)
+
+  cumulate(count, win, tsv)
+
+  if punter_num <= 2:
+    cumulate(subtotal[2]["count"], subtotal[2]["win"], tsv)
+  elif punter_num <= 4:
+    cumulate(subtotal[4]["count"], subtotal[4]["win"], tsv)
+  elif punter_num <= 8:
+    cumulate(subtotal[8]["count"], subtotal[8]["win"], tsv)
+  else:
+    cumulate(subtotal[16]["count"], subtotal[16]["win"], tsv) 
+
+  output(count, win, mapname)
+
+for i in subtotal.keys():
+  output(subtotal[2]["count"], subtotal[2]["win"], "subtotal%d"%i)

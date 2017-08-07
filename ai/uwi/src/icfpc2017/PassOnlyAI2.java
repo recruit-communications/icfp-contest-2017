@@ -82,16 +82,23 @@ class PassOnlyAI2 {
 			// ゲーム中入力
 			State state = (State)fromBase64(ns());
 			int C = state.C;
-			for(int z = 0, i = state.P;z < C;z++,i++){
-				if(i == C)i = 0;
+			int[][] moves = new int[C][];
+			for(int i = 0;i < C;i++){
 				int L = ni();
-				if(state.S == 1 && L == 0 && (state.phase > 0 || state.phase == 0 && i < state.P)){
-					// 初回のダミーpassに注意してチャージ
-					inc(state.charges, i, 1);
-				}
 				int[] a = new int[L];
 				for(int j = 0;j < L;j++){
 					a[j] = ni();
+				}
+				moves[i] = a;
+			}
+			
+			for(int z = 0, i = state.P;z < C;z++,i++){
+				if(i == C)i = 0;
+				int[] a = moves[i];
+				int L = a.length;
+				if(state.S == 1 && L == 0 && (state.phase > 0 || state.phase == 0 && i < state.P)){
+					// 初回のダミーpassに注意してチャージ
+					inc(state.charges, i, 1);
 				}
 				inner:
 				for(int j = 0;j < L-1;j++){

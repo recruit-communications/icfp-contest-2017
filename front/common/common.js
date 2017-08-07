@@ -31,16 +31,55 @@ function initPunterColours() {
   }
 }
 
-function changeIdShow() {
-
+let show = true;
+function switchIdShow() {
+  let nodes = cy.nodes();
+  for (let i = 0; i < nodes.length; i++) {
+    const n = nodes[i];
+    if (show == true) {
+      n.style("font-size", 0);
+    } else {
+      n.style("font-size", idSize);
+    }
+  }
+  show = !show;
 }
 
-function changeIdSize() {
-
+function updateIdSize() {
+  let nodes = cy.nodes();
+  idSize = $("#id-size").val();
+  for (let i = 0; i < nodes.length; i++) {
+    const n = nodes[i];
+    n.style("font-size", idSize);
+  }
 }
 
-function changeLineWidth() {
-  width = $("#line-width").val();
-  $("#cy .edge").css("width", width);
-  console.log("updateWidth with" + width);
+function updateEdgeWidth() {
+  edgeWidth = $("#edge-width").val();
+  let edges = cy.edges();
+  for (let i = 0; i < edges.length; i++) {
+    const e = edges[i];
+    e.style("width", edgeWidth);
+  }
+}
+
+function getPngNameFromUrl() {
+  let pngName = "image.png";
+  var logUrl = decodeURIComponent(location.search).substr(5);
+  if (logUrl.length > 0) {
+    let paths = logUrl.split("/");
+    let jsonName = paths[paths.length - 1];
+    pngName = jsonName.substr(0, jsonName.length - 5) + ".png";
+  }
+  return pngName;
+}
+
+function handleDownloadPng() {
+  let pngName = getPngNameFromUrl();
+  let png = cy.png({bg:"black"});
+
+  console.log(png);
+
+  $("#download").attr("download", pngName);
+  $("#download").attr("href", png);
 }

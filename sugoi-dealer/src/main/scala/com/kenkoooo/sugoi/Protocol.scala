@@ -8,7 +8,7 @@ case class HandShakeFromServer(you: String)
 
 case class SetupToPunter(punter: Int, punters: Int, map: LambdaMap, settings: LambdaSettings)
 
-case class LambdaSettings(futures: Boolean, splurges: Boolean)
+case class LambdaSettings(futures: Boolean, splurges: Boolean, options: Boolean)
 
 case class LambdaFuture(source: Int, target: Int)
 
@@ -40,7 +40,11 @@ case class SplurgeMove(splurge: Splurge) extends Move
 
 case class Splurge(punter: Int, route: Array[Int])
 
-case class MoveFromPunter(claim: Claim, pass: Pass, splurge: Splurge, state: Object)
+case class OptionMove(option: LambdaOption) extends Move
+
+case class LambdaOption(punter: Int, source: Int, target: Int)
+
+case class MoveFromPunter(claim: Claim, pass: Pass, splurge: Splurge, option: LambdaOption, state: Object)
 
 case class ScoreToPunter(stop: Stop)
 
@@ -52,4 +56,4 @@ case class TimeoutToPunter(timeout: Int)
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
-case class PurifiedState(claim: Object, pass: Object, splurge: Object, move: Object, ready: Object, futures: Object, punter: Object, punters: Object, map: Object, settings: Object)
+case class PurifiedState(claim: Object, pass: Object, splurge: Object, option: Object, move: Object, ready: Object, futures: Object, punter: Object, punters: Object, map: Object, settings: Object)

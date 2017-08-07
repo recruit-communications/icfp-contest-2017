@@ -60,13 +60,13 @@ bool operator<(const Edge& e1, const Edge& e2) {
 struct Game {
 
 	int turn;
-	int C, I, F, N, M, K;
+	int C, I, F, S, N, M, K;
 	vector<vector<Edge>> edges;
 	vector<int> mines;
 	vvi dists;
 
 	Game(bool original) {
-		scanf("%d %d %d %d %d %d", &C, &I, &F, &N, &M, &K);
+		scanf("%d %d %d %d %d %d %d", &C, &I, &F, &S, &N, &M, &K);
 		edges.resize(N);
 		mines.resize(K);
 		if (original) {
@@ -102,7 +102,7 @@ struct Game {
 
 	string serialize() const {
 		stringstream ss;
-		ss << C << " " << I << " " << F << " " << N << " " << M << " " << K << " " << (turn + 1);
+		ss << C << " " << I << " " << F << " " << S << " " << N << " " << M << " " << K << " " << (turn + 1);
 		for (int i = 0; i < N; ++i) {
 			ss << " " << edges[i].size();
 			for (const Edge& e : edges[i]) {
@@ -272,9 +272,14 @@ void move() {
 	time_limit = 500;
 	Game game(false);
 	for (int i = 0; i < game.C; ++i) {
-		int s, t;
-		scanf("%d %d", &s, &t);
-		game.use(s, t, i);
+		int c;
+		scanf("%d", &c);
+		if (c == 0) continue;
+		vi path(c);
+		for (int j = 0; j < c; ++j) {
+			scanf("%d", &path[j]);
+			if (j > 0) game.use(path[j - 1], path[j], i);
+		}
 	}
 	cout << game.serialize() << "\n";
 	pair<int, int> res = game.create_move();
@@ -282,7 +287,6 @@ void move() {
 	cout << res.first << " " << res.second << endl;
 	debug("move:%d\n", get_elapsed_msec());
 }
-
 int main() {
 	start_time = get_time();
 	string phase;

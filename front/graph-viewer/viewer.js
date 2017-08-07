@@ -93,17 +93,24 @@ function selectMap(url) {
 
 function doVisualize() {
   json = JSON.parse($("#json-form").val());
-  cy.destroy();
+  if (cy.elements !== undefined) {
+    cy.destroy();
+  }
   renderGraph(json);
 }
 
 $(function(){
-  const matches = /map=([^&#=]*)/.exec(window.location.search);
-  if (matches !== null && matches !== undefined) {
-    const param1 = matches[1];
-    loadMapList(false);
-    selectMap(param1);
+  let logUrl = decodeURIComponent(location.search).substr(5);
+  if (logUrl.length == 0) {
+    const matches = /map=([^&#=]*)/.exec(window.location.search);
+    if (matches !== null && matches !== undefined) {
+      const param1 = matches[1];
+      loadMapList(false);
+      selectMap(param1);
+    } else {
+      loadMapList(true);
+    }
   } else {
-    loadMapList(true);
+    loadMapList(false);
   }
 })

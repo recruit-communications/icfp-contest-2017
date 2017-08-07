@@ -24,19 +24,33 @@
       </p>
 
       <legend>Canvas</legend>
-      <div class="container-fluid">
-        <ul class="float-container">
-          <li><button class="btn" id="line-input" onclick="lineInputMode()" disabled>Line</button></li>
-          <li><button class="btn" id="mine-input" onclick="mineInputMode()">Mine</button></li>
-          <li><button class="btn" id="remove" onclick="removeMode()">Remove</button></li>
-          <li>&emsp;&emsp;&emsp;&emsp;</li>
-          <li><button class="btn" id="undo" onclick="undoCanvas()">Undo (Ctrl+Z)</button></li>
-          <li><button class="btn" id="reset" onclick="resetCanvas()">Reset!</button></li>
-        </ul>
+      <div class="container-fluid" align="center">
+        <div class="form-inline">
+          <div class="form-group">
+            <button class="btn" id="id-show-switch" onclick="switchIdShow()">ID on/off</button>
+          </div>
+          <div class="form-group">
+            <label>IDサイズ：</label><input type="number" class="form-control" id="id-size" min="2" value="32" step="10" onchange="updateIdSize()">
+          </div>
+          <div class="form-group">
+            <label>線の太さ：</label><input type="number" class="form-control" id="edge-width" value="13" step="5" min="3"  onchange="updateEdgeWidth()">
+          </div>
+        </div>
+        <div class="form-inline margin20">
+          <div class="form-group"><button class="btn" id="line-input" onclick="lineInputMode()" disabled>Line</button></div>
+          <div class="form-group"><button class="btn" id="mine-input" onclick="mineInputMode()">Mine</button></div>
+          <div class="form-group"><button class="btn" id="remove" onclick="removeMode()">Remove</button></div>
+          <div class="form-group">&emsp;&emsp;&emsp;&emsp;</div>
+          <div class="form-group"><button class="btn" id="undo" onclick="undoCanvas()">Undo (Ctrl+Z)</button></div>
+          <div class="form-group"><button class="btn" id="reset" onclick="resetCanvas()">Reset!</button></div>
+        </div>
       </div>
       <div class="container-fluid" id="cy"></div>
       <div id="loading">
         <span class="fa fa-refresh fa-spin"></span>
+      </div>
+      <div align="center">
+        <a class="btn" role="button" id="download" href="#" download="image.png" onclick="handleDownloadPng()">画像としてダウンロード</a>
       </div>
       <fieldset class="container-text margin20">
         <input type="radio" name="format" value="false" checked>1行で

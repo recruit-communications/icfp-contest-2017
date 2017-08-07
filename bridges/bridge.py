@@ -302,9 +302,9 @@ class Process:
         vs = []
         for v in pid_vs[1:]:
             if v >= 0:
-                v.append(sorted_site_ids[v])
+                vs.append(sorted_site_ids[v])
             else:
-                v.append(-(sorted_site_ids[-(v + 1)] + 1))
+                vs.append(-(sorted_site_ids[-(v + 1)] + 1))
         return pid, vs, new_state
 
 

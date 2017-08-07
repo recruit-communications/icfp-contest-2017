@@ -138,43 +138,50 @@ struct XorShift {
 const double XorShift::TO_DOUBLE = 1.0 / (1LL << 32);
 
 struct Edge {
-	int from, to, owner;
+	int from, to, owner, option_owner;
 };
 
 struct Game {
 
 	int turn;
-	int C, I, F, S, N, M, K;
+	int C, I, F, S, O, N, M, K;
 	vector<Edge> all_edges;
 	vector<vector<Edge*>> edges;
-	vector<int> mines;
+	vi mines;
+	vi option_counts;
 	vvi dists; // dists[i][j] := distance from mine i to vertex j
 
 	Game(bool original) {
-		scanf("%d %d %d %d %d %d %d", &C, &I, &F, &S, &N, &M, &K);
+		scanf("%d %d %d %d %d %d %d %d", &C, &I, &F, &S, &O, &N, &M, &K);
 		edges.resize(N);
 		all_edges.resize(M);
 		mines.resize(K);
+		option_counts.resize(C);
 		if (original) {
 			turn = 0;
 			for (int i = 0; i < M; ++i) {
 				scanf("%d %d", &all_edges[i].from, &all_edges[i].to);
 				all_edges[i].owner = NOT_OWNED;
+				all_edges[i].option_owner = NOT_OWNED;
 				edges[all_edges[i].from].push_back(&all_edges[i]);
 				if (all_edges[i].from != all_edges[i].to) edges[all_edges[i].to].push_back(&all_edges[i]);
 			}
 			for (int i = 0; i < K; ++i) {
 				scanf("%d", &mines[i]);
 			}
+			option_counts.assign(C, O ? K : 0);
 		} else {
 			scanf("%d", &turn);
 			for (int i = 0; i < M; ++i) {
-				scanf("%d %d %d", &all_edges[i].from, &all_edges[i].to, &all_edges[i].owner);
+				scanf("%d %d %d %d", &all_edges[i].from, &all_edges[i].to, &all_edges[i].owner, &all_edges[i].option_owner);
 				edges[all_edges[i].from].push_back(&all_edges[i]);
 				if (all_edges[i].from != all_edges[i].to) edges[all_edges[i].to].push_back(&all_edges[i]);
 			}
 			for (int i = 0; i < K; ++i) {
 				scanf("%d", &mines[i]);
+			}
+			for (int i = 0; i < C; ++i) {
+				scanf("%d", &option_counts[i]);
 			}
 			calc_mine_dists();
 		}
@@ -182,12 +189,15 @@ struct Game {
 
 	string serialize() const {
 		stringstream ss;
-		ss << C << " " << I << " " << F << " " << S << " " << N << " " << M << " " << K << " " << (turn + 1);
+		ss << C << " " << I << " " << F << " " << S << " " << O << " " << N << " " << M << " " << K << " " << (turn + 1);
 		for (const Edge& e : all_edges) {
-			ss << " " << e.from << " " << e.to << " " << e.owner;
+			ss << " " << e.from << " " << e.to << " " << e.owner << " " << e.option_owner;
 		}
 		for (int i = 0; i < K; ++i) {
 			ss << " " << mines[i];
+		}
+		for (int i = 0; i < K; ++i) {
+			ss << " " << option_counts[i];
 		}
 		return ss.str();
 	}
@@ -196,9 +206,14 @@ struct Game {
 		if (s == -1) return;
 		vector<Edge*>& es = edges[s];
 		for (int i = 0; i < es.size(); ++i) {
-			if (es[i]->from + es[i]->to - s == t && es[i]->owner == NOT_OWNED) {
-				es[i]->owner = owner;
-				break;
+			if (es[i]->from + es[i]->to - s == t) {
+				if (es[i]->owner == NOT_OWNED) {
+					es[i]->owner = owner;
+					break;
+				} else if (es[i]->option_owner == NOT_OWNED) {
+					es[i]->option_owner = owner;
+					break;
+				}
 			}
 		}
 	}

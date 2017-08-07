@@ -203,7 +203,7 @@ class PunterProgram(cmd: String, val punter: Int, val battler: Boolean = false, 
   var state: Object = _
   var penaltyCount = 0
   var passCount = 0
-  var optionRemain = minesCount
+  var optionRemain: Int = minesCount
 
   /**
     * put a command to the program with timeout

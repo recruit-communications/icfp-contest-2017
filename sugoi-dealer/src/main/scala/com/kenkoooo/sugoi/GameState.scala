@@ -20,7 +20,7 @@ class GameState(map: LambdaMap, punterNum: Int, futures: ArrayBuffer[Array[Lambd
   val futureVector: immutable.IndexedSeq[mutable.TreeMap[Vertex, Vertex]] = for (_ <- 0 until punterNum) yield new mutable.TreeMap[Vertex, Vertex]()
   futures.zipWithIndex.foreach(v => {
     val (arr, i) = v
-    LambdaOption(arr).foreach(_.foreach(f => futureVector(i) += (f.source -> f.target)))
+    Option(arr).foreach(_.foreach(f => futureVector(i) += (f.source -> f.target)))
   })
 
   val usedGraph = new mutable.TreeMap[Vertex, mutable.TreeMap[Vertex, Punter]]

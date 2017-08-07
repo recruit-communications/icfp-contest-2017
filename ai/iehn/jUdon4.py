@@ -13,9 +13,11 @@ def I(): return int(sys.stdin.readline())
 def F(): return float(sys.stdin.readline())
 def S(): return input()
 
-DEBUG = True
+DEBUG = False
 
 def pe(*a, **b):
+    return
+
     if not DEBUG:
         return
     with open('/tmp/t.log', 'a') as f:

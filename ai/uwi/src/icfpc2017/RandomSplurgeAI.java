@@ -16,172 +16,163 @@ import java.util.BitSet;
 import java.util.InputMismatchException;
 import java.util.List;
 import java.util.Queue;
+import java.util.SplittableRandom;
 
-class YoshikoAI {
+class RandomSplurgeAI {
 	public InputStream is;
 	public PrintWriter out;
 	String INPUT = "";
+
+	SplittableRandom gen = new SplittableRandom();
 	
-	String guess(State s)
-	{
-		int n = s.N;
-		DJSet ds = new DJSet(n); // TODO これもStateに入れてもいいかも
-		for(Edge e : s.es){
-			if(e.owner == s.P){
-				ds.union(e.x, e.y);
-			}
-		}
-		int[] mcount = new int[n];
-		for(int i = 0;i < n;i++){
-			if(s.mines.get(i)){
-				mcount[ds.root(i)]++;
-			}
-		}
-		long max = -1;
-		Edge best = null;
-		for(Edge e : s.es){
-			if(e.owner == -1 && !ds.equiv(e.x, e.y)){
-				long score = (long)(mcount[ds.root(e.x)]+1) * (mcount[ds.root(e.y)]+1);
-				if(score > max){
-					max = score;
-					best = e;
-				}
-			}
-		}
-		if(best == null){
-			for(Edge e : s.es){
-				if(e.owner == -1){
-					long score = mcount[ds.root(e.x)];
-					if(score > max){
-						max = score;
-						best = e;
-					}
-				}
-			}
-		}
-		assert best != null;
-		return best.x + " " + best.y;
-	}
-	
-	public static class DJSet {
-		public int[] upper;
-
-		public DJSet(int n) {
-			upper = new int[n];
-			Arrays.fill(upper, -1);
-		}
-
-		public int root(int x) {
-			return upper[x] < 0 ? x : (upper[x] = root(upper[x]));
-		}
-
-		public boolean equiv(int x, int y) {
-			return root(x) == root(y);
-		}
-
-		public boolean union(int x, int y) {
-			x = root(x);
-			y = root(y);
-			if (x != y) {
-				if (upper[y] < upper[x]) {
-					int d = x;
-					x = y;
-					y = d;
-				}
-				upper[x] += upper[y];
-				upper[y] = x;
-			}
-			return x == y;
-		}
-
-		public int count() {
-			int ct = 0;
-			for (int u : upper)
-				if (u < 0)
-					ct++;
-			return ct;
-		}
-	}
-
-
 	public void solve() {
 		char phase = ns().charAt(0);
 		if(phase == '?'){
 			// 初回入力
-			out.println("僕らは目指した〜");
+			out.println("Splatoon");
 			out.flush();
 		}else if(phase == 'I'){
 			// 初回入力2
 			int C = ni(), P = ni(), F = ni(), S = ni();
 			int N = ni(), M = ni(), K = ni();
-			List<Edge> es = new ArrayList<>();
+			List<List<Edge>> g = new ArrayList<>();
+			for(int i = 0;i < N;i++)g.add(new ArrayList<>());
 			for(int i = 0;i < M;i++){
 				int s = ni(), t = ni();
-				Edge e = new Edge(Math.min(s, t), Math.max(s, t));
-				es.add(e);
+				Edge e = new Edge(s, t);
+				g.get(s).add(e);
+				g.get(t).add(e);
 			}
-			es.sort((a, b) -> {
-				if(a.x != b.x)return a.x - b.x;
-				return a.y - b.y;
-			});
 			BitSet mines = new BitSet();
 			for(int i = 0;i < K;i++){
 				mines.set(ni());
 			}
+			List<List<Integer>> mindistss = new ArrayList<>();
+			for(int i = 0;i < N;i++){
+				if(mines.get(i)){
+					mindistss.add(mindists(g, i));
+				}else{
+					mindistss.add(null);
+				}
+			}
 			
 			State state = new State();
-			state.es = es;
+			state.g = g;
 			state.mines = mines;
 			state.C = C;
 			state.P = P;
 			state.N = N;
+			state.M = M;
 			state.F = F;
 			state.S = S;
+			state.mindistss = mindistss;
 			if(F == 1){
 				state.futures = new ArrayList<>();
 				for(int i = 0;i < N;i++)state.futures.add(null);
+				for(int i = 0;i < N;i++){
+					if(mines.get(i)){
+						for(int j = 0;j < 5;j++){ // futureを適当に選ぶ
+							int id = gen.nextInt(N);
+							if(!mines.get(id)){
+								state.futures.set(i, id);
+								break;
+							}
+						}
+					}
+				}
+			}
+			if(S == 1){
+				state.charges = new ArrayList<>();
+				for(int i = 0;i < C;i++)state.charges.add(0);
 			}
 			out.println(toBase64(state));
-			out.println(0);
+			if(F == 0){
+				out.println(0);
+			}else{
+				int ct = 0;
+				for(Integer x : state.futures){
+					if(x != null)ct++;
+				}
+				out.println(ct);
+				for(int i = 0;i < N;i++){
+					if(state.futures.get(i) != null){
+						out.println(i + " " + state.futures.get(i));
+					}
+				}
+			}
 		}else if(phase == 'G'){
 			// ゲーム中入力
 			State state = (State)fromBase64(ns());
 			int C = state.C;
-			List<Edge> added = new ArrayList<>();
+			outer:
 			for(int i = 0;i < C;i++){
 				int L = ni();
+				if(state.S == 1 && L == 0){
+					state.charges.set(i, state.charges.get(i)+1);
+				}
 				int[] a = new int[L];
 				for(int j = 0;j < L;j++){
 					a[j] = ni();
 				}
 				for(int j = 0;j < L-1;j++){
 					int s = a[j], t = a[j+1];
-					if(s > t){
-						int d = s; s = t; t = d;
+					for(Edge e : state.g.get(s)){
+						if((e.x^e.y^s) == t && e.owner == -1){
+							e.owner = i;
+							continue outer;
+						}
 					}
-					Edge e = new Edge(s, t);
-					e.owner = i;
-					added.add(e);
-				}
-			}
-			added.sort((a, b) -> {
-				if(a.x != b.x)return a.x - b.x;
-				return a.y - b.y;
-			});
-			int q = 0;
-			for(int p = 0;p < added.size();p++){
-				Edge e = added.get(p);
-				while(q < state.es.size() && (state.es.get(q).owner != -1 || state.es.get(q).x < e.x || state.es.get(q).x == e.x && state.es.get(q).y < e.y)){
-					q++;
-				}
-				if(q < state.es.size() && state.es.get(q).x == e.x && state.es.get(q).y == e.y){
-					state.es.get(q).owner = e.owner;
 				}
 			}
 			
 			out.println(toBase64(state));
-			out.print(state.P + " ");
-			out.println(guess(state));
+			out.print(state.P);
+			if(state.S == 0 || gen.nextInt(10) < 5){
+				// pass
+			}else{
+//				int use = gen.nextInt(state.charges.get(state.P)+1);
+				int len = state.charges.get(state.P) + 1;
+				outer:
+				for(int grep = 0;grep < 10;grep++){
+					int id = gen.nextInt(state.M*2);
+					for(int i = 0;i < state.N;i++){
+						if(id < state.g.get(i).size()){
+							Edge e = state.g.get(i).get(id);
+							if(e.owner != -1)continue outer;
+							e.owner = -2;
+							List<Edge> es = new ArrayList<>();
+							es.add(e);
+							int ap = e.y;
+							inner:
+							while(es.size() < len){
+								for(int rep = 0;rep < 10;rep++){
+									int nid = gen.nextInt(state.g.get(ap).size());
+									if(state.g.get(ap).get(nid).owner != -1)continue;
+									Edge ne = state.g.get(ap).get(nid);
+									ne.owner = -2;
+									es.add(ne);
+									ap = ap ^ ne.x ^ ne.y;
+									e = ne;
+									continue inner;
+								}
+								break;
+							}
+							out.print(" " + e.x);
+							ap = e.y;
+							for(Edge z : es){
+								z.owner = -1;
+								out.print(" " + ap);
+								ap ^= z.x ^ z.y;
+							}
+							state.charges.set(state.P, state.charges.get(state.P) - es.size());
+							break outer;
+						}else{
+							id -= state.g.get(i).size();
+						}
+					}
+				}
+			}
+			out.println();
 		}else{
 			throw new RuntimeException();
 		}
@@ -237,10 +228,12 @@ class YoshikoAI {
 		private static final long serialVersionUID = -4623606164150300132L;
 		int C; // プレー人数
 		int P; // お前のID(0~N-1)
-		int N; // 頂点数
-		int F, S;
-		List<Edge> es; // 辺集合
+		int N, M;
+		int F, S; // future splurge対応フラグ
+		List<List<Edge>> g; // グラフ
+		List<Integer> charges; // splurgeチャージ量
 		BitSet mines; // mineかどうか
+		List<List<Integer>> mindistss; // 最短経路長
 		List<Integer> futures;
 	}
 	
@@ -279,7 +272,7 @@ class YoshikoAI {
 	}
 
 	public static void main(String[] args) throws Exception {
-		new YoshikoAI().run();
+		new RandomSplurgeAI().run();
 	}
 
 	private byte[] inbuf = new byte[1024];

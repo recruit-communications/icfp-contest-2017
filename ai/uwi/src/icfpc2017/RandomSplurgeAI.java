@@ -194,11 +194,15 @@ class RandomSplurgeAI {
 								}
 								break;
 							}
-							line2.append(" " + es.get(0).x);
-							ap = es.get(0).x;
-							for(Edge z : es){
-								ap ^= z.x ^ z.y;
-								line2.append(" " + ap);
+							if(es.size() == 1 && es.get(0).owner != -1){
+								line2.append(" " + (-es.get(0).x-1) + " " + (-es.get(0).y-1));
+							}else{
+								line2.append(" " + es.get(0).x);
+								ap = es.get(0).x;
+								for(Edge z : es){
+									ap ^= z.x ^ z.y;
+									line2.append(" " + ap);
+								}
 							}
 							if(state.S == 1){
 								state.charges.set(state.P, state.charges.get(state.P) - (es.size() - 1));

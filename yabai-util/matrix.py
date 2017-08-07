@@ -30,7 +30,7 @@ if len(sys.argv) > 1:
 timestamp = int((origin - zero).total_seconds()) * 1000
 print "origin timestamp: %d"%timestamp
 
-os.system("curl -s http://13.112.208.142:3000/game/list?count=999999 > /tmp/gamelist.txt")
+os.system("curl -s http://13.112.208.142:3000/game/list?count=999999&all=1 > /tmp/gamelist.txt")
 shutil.rmtree("./matrix")
 os.makedirs("./matrix")
 maplist = commands.getoutput("curl -s http://13.112.208.142:3000/map/list | jq -r '.[].id'").split("\n")

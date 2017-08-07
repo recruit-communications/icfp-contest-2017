@@ -22,15 +22,14 @@ import java.util.concurrent.TimeoutException;
 
 // alpha-beta
 // 連結成分をメモ化
-// O=0対応
-class MeijinIDAI {
+class MeijinIDAI2 {
 	public InputStream is;
 	public PrintWriter out;
 	String INPUT = "";
 	
 	long TL;
 	
-	public MeijinIDAI(long tl)
+	public MeijinIDAI2(long tl)
 	{
 		this.TL = tl;
 	}
@@ -463,7 +462,7 @@ class MeijinIDAI {
 				}
 				moves[i] = a;
 			}
-//			tr("INPUT MOVES: " + Arrays.deepToString(moves));
+			tr("INPUT MOVES: " + Arrays.deepToString(moves));
 			
 			for(int z = 0, i = state.P;z < C;z++,i++){
 				if(i == C)i = 0;
@@ -490,19 +489,19 @@ class MeijinIDAI {
 					throw new RuntimeException("invalid input");
 				}
 			}
-//			tr("MY EDGES:");
-//			for(List<Edge> row : state.g){
-//				for(Edge e : row){
-//					if(e.x < e.y){
-//						tr(e);
-//					}
-//				}
-//			}
+			tr("MY EDGES:");
+			for(List<Edge> row : state.g){
+				for(Edge e : row){
+					if(e.x < e.y){
+						tr(e);
+					}
+				}
+			}
 			
 			String output = guess(state);
 			state.phase++;
 			out.println(toBase64(state));
-//			tr("MY OUTPUT:" + output);
+			tr("MY OUTPUT:" + output);
 			out.println(state.P + " " + output);
 		}else{
 			throw new RuntimeException();
@@ -690,7 +689,7 @@ class MeijinIDAI {
 	}
 
 	public static void main(String[] args) throws Exception {
-		new MeijinIDAI(800L).run();
+		new MeijinIDAI2(800L).run();
 	}
 
 	private byte[] inbuf = new byte[1024];

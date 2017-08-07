@@ -19,66 +19,82 @@ object YabaiSelector extends Logging {
   val mapper = new ObjectMapper()
   mapper.registerModule(DefaultScalaModule)
 
-  val ILLEGAL_PUNTER_RATIO = 0.9
-  val ILLEGAL_MAP_COUNT = 10
-  val FEWER_SELECTED_MAP_TOP = 10
+  val MULTIPLY = 2
+  val AFTER_TIME_UTC_STRING = "2017-08-07T03:30:00Z"
 
   def main(args: Array[String]): Unit = {
-    val parallelCount = args(0).toInt
+    val punterEntries = mapper.readValue[List[PunterEntry]](YabaiUrl.get(YabaiUrl.punterList), new TypeReference[List[PunterEntry]] {})
+    val mapEntries = mapper.readValue[List[MapEntry]](YabaiUrl.get(YabaiUrl.mapList), new TypeReference[List[MapEntry]] {})
+    val gameList = mapper.readValue[List[GameResult]](YabaiUrl.get(YabaiUrl.gameLog), new TypeReference[List[GameResult]] {})
 
-    val illegalCount = new mutable.TreeMap[PunterId, Int]().withDefaultValue(0)
-    val mapSelected = new mutable.TreeMap[LambdaMapId, Int]().withDefaultValue(0)
-    val mapMemberCount = new mutable.TreeMap[LambdaMapId, Int]().withDefaultValue(2)
-    val punterIdCount = new mutable.TreeMap[PunterId, Int]().withDefaultValue(0)
-    val illegalMapCount = new mutable.TreeMap[LambdaMapId, Int]().withDefaultValue(0)
+    val queue = new ArrayBuffer[Execute]()
 
-    val validPunterIds = (for (entry <- mapper.readValue[List[PunterEntry]](YabaiUrl.get(YabaiUrl.punterList), new TypeReference[List[PunterEntry]] {})) yield entry.id).toSet
-    validPunterIds.foreach(punterId => punterIdCount(punterId) = 0)
+    def extractAndListUp(member: Int): List[Data] = {
+      val mapIds = (for (map <- mapEntries if map.punterNum == member) yield map.id).toSet
 
-    mapper.readValue[List[MapEntry]](YabaiUrl.get(YabaiUrl.mapList), new TypeReference[List[MapEntry]] {}).foreach(entry => {
-      mapMemberCount(entry.id) = math.max(entry.punterNum, 2)
-      mapSelected(entry.id) = 0
-    })
-    mapper.readValue[List[GameResult]](YabaiUrl.get(YabaiUrl.gameLog), new TypeReference[List[GameResult]] {})
-      .foreach(r => if (r.createdAtMillis > Instant.parse("2017-08-07T03:30:00Z").getEpochSecond * 1000) Option(r.results) match {
-        case Some(result) => result.foreach(g =>
-          if (validPunterIds.contains(g.punter)) {
-            if (g.score <= 0) illegalCount(g.punter) += 1
-            punterIdCount(g.punter) += 1
-            if (mapSelected.contains(r.map)) mapSelected(r.map) += 1
-          })
-        case _ =>
-          illegalMapCount(r.map) += 1
+      val punterCount = new mutable.TreeMap[PunterId, Int]().withDefaultValue(0)
+      val punterScore = new mutable.TreeMap[PunterId, Double]().withDefaultValue(0.0)
+
+      gameList.foreach(gameResult => {
+        val mapId = gameResult.map
+        if (gameResult.createdAtMillis > Instant.parse(AFTER_TIME_UTC_STRING).getEpochSecond * 1000 && mapIds.contains(mapId))
+          Option(gameResult.results).foreach { results =>
+            val member = results.length
+            var rank: Int = 0
+            if (member > 1)
+              results.zipWithIndex.foreach { case (result, i) =>
+                val punterId = result.punter
+                if (i > 0 && results(rank).score != results(i).score) rank = i
+                val point = 1.0 - rank.toDouble / (member.toDouble - 1.0)
+
+                punterScore(punterId) += point
+                punterCount(punterId) += 1
+              }
+          }
       })
 
-    mapSelected.foreach { case (mapId, count) => mapSelected(mapId) = count / mapMemberCount(mapId) }
-    illegalCount.foreach { case (punterId, count) =>
-      if (punterIdCount(punterId) > 10 && count.toDouble / punterIdCount(punterId).toDouble > ILLEGAL_PUNTER_RATIO) {
-        logger.info(s"zero point ratio: $punterId: $count / ${punterIdCount(punterId)} = ${count.toDouble / punterIdCount(punterId).toDouble}")
-        punterIdCount.remove(punterId)
-      }
+      val x = for (entry <- punterEntries if punterCount(entry.id) > 0) yield (entry.id, punterScore(entry.id) / punterCount(entry.id), punterCount(entry.id))
+      for ((punterId, score, count) <- x.sortBy { case (_, score, _) => score }.reverse) yield Data(punterId, score, count)
     }
 
-    illegalMapCount.foreach { case (mapId, count) =>
-      if (count > ILLEGAL_MAP_COUNT && mapSelected.contains(mapId)) {
-        mapSelected.remove(mapId)
-        logger.info(s"illegal count $mapId: $count")
-      }
-    }
+    def select(data: List[Data], member: Int): Unit = {
+      val mapIds = (for (map <- mapEntries if map.punterNum == member) yield map.id).toSet
 
-    val sortedPunters = for ((punterId, _) <- punterIdCount.toArray.sortBy { case (_, count) => count } if validPunterIds.contains(punterId)) yield punterId
-    var pos = 0
-    Random.shuffle(mapSelected.toArray.sortBy { case (_, count) => count }.toList.take(FEWER_SELECTED_MAP_TOP))
-      .take(parallelCount)
-      .foreach { case (mapId, _) =>
-        val punterIds = new ArrayBuffer[PunterId]()
-        for (_ <- 0 until mapMemberCount(mapId)) {
-          punterIds.append(sortedPunters(pos % sortedPunters.length))
-          pos += 1
+      val punterCount = new mutable.TreeMap[PunterId, Int]().withDefaultValue(0)
+      val punterScore = new mutable.TreeMap[PunterId, Double]().withDefaultValue(0.0)
+
+      data.foreach(d => {
+        punterCount(d.punterId) = d.count
+        punterScore(d.punterId) = d.score
+      })
+
+      punterEntries.foreach(entry => {
+        if (!punterScore.contains(entry.id) || punterCount(entry.id) < 10) {
+          punterScore(entry.id) = 1.0
         }
-        YabaiUrl.get(YabaiUrl.gameExecute(mapId, punterIds.toList))
+      })
+
+      val selectedPunters = punterScore.toList.sortBy { case (_, score) => score }.reverse.take(member * MULTIPLY)
+      for (_ <- 0 until MULTIPLY) {
+        val randomSelected = Random.shuffle(selectedPunters).take(member)
+        queue.append(Execute(Random.shuffle(mapIds.toList).head, for ((punterId, _) <- randomSelected) yield punterId))
       }
+    }
+
+    (for (map <- mapEntries) yield map.punterNum).distinct.sorted.foreach(member => {
+      val data = extractAndListUp(member)
+      logger.info(s"member: $member")
+      data.foreach(d => logger.info(mapper.writeValueAsString(d)))
+      logger.info("")
+      select(data, member)
+    })
+
+    for (i <- 0 until math.min(queue.size, args(0).toInt)) YabaiUrl.get(YabaiUrl.gameExecute(queue(i).mapId, queue(i).punters))
   }
+
+  case class Execute(mapId: LambdaMapId, punters: List[PunterId])
+
+  case class Data(punterId: PunterId, score: Double, count: Int)
 
   @JsonIgnoreProperties(ignoreUnknown = true)
   case class GameResult(@JsonProperty("map_id") map: LambdaMapId,

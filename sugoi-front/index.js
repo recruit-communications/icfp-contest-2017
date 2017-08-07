@@ -5,6 +5,7 @@ const fs = require('fs');
 const db = require('./lib/db');
 const battle = require('./lib/battle');
 const url = require('url');
+const sortBy = require('underscore').sortBy;
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
@@ -41,7 +42,9 @@ app.get('/map/list', (req, res) => {
 app.get('/game/list', (req, res) => {
   const query = url.parse(req.url, true).query;
   db.games(query).then((data) => {
-    res.json(data);
+    const count = query.count || 100;
+    const sortedData = sortBy(data, (d) => d.created_at).reverse().slice(0, count);
+    res.json(sortedData);
   });
 });
 

@@ -59,4 +59,22 @@ class GameStateSuite extends FunSuite with Matchers {
     gameState.calcScore()(0) shouldBe 25
     gameState.calcScore()(1) shouldBe 30
   }
+
+  test("option test") {
+    val url = getClass.getClassLoader.getResource("sample.json").toURI.toURL
+    val mapper = new ObjectMapper()
+    mapper.registerModule(DefaultScalaModule)
+    val map = mapper.readValue[LambdaMap](url, classOf[LambdaMap])
+    val graph = new GameState(map, 2, new ArrayBuffer[Array[LambdaFuture]]())
+
+    graph.isUsed(0, 1) shouldBe false
+    graph.canBuy(0, 1, 0) shouldBe false
+    graph.addEdge(0, 1, 0)
+
+    graph.isUsed(0, 1) shouldBe true
+    graph.canBuy(0, 1, 0) shouldBe false
+    graph.canBuy(0, 1, 1) shouldBe true
+    graph.buyEdge(0, 1, 0)
+    graph.canBuy(0, 1, 0) shouldBe false
+  }
 }

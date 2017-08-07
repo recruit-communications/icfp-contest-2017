@@ -40,7 +40,7 @@ class YoshikoAI {
 		long max = -1;
 		Edge best = null;
 		for(Edge e : s.es){
-			if(e.owner == -1 && !ds.equiv(e.x, e.y)){
+			if(!ds.equiv(e.x, e.y) && s.ok(e, s.P) != -1){
 				long score = (long)(mcount[ds.root(e.x)]+1) * (mcount[ds.root(e.y)]+1);
 				if(score > max){
 					max = score;
@@ -51,6 +51,17 @@ class YoshikoAI {
 		if(best == null){
 			for(Edge e : s.es){
 				if(e.owner == -1){
+					long score = mcount[ds.root(e.x)];
+					if(score > max){
+						max = score;
+						best = e;
+					}
+				}
+			}
+		}
+		if(best == null){
+			for(Edge e : s.es){
+				if(s.ok(e, s.P) == 1){
 					long score = mcount[ds.root(e.x)];
 					if(score > max){
 						max = score;
@@ -112,7 +123,7 @@ class YoshikoAI {
 			out.flush();
 		}else if(phase == 'I'){
 			// 初回入力2
-			int C = ni(), P = ni(), F = ni(), S = ni();
+			int C = ni(), P = ni(), F = ni(), S = ni(), O = ni();
 			int N = ni(), M = ni(), K = ni();
 			List<Edge> es = new ArrayList<>();
 			for(int i = 0;i < M;i++){
@@ -137,10 +148,16 @@ class YoshikoAI {
 			state.N = N;
 			state.F = F;
 			state.S = S;
+			state.O = O;
 			state.phase = 0;
 			if(F == 1){
 				state.futures = new ArrayList<>();
 				for(int i = 0;i < N;i++)state.futures.add(null);
+			}
+			if(O == 1){
+				state.options = new ArrayList<>();
+				int z = mines.cardinality();
+				for(int i = 0;i < C;i++)state.options.add(z);
 			}
 			out.println(toBase64(state));
 			out.println(0);
@@ -162,21 +179,32 @@ class YoshikoAI {
 					}
 					Edge e = new Edge(s, t);
 					e.owner = i;
+					e.owner2 = i >= state.P ? i - state.P : i - state.P + state.C;
 					added.add(e);
 				}
 			}
 			added.sort((a, b) -> {
 				if(a.x != b.x)return a.x - b.x;
-				return a.y - b.y;
+				if(a.y != b.y)return a.y - b.y;
+				return a.owner2 - b.owner2;
 			});
+//			tr("es", state.es);
+//			tr("added", added, state.P);
 			int q = 0;
 			for(int p = 0;p < added.size();p++){
 				Edge e = added.get(p);
-				while(q < state.es.size() && (state.es.get(q).owner != -1 || state.es.get(q).x < e.x || state.es.get(q).x == e.x && state.es.get(q).y < e.y)){
+				while(q < state.es.size() && (state.ok(state.es.get(q), e.owner) == -1 || state.es.get(q).x < e.x || state.es.get(q).x == e.x && state.es.get(q).y < e.y)){
 					q++;
 				}
-				if(q < state.es.size() && state.es.get(q).x == e.x && state.es.get(q).y == e.y){
-					state.es.get(q).owner = e.owner;
+				assert q < state.es.size();
+				assert state.es.get(q).x == e.x;
+				assert state.es.get(q).y == e.y;
+				Edge tar = state.es.get(q);
+				if(tar.owner == -1){
+					tar.owner = e.owner;
+				}else{
+					tar.owner2 = e.owner;
+					inc(state.options, e.owner, -1);
 				}
 			}
 			
@@ -187,6 +215,11 @@ class YoshikoAI {
 		}else{
 			throw new RuntimeException();
 		}
+	}
+	
+	public static void inc(List<Integer> list, int id, int x)
+	{
+		list.set(id, list.get(id) + x);
 	}
 	
 	public static List<Integer> mindists(List<List<Edge>> g, int start)
@@ -240,11 +273,24 @@ class YoshikoAI {
 		int C; // プレー人数
 		int P; // お前のID(0~N-1)
 		int N; // 頂点数
-		int F, S;
+		int F, S, O; // future splurge option対応フラグ
 		int phase; // 何回目か
 		List<Edge> es; // 辺集合
 		BitSet mines; // mineかどうか
+		List<Integer> options; // option残り回数
 		List<Integer> futures;
+		
+		int ok(Edge e, int who)
+		{
+			if(e.owner == -1){
+				return 0;
+			}else if(e.owner != who && e.owner2 == -1){
+				if(O == 1 && options.get(who) > 0)return 1;
+				return -1;
+			}else{
+				return -1;
+			}
+		}
 	}
 	
 	static class Future implements Serializable
@@ -262,11 +308,18 @@ class YoshikoAI {
 		private static final long serialVersionUID = 5180071263476967427L;
 		int x, y;
 		int owner; // 辺の所有者。いないときは-1
+		int owner2;
 		
 		public Edge(int x, int y) {
 			this.x = x;
 			this.y = y;
 			this.owner = -1;
+			this.owner2 = -1;
+		}
+		
+		@Override
+		public String toString() {
+			return "Edge [x=" + x + ", y=" + y + ", owner=" + owner + ", owner2=" + owner2 + "]";
 		}
 	}
 

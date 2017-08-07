@@ -89,7 +89,8 @@ class RandomSplurgeAI {
 			}
 			if(O == 1){
 				state.options = new ArrayList<>();
-				for(int i = 0;i < C;i++)state.options.add(mines.cardinality());
+				int z = mines.cardinality();
+				for(int i = 0;i < C;i++)state.options.add(z);
 			}
 			out.println(toBase64(state));
 			if(F == 0){
@@ -110,7 +111,8 @@ class RandomSplurgeAI {
 			// ゲーム中入力
 			State state = (State)fromBase64(ns());
 			int C = state.C;
-			for(int i = 0;i < C;i++){
+			for(int z = 0, i = state.P;z < C;z++,i++){
+				if(i == C)i = 0;
 				int L = ni();
 				if(state.S == 1 && L == 0 && (state.phase > 0 || state.phase == 0 && i < state.P)){
 					// 初回のダミーpassに注意してチャージ

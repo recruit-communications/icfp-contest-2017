@@ -134,29 +134,53 @@ object SugoiDealer extends Logging with BattleLogging {
           penaltyProcess()
           return
         }
+
+        var optionCount = 0
         for (i <- 1 until route.length) {
           val source = route(i - 1)
           val target = route(i)
           if (gameState.isUsed(source, target)) {
-            logger.error(s"punter ${p.punter}: $source -- $target is already used!!!")
-            penaltyProcess()
-            return
+            if (gameState.canBuy(source, target, p.punter)) {
+              optionCount += 1
+            } else {
+              logger.error(s"punter ${p.punter}: $source -- $target is already used!!!")
+              penaltyProcess()
+              return
+            }
           }
+        }
+        if (p.optionRemain < optionCount) {
+          logger.error(s"punter ${p.punter}: lack of option")
+          penaltyProcess()
+          return
         }
 
         for (i <- 1 until route.length) {
           val source = route(i - 1)
           val target = route(i)
           logger.info(s"$source -- $target")
-          gameState.addEdge(source, target, p.punter)
-          deque.append(ClaimMove(moveFromPunter.claim))
+          if (!gameState.isUsed(source, target)) {
+            gameState.addEdge(source, target, p.punter)
+          } else {
+            gameState.buyEdge(source, target, p.punter)
+            p.optionRemain -= 1
+          }
         }
 
         p.passCount -= route.length - 2
         deque.append(SplurgeMove(moveFromPunter.splurge))
       } else if (moveFromPunter.option != null) {
         //option
-
+        val s = moveFromPunter.option.source
+        val t = moveFromPunter.option.target
+        if (gameState.canBuy(s, t, p.punter) && p.optionRemain > 0) {
+          gameState.buyEdge(s, t, p.punter)
+          deque.append(OptionMove(moveFromPunter.option))
+          p.optionRemain -= 1
+        } else {
+          logger.error(s"${p.punter} can not option $s -- $t")
+          penaltyProcess()
+        }
       } else {
         // empty move
         logger.error(s"punter ${p.punter}: please specify claim, pass or splurge")

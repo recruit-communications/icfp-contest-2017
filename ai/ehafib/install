@@ -1,2 +1,2 @@
 #!/bin/bash
-g++ -O2 -std=c++11 src/json11/json11.cpp src/gd.cpp -o greedily
+g++ -O2 -std=c++14 src/ai/ehafib/src/json11/json11.cpp src/ai/ehafib/src/steiner.cpp -o ehafib

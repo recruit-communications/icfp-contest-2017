@@ -1,4 +1,4 @@
-package icfpc2017;
+package icfpc2017.old;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -22,14 +22,15 @@ import java.util.concurrent.TimeoutException;
 
 // alpha-beta
 // 連結成分をメモ化
-class MeijinIDAI2 {
+// O=0対応
+class MeijinIDAI3 {
 	public InputStream is;
 	public PrintWriter out;
 	String INPUT = "";
 	
 	long TL;
 	
-	public MeijinIDAI2(long tl)
+	public MeijinIDAI3(long tl)
 	{
 		this.TL = tl;
 	}
@@ -75,9 +76,11 @@ class MeijinIDAI2 {
 		cache.add(new HashMap<>());
 		cache.add(new HashMap<>());
 		
-		int[] ops = new int[s.options.size()];
-		for(int i = 0;i < s.options.size();i++){
-			ops[i] = s.options.get(i);
+		int[] ops = new int[s.C];
+		if(s.O == 1){
+			for(int i = 0;i < s.options.size();i++){
+				ops[i] = s.options.get(i);
+			}
 		}
 		
 		long ec = -1;
@@ -462,7 +465,7 @@ class MeijinIDAI2 {
 				}
 				moves[i] = a;
 			}
-			tr("INPUT MOVES: " + Arrays.deepToString(moves));
+//			tr("INPUT MOVES: " + Arrays.deepToString(moves));
 			
 			for(int z = 0, i = state.P;z < C;z++,i++){
 				if(i == C)i = 0;
@@ -489,19 +492,19 @@ class MeijinIDAI2 {
 					throw new RuntimeException("invalid input");
 				}
 			}
-			tr("MY EDGES:");
-			for(List<Edge> row : state.g){
-				for(Edge e : row){
-					if(e.x < e.y){
-						tr(e);
-					}
-				}
-			}
+//			tr("MY EDGES:");
+//			for(List<Edge> row : state.g){
+//				for(Edge e : row){
+//					if(e.x < e.y){
+//						tr(e);
+//					}
+//				}
+//			}
 			
 			String output = guess(state);
 			state.phase++;
 			out.println(toBase64(state));
-			tr("MY OUTPUT:" + output);
+//			tr("MY OUTPUT:" + output);
 			out.println(state.P + " " + output);
 		}else{
 			throw new RuntimeException();
@@ -689,7 +692,7 @@ class MeijinIDAI2 {
 	}
 
 	public static void main(String[] args) throws Exception {
-		new MeijinIDAI2(800L).run();
+		new MeijinIDAI3(800L).run();
 	}
 
 	private byte[] inbuf = new byte[1024];

@@ -48,6 +48,8 @@ def cumulate(count, win, tsv):
         win[punters[i]] += 1
         win[punters[j]] += 0
 
+  return (count, win)
+
 def output(count, win, name):
   rate = collections.defaultdict(float)
   ratesum = collections.defaultdict(float)
@@ -88,11 +90,9 @@ def output(count, win, name):
 
 subtotal = {}
 for i in [2,4,8,16]:
-  subtotal[i] = {
-    "count" : collections.defaultdict(int),
-    "win" : collections.defaultdict(int)
-  }
-
+  subtotal[i] = {}
+  subtotal[i]["count"] = collections.defaultdict(int)
+  subtotal[i]["win"] = collections.defaultdict(int)
 
 for mapname, punter_num in maplist:
   tsv = commands.getoutput("cat /tmp/gamelist.txt | jq -r '.[] | if .job.status == \"success\" and .map_id == \"%s\" then . else empty end | (.created_at | tostring) + \"\t\" + .id + \"\t\" + (.results | sort_by(.score) | reverse | map(.punter) | @tsv)'" % mapname).split("\n")
@@ -102,18 +102,19 @@ for mapname, punter_num in maplist:
   count = collections.defaultdict(int)
   win = collections.defaultdict(int)
 
-  cumulate(count, win, tsv)
+  count, win = cumulate(count, win, tsv)
 
   if punter_num <= 2:
-    cumulate(subtotal[2]["count"], subtotal[2]["win"], tsv)
+    subtotal[2]["count"], subtotal[2]["win"] = cumulate(subtotal[2]["count"], subtotal[2]["win"], tsv)
   elif punter_num <= 4:
-    cumulate(subtotal[4]["count"], subtotal[4]["win"], tsv)
+    subtotal[2]["count"], subtotal[2]["win"] = cumulate(subtotal[4]["count"], subtotal[4]["win"], tsv)
   elif punter_num <= 8:
-    cumulate(subtotal[8]["count"], subtotal[8]["win"], tsv)
+    subtotal[2]["count"], subtotal[2]["win"] = cumulate(subtotal[8]["count"], subtotal[8]["win"], tsv)
   else:
-    cumulate(subtotal[16]["count"], subtotal[16]["win"], tsv) 
+    subtotal[2]["count"], subtotal[2]["win"] = cumulate(subtotal[16]["count"], subtotal[16]["win"], tsv) 
 
   output(count, win, mapname)
 
+print subtotal[2]
 for i in subtotal.keys():
   output(subtotal[2]["count"], subtotal[2]["win"], "subtotal%d"%i)

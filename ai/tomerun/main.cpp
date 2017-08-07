@@ -117,7 +117,7 @@ struct Game {
 		return ss.str();
 	}
 
-	void use(int s, int t, int owner) {
+	void use(int player_id, int s, int t, int owner) {
 		if (s == -1) return;
 		for (int flip = 0; flip < 2; ++flip) {
 			vector<Edge>& es = edges[s];
@@ -128,6 +128,7 @@ struct Game {
 						break;
 					} else if (es[i].option_owner == NOT_OWNED) {
 						es[i].option_owner = owner;
+						option_counts[player_id]--;
 						break;
 					}
 				}
@@ -285,7 +286,7 @@ void move() {
 		vi path(c);
 		for (int j = 0; j < c; ++j) {
 			scanf("%d", &path[j]);
-			if (j > 0) game.use(path[j - 1], path[j], i);
+			if (j > 0) game.use(i, path[j - 1], path[j], i);
 		}
 	}
 	cout << game.serialize() << "\n";

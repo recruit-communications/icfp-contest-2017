@@ -202,7 +202,7 @@ struct Game {
 		return ss.str();
 	}
 
-	void use(int s, int t, int owner) {
+	void use(int player_id, int s, int t, int owner) {
 		if (s == -1) return;
 		vector<Edge*>& es = edges[s];
 		for (int i = 0; i < es.size(); ++i) {
@@ -212,6 +212,7 @@ struct Game {
 					break;
 				} else if (es[i]->option_owner == NOT_OWNED) {
 					es[i]->option_owner = owner;
+					option_counts[player_id]--;
 					break;
 				}
 			}
@@ -255,6 +256,7 @@ struct MCTS {
 		vector<Edge*> selected_edge;
 		int prev_from, prev_to;
 		int random_edge_idx;
+		int option_count;
 	};
 
 	XorShift rnd;
@@ -275,6 +277,7 @@ struct MCTS {
 		states.resize(C);
 		for (int player = 0; player < C; ++player) {
 			states_orig[player].reachable.resize(N);
+			states_orig[player].option_count = game.option_counts[player];
 			vi q;
 			for (int mine = 0; mine < K; ++mine) {
 				q.clear();
@@ -515,7 +518,7 @@ void move() {
 		vi path(c);
 		for (int j = 0; j < c; ++j) {
 			scanf("%d", &path[j]);
-			if (j > 0) game.use(path[j - 1], path[j], i);
+			if (j > 0) game.use(i, path[j - 1], path[j], i);
 		}
 	}
 	cout << game.serialize() << "\n";

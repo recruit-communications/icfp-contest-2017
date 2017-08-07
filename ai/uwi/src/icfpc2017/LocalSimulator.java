@@ -100,11 +100,13 @@ public class LocalSimulator {
 //			int N = 8, M = 12, K = 3;
 			RandomSplurgeAI.gen = new SplittableRandom(i);
 			long[] scores = game(i, N, M, K, true, 
-//					new Instanciator(PassOnlyAI2.class),
+					new Instanciator(PassOnlyAI2.class),
+					new Instanciator(PassOnlyAI2.class),
+					new Instanciator(PassOnlyAI2.class)
 //					new Instanciator(YoshikoAI.class),
-					new Instanciator(RandomSplurgeAI.class),
+//					new Instanciator(RandomSplurgeAI.class),
 //					new Instanciator(GrowAI.class, new Class[]{int.class}, new Object[]{3})
-					new Instanciator(MeijinIDAI.class, new Class[]{long.class}, new Object[]{800L})
+//					new Instanciator(MeijinIDAI.class, new Class[]{long.class}, new Object[]{800L})
 //					new Instanciator(MeijinAI.class, new Class[]{int.class}, new Object[]{6})
 //					new Instanciator(GrowAI.class, new Class[]{int.class}, new Object[]{0})
 					);
@@ -333,7 +335,11 @@ public class LocalSimulator {
 	
 	static void print(int N, int M, int K, int[] mines, int[][] es, int[][] colors)
 	{
-		System.out.println(N + " " + M + " " + K);
+		int X = M;
+		for(int i = 0;i < M;i++){
+			if(colors[i][1] != -1)X++;
+		}
+		System.out.println(N + " " + X + " " + K);
 		for(int mine : mines){
 			System.out.print(mine + " ");
 		}

@@ -5,6 +5,9 @@
 #include <queue>
 #include <vector>
 
+// M*E > 1e8 --> random
+// M*N*V > 1e8 --> random
+// M*E > 1e8 --> random
 using namespace std;
 using namespace json11;
 
@@ -115,7 +118,8 @@ public:
 
     // I: 初回入力2時に最初に作るState
     State() { // {{{
-        cin >> number_of_players >> punter_id >> future_enabled >> splurge_enabled;
+        cin >> number_of_players >> punter_id >> future_enabled >>
+            splurge_enabled;
         cin >> V >> E >> M;
         T = 0;
         for (int i = 0; i < E; i++) {
@@ -134,17 +138,19 @@ public:
         used = vector<int>(E, 0);
         claim = vector<vector<int>>(number_of_players, vector<int>());
         my_mines = vector<int>();
-        // 最初の下準備はここから
 
-        if (M * 1.0 * V > 1e7)
+        // 最初の下準備はここから
+        if (M * 1.0 * E > 1e7)
             return;
 
+        // O(E)
         G = vector<vector<Edge>>(V, vector<Edge>());
         for (int i = 0; i < E; i++) {
             G[sources[i]].push_back({targets[i], 1, i, false, 0.0});
             G[targets[i]].push_back({sources[i], 1, i, true, 0.0});
         }
 
+        // 各mineからはばゆうせんしてきょりをもとめる O(ME)
         for (const int &mine : mines) {
             auto v = Dijkstra::solve(G, mine);
             score.push_back(v);
@@ -189,7 +195,7 @@ public:
             G[targets[i]].push_back({sources[i], 1, i, true, 0.0});
         }
 
-        //if(DEBUG) cout << "INPUT PARSE DONE" << endl;
+        // if(DEBUG) cout << "INPUT PARSE DONE" << endl;
         // }}}
     }
 
@@ -200,7 +206,7 @@ public:
             {"pid", punter_id},
             {"future_enabled", future_enabled},
             {"splurge_enabled", splurge_enabled},
-            {"t", T+1},
+            {"t", T + 1},
             {"v", V},
             {"e", E},
             {"m", M},
@@ -219,8 +225,7 @@ public:
     vector<int> available_edge_indices() {
         vector<int> res;
         for (int i = 0; i < used.size(); i++) {
-            if (!used[i])
-                res.push_back(i);
+            if (used[i] == 0) res.push_back(i);
         }
         return res;
     }
@@ -252,8 +257,8 @@ public:
         for (int i = 0; i < number_of_players; i++) { // O(N)
             vector<vector<long long>> addm(M, vector<long long>(V, 0));
 
-            //cout << "ADDM" << endl;
-            //cout << "MV " << i << " " << M << " "  << V << endl;
+            // cout << "ADDM" << endl;
+            // cout << "MV " << i << " " << M << " "  << V << endl;
             for (int mi = 0; mi < M; mi++) {
                 for (int v = 0; v < V; v++) {
                     // cout << mi << " "  << v << endl;
@@ -264,7 +269,7 @@ public:
 
             // long long lprev = calc_score(i, uf[i]); // O(V)
 
-            //cout << "LPREV" << endl;
+            // cout << "LPREV" << endl;
             long long lprev = 0;
             for (int mi = 0; mi < M; mi++) {
                 int m = mines[mi];
@@ -305,16 +310,20 @@ public:
                     }
 
                     // add edge weight
-                    if(USE_VERTEX_WEIGHT) {
-                        for(int mi = 0; mi < M; mi++) {
+                    if (USE_VERTEX_WEIGHT) {
+                        for (int mi = 0; mi < M; mi++) {
                             int m = mines[mi];
-                            if(uf[punter_id].eq(m, v) && !uf[punter_id].eq(m, e.to)) {
+                            if (uf[punter_id].eq(m, v) &&
+                                !uf[punter_id].eq(m, e.to)) {
                                 e.weight += vertex_deg[e.to];
-                                e.weight += VERTEX_COEFFICIENT * vertex_weight[mi][e.to];
+                                e.weight += VERTEX_COEFFICIENT *
+                                            vertex_weight[mi][e.to];
                             }
-                            if(!uf[punter_id].eq(m, v) && uf[punter_id].eq(m, e.to)) {
+                            if (!uf[punter_id].eq(m, v) &&
+                                uf[punter_id].eq(m, e.to)) {
                                 e.weight += vertex_deg[e.to];
-                                e.weight += VERTEX_COEFFICIENT * vertex_weight[mi][v];
+                                e.weight +=
+                                    VERTEX_COEFFICIENT * vertex_weight[mi][v];
                             }
                         }
                     }
@@ -383,8 +392,9 @@ public:
     void init_vertex_deg() {
         // O(E)
         vertex_deg = vector<int>(V, 0);
-        for(int e = 0; e < E; e++ ){
-            if(used[e]) continue;
+        for (int e = 0; e < E; e++) {
+            if (used[e])
+                continue;
             vertex_deg[sources[e]]++;
             vertex_deg[targets[e]]++;
         }
@@ -392,10 +402,12 @@ public:
 
     // O(MV^2) TODO: 時間決めて打ち切る処理の追加
     void init_vertex_weight() {
-        if(!USE_VERTEX_WEIGHT) return;
+        if (!USE_VERTEX_WEIGHT)
+            return;
 
         vertex_weight = vector<vector<double>>(M, vector<double>(V, 0));
-        if(M*1.0*V*V > 1e8) return;
+        if (M * 1.0 * V * V > 1e7)
+            return;
 
         for (int v = 0; v < V; v++) {
             queue<int> q;
@@ -414,9 +426,10 @@ public:
                         continue;
                     dist[e.to] = dist[w] + 1;
 
-                    //cnt[dist[e.to]]++;
-                    for(int mi = 0; mi < M; mi++) {
-                        vertex_weight[mi][dist[e.to]] += score[mi][e.to] * 1.0 * score[mi][e.to] / D / V;
+                    // cnt[dist[e.to]]++;
+                    for (int mi = 0; mi < M; mi++) {
+                        vertex_weight[mi][dist[e.to]] +=
+                            score[mi][e.to] * 1.0 * score[mi][e.to] / D / V;
                     }
 
                     if (dist[e.to] + 1 < D) {
@@ -427,76 +440,95 @@ public:
         }
     }
 
-    // O(MVE)
+    // O(M^2 E)
     pair<int, int> choose_steiner() {
+        if (M * 1.0 * M * E > 1e7) return choose_greedily();
+
         vector<double> edge_weight(E, 0);
 
-        for(int mi = 0; mi < M; mi++) {
+        for (int mi = 0; mi < M; mi++) {
             deque<int> q;
             vector<int> dist(V, -1);
-            vector<int> from_e(V, -1);
-            vector<int> from_v(V, -1);
             int m = mines[mi];
 
             q.push_back(m);
             dist[m] = 0;
 
-            while(!q.empty()) {
+            while (!q.empty()) {
                 int v = q.front();
                 q.pop_front();
 
-                for(const Edge &e: G[v]) {
-                    if(dist[e.to] != -1) continue;
-
-                    if(used[e.idx] == punter_id + 1) {
+                for (const Edge &e : G[v]) {
+                    if (dist[e.to] != -1)
+                        continue;
+                    if (used[e.idx] == punter_id + 1) {
                         dist[e.to] = dist[v];
-                        from_e[e.to] = e.idx;
-                        from_v[e.to] = v;
                         q.push_front(e.to);
-                    } else if(used[e.idx] == 0) {
+                    } else if (used[e.idx] == 0) {
                         dist[e.to] = dist[v] + 1;
-                        from_e[e.to] = e.idx;
-                        from_v[e.to] = v;
                         q.push_back(e.to);
                     }
                 }
             }
 
-            for(int mj = 0; mj < M; mj++) {
-                if(mi == mj) continue;
-
+            for (int mj = 0; mj < M; mj++) {
+                if (mi == mj)
+                    continue;
                 int cur = mines[mj];
-                // いけない or すでにれんけつ
-                if(dist[cur] <= 0) continue;
 
-                // 逆数なのはとくべつないみはあに
-                double w = 1e6 *pow(0.99, T) / dist[cur];
+                if (dist[cur] <= 0)
+                    continue;
 
-                while(cur != m) {
-                    int edge = from_e[cur];
-                    int vert = from_v[cur];
+                double w = 1e5 * pow(0.95, T) / dist[cur];
 
-                    edge_weight[edge] += w;
-                    cur = vert;
+                for (int v = 0; v < V; v++) {
+                    for(const Edge &e: G[v]) {
+                        if (used[e.idx] == 0 && dist[e.to] == dist[v] + 1) {
+                            // w適用
+                            edge_weight[e.idx] += w;
+                        }
+                    }
                 }
             }
+
+            // for(int mj = 0; mj < M; mj++) {
+            //     if(mi == mj) continue;
+
+            //     int cur = mines[mj];
+            //     // いけない or すでにれんけつ
+            //     if(dist[cur] <= 0) continue;
+
+            //     // 逆数なのはとくべつないみはあに
+            //     double w = 1e6 *pow(0.99, T) / dist[cur];
+
+            //     while(cur != m) {
+            //         int edge = from_e[cur];
+            //         int vert = from_v[cur];
+
+            //         edge_weight[edge] += w;
+            //         cur = vert;
+            //     }
+            // }
         }
 
         init_union_find();
         add_next_score_weight_kai();
 
-        for(int v = 0; v < V; v++) {
-            for(Edge &e: G[v]) {
+        for (int v = 0; v < V; v++) {
+            for (Edge &e : G[v]) {
                 edge_weight[e.idx] += e.weight;
             }
         }
 
         double max_weight = 0;
         int idx = -1;
-        for(int v = 0; v < V; v++) {
-            for(Edge &e: G[v]) {
-                if(used[e.idx]) continue;
-                if(max_weight < edge_weight[e.idx]) {
+        for (int v = 0; v < V; v++) {
+            for (Edge &e : G[v]) {
+                if (used[e.idx])
+                    continue;
+                if (uf[punter_id].eq(v, e.to)) //まじで意味ないのでやめよう
+                    continue;
+                if (max_weight < edge_weight[e.idx]) {
                     max_weight = edge_weight[e.idx];
                     idx = e.idx;
                 }
@@ -505,27 +537,26 @@ public:
 
         if (idx == -1) {
             return make_pair(-1, -1);
-            // return choose_randomly();
         } else {
             return make_pair(sources[idx], targets[idx]);
         }
     }
 
+    // O(ME)
     pair<int, int> choose_greedily() {
-        // O(ME)
-        if (M * 1.0 * number_of_players * E > 1e8) {
+        if (M * 1.0 * number_of_players * E > 1e7) {
             return choose_randomly();
         }
 
-        //cout << "INIT_UF" << endl;
+        // cout << "INIT_UF" << endl;
         init_union_find();
-        //cout << "VD" << endl;
+        // cout << "VD" << endl;
         init_vertex_deg();
-        //cout << "VW" << endl;
+        // cout << "VW" << endl;
         init_vertex_weight();
-        //cout << "ANSW" << endl;
+        // cout << "ANSW" << endl;
         add_next_score_weight_kai();
-        //cout << "ANL" << endl;
+        // cout << "ANL" << endl;
         add_near_lambda();
 
         // cerr << "idx = " << idx << endl;
@@ -576,11 +607,10 @@ void doit_first(State &s) {
 void doit(State &s) {
     cout << s.to_json() << endl; // print new state
 
-    //auto e = s.choose_greedily();
+    // auto e = s.choose_greedily();
     auto e = s.choose_steiner();
-    // if(e.first == -1 && e.second == -1) e = s.choose_randomly();
-    cout << s.punter_id << " " << e.second << " " << e.first
-         << endl; // print edge
+    if(e.first == e.second) e = s.choose_randomly();
+    cout << s.punter_id << " " << e.second << " " << e.first << endl;
 }
 
 int main() {
@@ -598,7 +628,7 @@ int main() {
             string json_str;
             getline(cin, json_str);
 
-            //cout << "State received." << endl;
+            // cout << "State received." << endl;
             State s = State(json_str);
 
             for (int i = 0; i < s.number_of_players; i++) {
@@ -606,12 +636,12 @@ int main() {
                 cin >> path_length;
 
                 vector<int> path(path_length);
-                for(int j = 0; j < path_length; j++) {
+                for (int j = 0; j < path_length; j++) {
                     cin >> path[j];
                 }
 
-                for(int j = 0; j+1 < path_length; j++) {
-                    s.set_used_edge(path[j], path[j+1], i);
+                for (int j = 0; j + 1 < path_length; j++) {
+                    s.set_used_edge(path[j], path[j + 1], i);
                 }
             }
             doit(s);

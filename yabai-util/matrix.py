@@ -5,20 +5,40 @@ mapごとの勝率マトリックスを生成するスクリプト
 
 ./matrix/以下にcsvを作る
 勝率ではなく勝数を見たい場合はrateの代わりにcountを出力すると良い
+
+usage: ./matrix.py ['%Y-%m-%d %H:%M:%S']
+例) ./matrix.py "2017-08-07 13:00:00"
 '''
 
 import collections
 import commands
-import datetime
+from datetime import datetime
 import os
+from pytz import timezone
+import shutil
 import sys
 
-os.system("curl -s http://13.112.208.142:3000/game/list > /tmp/gamelist.txt")
-if not os.path.exists("./matrix"): os.makedirs("./matrix")
+zero = datetime(1970, 1, 1, 0, 0, 0, tzinfo=timezone('UTC'))
+origin = zero
+
+if len(sys.argv) > 1:
+  try: 
+    origin = datetime.strptime(sys.argv[1], '%Y-%m-%d %H:%M:%S').replace(tzinfo=timezone('Asia/Tokyo'))
+  except ValueError:
+    pass
+
+timestamp = int((origin - zero).total_seconds()) * 1000
+print "origin timestamp: %d"%timestamp
+
+os.system("curl -s http://13.112.208.142:3000/game/list?count=999999 > /tmp/gamelist.txt")
+shutil.rmtree("./matrix")
+os.makedirs("./matrix")
 maplist = commands.getoutput("curl -s http://13.112.208.142:3000/map/list | jq -r '.[].id'").split("\n")
 
 for mapname in maplist:
-  tsv = commands.getoutput("cat /tmp/gamelist.txt | jq -r '.[] | if .job.status == \"success\" and .map_id == \"%s\" then . else empty end | .id + \"\t\" + (.results | sort_by(.score) | reverse | map(.punter) | @tsv)'" % mapname).split("\n")
+  tsv = commands.getoutput("cat /tmp/gamelist.txt | jq -r '.[] | if .job.status == \"success\" and .map_id == \"%s\" then . else empty end | (.created_at | tostring) + \"\t\" + .id + \"\t\" + (.results | sort_by(.score) | reverse | map(.punter) | @tsv)'" % mapname).split("\n")
+
+  if tsv[0] == '': continue
 
   count = collections.defaultdict(int)
   rate = collections.defaultdict(float)
@@ -27,7 +47,8 @@ for mapname in maplist:
 
   for line in tsv:
     ary = line.split()
-    id, punters = ary[0], ary[1:]
+    t, id, punters = ary[0], ary[1], ary[2:]
+    if int(t) < timestamp: continue
     for i in xrange(len(punters)):
       for j in xrange(i+1, len(punters)):
         count[(punters[i], punters[j])] += 1

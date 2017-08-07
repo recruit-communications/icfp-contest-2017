@@ -13,6 +13,7 @@
 #include <cstdio>
 #include <cmath>
 #include <sys/time.h>
+// #define MEASURE_TIME
 
 using namespace std;
 using u8 = uint8_t;
@@ -24,6 +25,8 @@ using ll = int64_t;
 using ull = uint64_t;
 using vi = vector<int>;
 using vvi = vector<vi>;
+
+const double CLOCK_PER_SEC = 2.2e9;
 
 ll start_time, time_limit; // in msec
 
@@ -37,6 +40,55 @@ inline ll get_time() {
 inline ll get_elapsed_msec() {
 	return get_time() - start_time;
 }
+
+inline ull get_tsc() {
+#ifdef __i386
+  ull ret;
+  __asm__ volatile ("rdtsc" : "=A" (ret));
+  return ret;
+#else
+  ull high,low;
+  __asm__ volatile ("rdtsc" : "=a" (low), "=d" (high));
+  return (high << 32) | low;
+#endif
+}
+
+struct Timer {
+	vector<ull> at;
+	vector<ull> sum;
+
+	void start(int i) {
+		if (i >= at.size()) {
+			at.resize(i+1);
+			sum.resize(i+1);
+		}
+		at[i] = get_tsc();
+	}
+
+	void stop(int i) {
+		sum[i] += (get_tsc() - at[i]);
+	}
+
+	void print() {
+		cerr << "timer:[";
+		for (int i = 0; i < at.size(); ++i) {
+			cerr << (int)(sum[i] / CLOCK_PER_SEC * 1000) << ", ";
+			if (i % 10 == 9) cerr << endl;
+		}
+		cerr << "]" << endl;
+	}
+};
+Timer timer;
+
+#ifdef MEASURE_TIME
+#define START_TIMER(i) (timer.start(i))
+#define STOP_TIMER(i) (timer.stop(i))
+#define PRINT_TIMER() (timer.print())
+#else
+#define START_TIMER(i)
+#define STOP_TIMER(i)
+#define PRINT_TIMER()
+#endif
 
 #ifdef DEBUG
 #define debug(format, ...) fprintf(stderr, format, __VA_ARGS__)
@@ -85,43 +137,6 @@ struct XorShift {
 };
 const double XorShift::TO_DOUBLE = 1.0 / (1LL << 32);
 
-struct UnionFind {
-	vi set;
-
-	UnionFind(int n) : set(n, -1) { }
-
-	void reset(const UnionFind& other) {
-		copy(other.set.begin(), other.set.end(), set.begin());
-	}
-
-	void unite(int a, int b) {
-		int rtA = root(a);
-		int rtb = root(b);
-		if (rtA == rtb) {
-			return;
-		}
-		set[rtA] += set[rtb];
-		set[rtb] = rtA;
-	}
-
-	bool find(int a, int b) {
-		return root(a) == root(b);
-	}
-
-	int root(int a) {
-		if (set[a] < 0) {
-			return a;
-		} else {
-			set[a] = root(set[a]);
-			return set[a];
-		}
-	}
-
-	int size(int a) {
-		return -set[root(a)];
-	}
-};
-
 struct Edge {
 	int from, to, owner;
 };
@@ -129,14 +144,14 @@ struct Edge {
 struct Game {
 
 	int turn;
-	int C, I, F, N, M, K;
+	int C, I, F, S, N, M, K;
 	vector<Edge> all_edges;
 	vector<vector<Edge*>> edges;
 	vector<int> mines;
 	vvi dists; // dists[i][j] := distance from mine i to vertex j
 
 	Game(bool original) {
-		scanf("%d %d %d %d %d %d", &C, &I, &F, &N, &M, &K);
+		scanf("%d %d %d %d %d %d %d", &C, &I, &F, &S, &N, &M, &K);
 		edges.resize(N);
 		all_edges.resize(M);
 		mines.resize(K);
@@ -167,7 +182,7 @@ struct Game {
 
 	string serialize() const {
 		stringstream ss;
-		ss << C << " " << I << " " << F << " " << N << " " << M << " " << K << " " << (turn + 1);
+		ss << C << " " << I << " " << F << " " << S << " " << N << " " << M << " " << K << " " << (turn + 1);
 		for (const Edge& e : all_edges) {
 			ss << " " << e.from << " " << e.to << " " << e.owner;
 		}
@@ -220,7 +235,7 @@ struct Game {
 struct MCTS {
 	struct PlayerState {
 		vector<i64> reachable;
-		vi connected_node;
+		vector<Edge*> candidate_edge;
 		vector<Edge*> random_edge;
 		vector<Edge*> selected_edge;
 		int prev_from, prev_to;
@@ -236,7 +251,7 @@ struct MCTS {
 	const vvi& dists;
 	int turn;
 	vi buf;
-	unordered_map<Edge*, pair<int, i64>> values;
+	unordered_map<Edge*, pair<double, double>> values;
 
 	MCTS(const Game& game) : C(game.C), I(game.I), F(game.F), N(game.N), M(game.M), K(game.K),
 		                       all_edges(game.all_edges), edges(game.edges), mines(game.mines), dists(game.dists) {
@@ -250,14 +265,13 @@ struct MCTS {
 				q.clear();
 				q.push_back(mines[mine]);
 				states_orig[player].reachable[mines[mine]] |= (1LL << mine);
-				states_orig[player].connected_node.push_back(mines[mine]);
 				for (int i = 0; i < q.size(); ++i) {
-					for (const Edge* e : edges[q[i]]) {
+					for (Edge* e : edges[q[i]]) {
+						if (e->owner == NOT_OWNED) states_orig[player].candidate_edge.push_back(e);
 						if (e->owner != player) continue;
 						int t = e->from + e->to - q[i];
 						if (states_orig[player].reachable[t] & (1LL << mine)) continue;
 						states_orig[player].reachable[t] |= (1LL << mine);
-						states_orig[player].connected_node.push_back(t);
 						q.push_back(t);
 					}
 				}
@@ -275,18 +289,18 @@ struct MCTS {
 	Edge* select_move(PlayerState& st) {
 		const int EXPAND_PREV = 0, RANDOM_NODE = 1, RANDOM_EDGE = 2, EXPAND_PREV_PREV = 3;
 		int strategy = RANDOM_EDGE;
-		// if (st.prev_to == -1 || st.reachable[st.prev_to] == 0) {
-		// 	strategy = (rnd.nextUInt() & 0x330) ? RANDOM_NODE : RANDOM_EDGE;
-		// } else {
-		// 	int rv = rnd.nextUInt(32);
-		// 	if (rv < 29) {
-		// 		strategy = EXPAND_PREV;
-		// 	} else if (rv < 31) {
-		// 		strategy = RANDOM_NODE;
-		// 	} else {
-		// 		strategy = RANDOM_EDGE;
-		// 	}
-		// }
+		if (st.prev_to == -1 || st.reachable[st.prev_to] == 0) {
+			strategy = (rnd.nextUInt() & 0x330) ? RANDOM_NODE : RANDOM_EDGE;
+		} else {
+			int rv = rnd.nextUInt(32);
+			if (rv < 16) {
+				strategy = EXPAND_PREV;
+			} else if (rv < 28) {
+				strategy = RANDOM_NODE;
+			} else {
+				strategy = RANDOM_EDGE;
+			}
+		}
 		if (strategy == EXPAND_PREV) {
 			const int size = edges[st.prev_to].size();
 			int ei = rnd.nextUInt(size);
@@ -306,15 +320,20 @@ struct MCTS {
 			strategy = RANDOM_NODE;
 		}
 		if (strategy == RANDOM_NODE) {
-			for (int i = 0; i < st.connected_node.size(); ++i) {
-				int pos = rnd.nextUInt(st.connected_node.size() - i);
-				swap(st.connected_node[i], st.connected_node[i + pos]);
-				const int s = st.connected_node[i];
-				const int size = edges[s].size();
-				const int ei = rnd.nextUInt(size);
-				for (int j = 0; j < size; ++j) {
-					Edge* e = edges[s][(j + ei) % size];
-					if (e->owner == NOT_OWNED && st.reachable[s] != st.reachable[e->to]) return e;
+			for (int i = 0; i < st.candidate_edge.size(); ++i) {
+				int pos = rnd.nextUInt(st.candidate_edge.size() - i);
+				swap(st.candidate_edge[i], st.candidate_edge[i + pos]);
+				Edge* edge = st.candidate_edge[i];
+				if (edge->owner != NOT_OWNED) {
+					swap(st.candidate_edge[i], st.candidate_edge.back());
+					st.candidate_edge.pop_back();
+					--i;
+					continue;
+				}
+				const int s = edge->from;
+				const int t = edge->to;
+				if (st.reachable[s] != st.reachable[t]) {
+					return edge;
 				}
 			}
 			strategy = RANDOM_EDGE;
@@ -333,7 +352,11 @@ struct MCTS {
 		if ((st.reachable[from] & ~st.reachable[to]) == 0) return;
 		buf.clear();
 		buf.push_back(to);
-		if (st.reachable[to] == 0) st.connected_node.push_back(to);
+		if (st.reachable[to] == 0) {
+			for (Edge* e : edges[to]) {
+				if (e->owner == NOT_OWNED) st.candidate_edge.push_back(e);
+			}
+		}
 		st.reachable[to] |= st.reachable[from];
 		for (int i = 0; i < buf.size(); ++i) {
 			int s = buf[i];
@@ -342,7 +365,11 @@ struct MCTS {
 				int t = e->from + e->to - s;
 				if ((st.reachable[from] & ~st.reachable[t]) == 0) continue;
 				buf.push_back(t);
-				if (st.reachable[t] == 0) st.connected_node.push_back(t);
+				if (st.reachable[t] == 0) {
+					for (Edge* ne : edges[t]) {
+						if (ne->owner == NOT_OWNED) st.candidate_edge.push_back(ne);
+					}
+				}
 				st.reachable[t] |= st.reachable[from];
 			}
 		}
@@ -409,7 +436,7 @@ struct MCTS {
 				v.first += weight;
 				v.second += value * weight;
 			}
-			weight *= 0.95;
+			weight *= 0.9;
 		}
 	}
 
@@ -417,6 +444,7 @@ struct MCTS {
 		double best_value = -99999999;
 		Edge* ret = nullptr;
 		for (auto& vp : values) {
+			// cerr << vp.first->from << " " << vp.first->to << " " << vp.second.first << " " << vp.second.second << endl;
 			if (vp.second.first < 0.001) continue;
 			double v = 1.0 * vp.second.second / vp.second.first;
 			if (v > best_value) {
@@ -466,15 +494,21 @@ void move() {
 	time_limit = 500;
 	Game game(false);
 	for (int i = 0; i < game.C; ++i) {
-		int s, t;
-		scanf("%d %d", &s, &t);
-		game.use(s, t, i);
+		int c;
+		scanf("%d", &c);
+		if (c == 0) continue;
+		vi path(c);
+		for (int j = 0; j < c; ++j) {
+			scanf("%d", &path[j]);
+			if (j > 0) game.use(path[j - 1], path[j], i);
+		}
 	}
 	cout << game.serialize() << "\n";
 	pair<int, int> res = create_move(game);
 	cout << game.I << " ";
 	cout << res.first << " " << res.second << endl;
 	debug("move:%d\n", get_elapsed_msec());
+	PRINT_TIMER();
 }
 
 int main() {

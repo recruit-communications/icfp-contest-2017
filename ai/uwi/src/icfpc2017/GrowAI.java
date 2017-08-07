@@ -18,7 +18,6 @@ import java.util.HashSet;
 import java.util.InputMismatchException;
 import java.util.List;
 import java.util.Queue;
-import java.util.Random;
 import java.util.Set;
 
 class GrowAI {
@@ -51,7 +50,7 @@ class GrowAI {
 		return (ec>>>32) + " " + ((int)ec);
 	}
 	
-	Random gen = new Random(114514);
+//	Random gen = new Random(114514);
 	
 	long go(int rem, int dep, State s, RestorableDisjointSet2 rds)
 	{

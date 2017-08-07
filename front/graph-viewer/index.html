@@ -27,11 +27,17 @@
     <div class="container-fluid">
       <legend>Canvas</legend>
       <div class="visual-controller">
-        <ul class="float-container">
-          <li><button class="btn" id="id-show-change" onclick="changeIdShow()">ID on/off</button></li>
-          <li class="form-inline form-group"><label>IDサイズ：</label><input type="number" class="form-control" id="id-size" min="1" value="32" onchange="changeIdSize()"></li>
-          <li class="form-inline form-group"><label>線の太さ：</label><input type="number" class="form-control" id="line-width" min="1" value="15" onchange="changeLineWidth()"></li>
-        </ul>
+        <div class="form-inline">
+          <div class="form-group">
+            <button class="btn" id="id-show-switch" onclick="switchIdShow()">ID on/off</button>
+          </div>
+          <div class="form-group">
+            <label>IDサイズ：</label><input type="number" class="form-control" id="id-size" min="2" value="32" step="10" onchange="updateIdSize()">
+          </div>
+          <div class="form-group">
+            <label>線の太さ：</label><input type="number" class="form-control" id="edge-width" value="13" step="5" min="3"  onchange="updateEdgeWidth()">
+          </div>
+        </div>
       </div>
       <div class="container-fluid" id="cy"></div>
       <div id="loading">

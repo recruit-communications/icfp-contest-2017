@@ -23,18 +23,31 @@ class GameState(map: LambdaMap, punterNum: Int, futures: ArrayBuffer[Array[Lambd
     Option(arr).foreach(_.foreach(f => futureVector(i) += (f.source -> f.target)))
   })
 
-  val graph = new mutable.TreeMap[Vertex, mutable.TreeMap[Vertex, Punter]]
-  map.sites.foreach(site => graph += (site.id -> new mutable.TreeMap[Vertex, Punter]()))
+  val usedGraph = new mutable.TreeMap[Vertex, mutable.TreeMap[Vertex, Punter]]
+  val optionGraph = new mutable.TreeMap[Vertex, mutable.TreeMap[Vertex, Punter]]
+  map.sites.foreach(site => {
+    usedGraph += (site.id -> new mutable.TreeMap[Vertex, Punter]())
+    optionGraph += (site.id -> new mutable.TreeMap[Vertex, Punter]())
+  })
   map.rivers.foreach(river => {
-    graph(river.source).put(river.target, GameState.UNUSED)
-    graph(river.target).put(river.source, GameState.UNUSED)
+    usedGraph(river.source) += (river.target -> GameState.UNUSED)
+    usedGraph(river.target) += (river.source -> GameState.UNUSED)
+    optionGraph(river.source) += (river.target -> GameState.UNUSED)
+    optionGraph(river.target) += (river.source -> GameState.UNUSED)
   })
   val mines: Set[Vertex] = map.mines.toSet
 
   var edgeCount: Int = map.rivers.length
 
   def isUsed(source: Vertex, target: Vertex): Boolean = {
-    graph.contains(source) && graph(source).contains(target) && graph(source)(target) != GameState.UNUSED
+    !(usedGraph.contains(source) && usedGraph(source).contains(target) && usedGraph(source)(target) == GameState.UNUSED)
+  }
+
+  def canBuy(source: Vertex, target: Vertex, punter: Punter): Boolean = {
+    optionGraph.contains(source) && optionGraph(source).contains(target) &&
+      optionGraph(source)(target) == GameState.UNUSED &&
+      usedGraph(source)(target) != GameState.UNUSED &&
+      usedGraph(source)(target) != punter
   }
 
   /**
@@ -45,8 +58,13 @@ class GameState(map: LambdaMap, punterNum: Int, futures: ArrayBuffer[Array[Lambd
     * @param punter user of this edge
     */
   def addEdge(source: Vertex, target: Vertex, punter: Punter): Unit = {
-    graph(source)(target) = punter
-    graph(target)(source) = punter
+    usedGraph(source)(target) = punter
+    usedGraph(target)(source) = punter
+  }
+
+  def buyEdge(source: Vertex, target: Vertex, punter: Punter): Unit = {
+    optionGraph(source)(target) = punter
+    optionGraph(target)(source) = punter
   }
 
   /**
@@ -65,7 +83,7 @@ class GameState(map: LambdaMap, punterNum: Int, futures: ArrayBuffer[Array[Lambd
         deque.add(start)
         while (!deque.isEmpty) {
           val v = deque.poll()
-          for ((u, _) <- graph(v)) {
+          for ((u, _) <- usedGraph(v)) {
             if (!dist.contains(u)) {
               dist += (u -> (dist(v) + 1))
               deque.add(u)
@@ -95,15 +113,12 @@ class GameState(map: LambdaMap, punterNum: Int, futures: ArrayBuffer[Array[Lambd
       deque.add(start)
       while (!deque.isEmpty) {
         val v = deque.poll()
-        for ((u, p) <- graph(v)) {
-          if (p == punter && !dist.contains(u)) {
-            dist += (u -> (dist(v) + 1))
-            deque.add(u)
+        for ((u, p) <- usedGraph(v)) if ((p == punter || optionGraph(v)(u) == punter) && !dist.contains(u)) {
+          dist += (u -> (dist(v) + 1))
+          deque.add(u)
 
-            val d = distFromMines(start)(u)
-
-            score += d * d
-          }
+          val d = distFromMines(start)(u)
+          score += d * d
         }
       }
 

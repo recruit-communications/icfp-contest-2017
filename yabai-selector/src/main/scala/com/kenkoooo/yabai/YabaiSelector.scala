@@ -1,5 +1,7 @@
 package com.kenkoooo.yabai
 
+import java.time.Instant
+
 import com.fasterxml.jackson.annotation.{JsonIgnoreProperties, JsonProperty}
 import com.fasterxml.jackson.core.`type`.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -38,7 +40,7 @@ object YabaiSelector extends Logging {
       mapSelected(entry.id) = 0
     })
     mapper.readValue[List[GameResult]](YabaiUrl.get(YabaiUrl.gameLog), new TypeReference[List[GameResult]] {})
-      .foreach(r => Option(r.results) match {
+      .foreach(r => if (r.createdAtMillis > Instant.parse("2017-08-07T03:30:00Z").getEpochSecond * 1000) Option(r.results) match {
         case Some(result) => result.foreach(g =>
           if (validPunterIds.contains(g.punter)) {
             if (g.score <= 0) illegalCount(g.punter) += 1
@@ -81,7 +83,7 @@ object YabaiSelector extends Logging {
   @JsonIgnoreProperties(ignoreUnknown = true)
   case class GameResult(@JsonProperty("map_id") map: LambdaMapId,
                         results: Array[PlayerResult],
-                        @JsonProperty("created_at") createdAt: Long,
+                        @JsonProperty("created_at") createdAtMillis: Long,
                         id: String,
                         @JsonProperty("punter_ids") punterIds: Array[String],
                         job: Job)
@@ -106,7 +108,7 @@ object YabaiSelector extends Logging {
 
 object YabaiUrl extends Logging {
   val host = "http://13.112.208.142:3000"
-  val gameLog = s"$host/game/list"
+  val gameLog = s"$host/game/list?count=10000"
   val punterList = s"$host/punter/list"
   val mapList = s"$host/map/list"
 

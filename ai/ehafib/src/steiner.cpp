@@ -441,7 +441,7 @@ public:
                 if (dist[cur] <= 0)
                     continue;
 
-                double w = 1e6 * pow(0.998, T) / dist[cur];
+                double w = 1e6 * pow(0.999, T) / dist[cur];
 
                 // for (int v = 0; v < V; v++) {
                 //     for (const Edge &e : G[v]) {
@@ -462,7 +462,7 @@ public:
                         continue;
 
                     // 逆数なのはとくべつないみはあに
-                    double w = 1e6 * pow(0.99, T) / dist[cur];
+                    double w = 1e6 * pow(0.999, T) / dist[cur];
                     queue<int> q;
                     vector<int> seen(V, 0);
                     q.push(cur);
@@ -491,6 +491,7 @@ public:
 
         for (int v = 0; v < V; v++) {
             for (Edge &e : G[v]) {
+                edge_weight[e.idx] *= pow(0.999, vcnt);
                 edge_weight[e.idx] += e.weight;
             }
         }

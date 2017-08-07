@@ -239,8 +239,8 @@ class Process:
 
     def exec(self, input):
         proc = subprocess.Popen(self.cmdline, stdout=subprocess.PIPE, stdin=subprocess.PIPE, stderr=subprocess.PIPE)
-        global LAST_INPUT
-        LAST_INPUT = input
+        #global LAST_INPUT
+        #LAST_INPUT = input
         stdout, stderr = proc.communicate(input=input.encode())
         print(stderr.decode().rstrip(), file=sys.stderr)
         return stdout.decode().rstrip()
@@ -375,10 +375,17 @@ def decision(bridge):
     m = len(ma['rivers'])
     k = len(ma['mines'])
 
-    if n < 300:
+    if n < 500 and punter_count <= 2:
         proc_idx = 0
-    else:
+    elif n * k < 1000:
+        proc_idx = 3
+    elif k ** 2 * m < 100000:
+        proc_idx = 2
+    elif k * m < 100000:
         proc_idx = 1
+    else:
+        proc_idx = 4
+
     print('proc_idx:', proc_idx, file=sys.stderr)
     return proc_idx
 
@@ -431,5 +438,5 @@ if __name__ == '__main__':
         elif len(sys.argv) == 4:
             online()
     except:
-        print(LAST_INPUT, file=sys.stderr)
+        #print(LAST_INPUT, file=sys.stderr)
         raise

@@ -123,7 +123,7 @@ class GameState(map: LambdaMap, punterNum: Int, futures: ArrayBuffer[Array[Lambd
       }
 
       // future
-      sourceToTarget.get(start).foreach(target => {
+      sourceToTarget.get(start).foreach(target => if (distFromMines.contains(start) && distFromMines(start).contains(target)) {
         val d = distFromMines(start)(target)
         if (dist.contains(target)) {
           score += d * d * d

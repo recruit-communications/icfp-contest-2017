@@ -382,7 +382,7 @@ def decision(bridge):
     elif k ** 2 * m < 100000:
         proc_idx = 2
     elif k * m < 100000:
-        proc_idx = 1
+        proc_idx = 2
     else:
         proc_idx = 4
 

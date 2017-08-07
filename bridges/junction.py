@@ -375,10 +375,17 @@ def decision(bridge):
     m = len(ma['rivers'])
     k = len(ma['mines'])
 
-    if n < 300:
+    if n < 500 and punter_count <= 2:
         proc_idx = 0
-    else:
+    elif n * k < 1000:
+        proc_idx = 3
+    elif k ** 2 * m < 100000:
+        proc_idx = 2
+    elif k * m < 100000:
         proc_idx = 1
+    else:
+        proc_idx = 4
+
     print('proc_idx:', proc_idx, file=sys.stderr)
     return proc_idx
 

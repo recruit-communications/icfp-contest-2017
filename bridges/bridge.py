@@ -173,8 +173,8 @@ class OnlineBridge:
         self.map = sup['map']
         if 'settings' in sup and 'futures' in sup['settings']:
             self.future = 1 if sup['settings']['futures'] else 0
-        if 'settings' in sup and 'splurge' in sup['settings']:
-            self.splurge = 1 if sup['settings']['splurge'] else 0
+        if 'settings' in sup and 'splurges' in sup['settings']:
+            self.splurge = 1 if sup['settings']['splurges'] else 0
         if 'settings' in sup and 'options' in sup['settings']:
             self.option = 1 if sup['settings']['options'] else 0
 

@@ -19,10 +19,11 @@ object YabaiSelector extends Logging {
   val mapper = new ObjectMapper()
   mapper.registerModule(DefaultScalaModule)
 
-  val MAX_SIZE = 32
   val AFTER_TIME_UTC_STRING = "2017-08-07T03:30:00Z"
 
   def main(args: Array[String]): Unit = {
+    val maxSize = args(0).toInt * 16
+
     val punterEntries = mapper.readValue[List[PunterEntry]](YabaiUrl.get(YabaiUrl.punterList), new TypeReference[List[PunterEntry]] {})
     val mapEntries = mapper.readValue[List[MapEntry]](YabaiUrl.get(YabaiUrl.mapList), new TypeReference[List[MapEntry]] {})
     val gameList = mapper.readValue[List[GameResult]](YabaiUrl.get(YabaiUrl.gameLog), new TypeReference[List[GameResult]] {})
@@ -75,7 +76,7 @@ object YabaiSelector extends Logging {
       })
 
       val selectedPunters = punterScore.toList.sortBy { case (_, score) => score }.reverse.take(16)
-      for (_ <- 0 until (MAX_SIZE / member)) {
+      for (_ <- 0 until (maxSize / member)) {
         val shuffled = Random.shuffle(selectedPunters)
         queue.append(Execute(Random.shuffle(mapIds.toList).head, (for (i <- 0 until member) yield shuffled(i % shuffled.length)._1).toList))
       }
@@ -124,7 +125,7 @@ object YabaiSelector extends Logging {
 
 object YabaiUrl extends Logging {
   val host = "http://13.112.208.142:3000"
-  val gameLog = s"$host/game/list?count=10000"
+  val gameLog = s"$host/game/list?count=5000&all=1"
   val punterList = s"$host/punter/list"
   val mapList = s"$host/map/list"
 

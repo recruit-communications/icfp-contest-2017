@@ -4,6 +4,7 @@
 #include <numeric>
 #include <queue>
 #include <vector>
+
 #define available_edge(eidx) (used[eidx] == 0 || (O > 0 && op[eidx] == 0))
 #define using_edge(eidx, punter_id)                                            \
     ((used[eidx] == (punter_id) + 1) || (op[eidx] == (punter_id) + 1))
@@ -126,6 +127,7 @@ public:
         cin >> number_of_players >> punter_id >> future_enabled >>
             splurge_enabled >> option_enabled;
         cin >> V >> E >> M;
+
         T = 0;
         O = option_enabled ? M : 0;
 
@@ -217,7 +219,6 @@ public:
             {"pid", punter_id},
             {"future_enabled", future_enabled},
             {"splurge_enabled", splurge_enabled},
-            {"option_enabled", option_enabled},
             {"t", T + 1},
             {"v", V},
             {"e", E},
@@ -239,7 +240,7 @@ public:
     vector<int> available_edge_indices() {
         vector<int> res;
         for (int i = 0; i < used.size(); i++) {
-            if (used[i] == 0 || (O > 0 && op[i] == 0))
+            if (available_edge(i))
                 res.push_back(i);
         }
         return res;
@@ -285,6 +286,9 @@ public:
                         continue;
 
                     if (!available_edge(e.idx))
+                        continue;
+
+                    if (using_edge(e.idx, punter_id))
                         continue;
 
                     //// O(V)
@@ -400,6 +404,8 @@ public:
         if (M * 1.0 * M * E > 1e7)
             return choose_greedily();
 
+        int vcnt = V - T * number_of_players;
+
         vector<double> edge_weight(E, 0);
 
         for (int mi = 0; mi < M; mi++) {
@@ -460,14 +466,16 @@ public:
                     queue<int> q;
                     vector<int> seen(V, 0);
                     q.push(cur);
-                    seen[q] = 1;
+                    seen[cur] = 1;
 
-                    while(!q.empty()) {
-                        int v = q.front(); q.pop();
+                    while (!q.empty()) {
+                        int v = q.front();
+                        q.pop();
 
-                        for(Edge &e: G[v]) {
-                            int cost = using_edge(e.idx, punter_id) ? 0 ? 1;
-                            if(!seen[e.to] && dist[v] >= dist[e.to] && dist[v] == dist[e.to] + cost) {
+                        for (Edge &e : G[v]) {
+                            int cost = using_edge(e.idx, punter_id) ? 0 : 1;
+                            if (!seen[e.to] && dist[v] >= dist[e.to] &&
+                                dist[v] == dist[e.to] + cost) {
                                 seen[e.to] = 1;
                                 q.push(cur);
                                 edge_weight[e.idx] += w;
@@ -492,6 +500,8 @@ public:
         for (int v = 0; v < V; v++) {
             for (Edge &e : G[v]) {
                 if (!available_edge(e.idx))
+                    continue;
+                if (using_edge(e.idx, punter_id))
                     continue;
                 if (uf[punter_id].eq(v, e.to) && used[idx] != 0)
                     continue;
@@ -527,8 +537,15 @@ public:
         double max_score = 0;
         int idx = -1;
 
+        int vcnt = V - T * number_of_players;
         for (int v = 0; v < V; v++) {
-            for (const Edge &e : G[v]) {
+            for (Edge &e : G[v]) {
+                if (using_edge(e.idx, punter_id))
+                    continue;
+                if(op[e.idx] == punter_id + 1) {
+                    e.weight *= pow(0.9999, vcnt);
+                    //  残り少ないほど重み軽くする
+                }
                 if (max_score < e.weight) {
                     max_score = e.weight;
                     idx = e.idx;
@@ -545,15 +562,19 @@ public:
             return;
 
         // TODO あとで高速化？
-        for (int i = 0; i < used.size(); i++) {
-            if ((sources[i] == u && targets[i] == v) ||
-                (sources[i] == v && targets[i] == u)) {
-                if (used[i] != 0) {
-                    op[i] = uid + 1;
-                    O--;
+        for (int eidx = 0; eidx < E; eidx++) {
+            if ((sources[eidx] == u && targets[eidx] == v) ||
+                (sources[eidx] == v && targets[eidx] == u)) {
+
+                if (used[eidx] == 0) {
+                    used[eidx] = uid + 1;
+                } else {
+                    op[eidx] = uid + 1;
+                    if (uid == punter_id)
+                        O--;
                 }
-                used[i] = uid + 1;
-                claim[uid].push_back(i);
+
+                claim[uid].push_back(eidx);
                 break;
             }
         }

@@ -46,7 +46,6 @@ app.get('/game/list', (req, res) => {
 	if (query.status) {
 	  data = data.filter((e) => e.job.status === query.status);
 	}
-	
     const sortedData = sortBy(data, (d) => d.created_at).reverse().slice(0, count);
     res.json(sortedData);
   });

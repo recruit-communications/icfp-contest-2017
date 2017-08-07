@@ -77,4 +77,15 @@ class GameStateSuite extends FunSuite with Matchers {
     graph.buyEdge(0, 1, 0)
     graph.canBuy(0, 1, 0) shouldBe false
   }
+
+  test("option test2") {
+    val url = getClass.getClassLoader.getResource("Sierpinski-triangle.json").toURI.toURL
+    val mapper = new ObjectMapper()
+    mapper.registerModule(DefaultScalaModule)
+    val map = mapper.readValue[LambdaMap](url, classOf[LambdaMap])
+    val graph = new GameState(map, 3, new ArrayBuffer[Array[LambdaFuture]]())
+    graph.addEdge(3, 13, 0)
+    graph.addEdge(3, 12, 1)
+    graph.addEdge(21, 3, 2)
+  }
 }

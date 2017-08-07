@@ -13,6 +13,7 @@ app.use(bodyParser.json());
 // クライアント一覧
 app.get('/punter/list', (req, res) => {
   db.punters().then((data) => {
+    data = sortBy(data, (d) => d.id);
     res.json(data);
   });
 });
@@ -31,6 +32,7 @@ app.post('/punter/delete', (req, res) => {
 // マップ一覧
 app.get('/map/list', (req, res) => {
   db.maps().then((data) => {
+    data = sortBy(data, (d) => d.id)
     res.json(data.map((v) => {
       v.url = `https://s3-ap-northeast-1.amazonaws.com/${db.bucket}/maps/${v.id}.json`;
       return v;
@@ -43,6 +45,9 @@ app.get('/game/list', (req, res) => {
   const query = url.parse(req.url, true).query;
   db.games(query).then((data) => {
     const count = query.count || 100;
+	if (query.status) {
+	  data = data.filter((e) => e.job.status === query.status);
+	}
     const sortedData = sortBy(data, (d) => d.created_at).reverse().slice(0, count);
     res.json(sortedData);
   });

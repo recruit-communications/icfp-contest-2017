@@ -5,6 +5,10 @@
 #include <queue>
 #include <vector>
 
+#define available_edge(eidx) (used[eidx] == 0 || (O > 0 && op[eidx] == 0))
+#define using_edge(eidx, punter_id)                                            \
+    ((used[eidx] == (punter_id) + 1) || (op[eidx] == (punter_id) + 1))
+
 // M*E > 1e8 --> random
 // M*N*V > 1e8 --> random
 // M*E > 1e8 --> random
@@ -101,7 +105,8 @@ public:
 
 class State {
 public:
-    int number_of_players, punter_id, future_enabled, splurge_enabled, option_enabled;
+    int number_of_players, punter_id, future_enabled, splurge_enabled,
+        option_enabled;
     int T, O;
     int V, E, M;
     vector<int> sources, targets;
@@ -110,7 +115,7 @@ public:
     vector<int> op;
     vector<vector<Edge>> G;
     vector<vector<int>> score;
-    vector<vector<int>> claim;
+    vector<vector<int>> claim; // claimだけじゃなくてoptionに指定された辺も入る
     vector<int> my_mines;
     vector<UnionFind> uf;
     vector<vector<double>> vertex_weight;
@@ -122,8 +127,9 @@ public:
         cin >> number_of_players >> punter_id >> future_enabled >>
             splurge_enabled >> option_enabled;
         cin >> V >> E >> M;
+
         T = 0;
-        O = option_enabled ? M: 0;
+        O = option_enabled ? M : 0;
 
         for (int i = 0; i < E; i++) {
             int a, b;
@@ -213,7 +219,6 @@ public:
             {"pid", punter_id},
             {"future_enabled", future_enabled},
             {"splurge_enabled", splurge_enabled},
-            {"option_enabled", option_enabled},
             {"t", T + 1},
             {"v", V},
             {"e", E},
@@ -235,15 +240,16 @@ public:
     vector<int> available_edge_indices() {
         vector<int> res;
         for (int i = 0; i < used.size(); i++) {
-            if (used[i] == 0) res.push_back(i);
+            if (available_edge(i))
+                res.push_back(i);
         }
         return res;
     }
 
-    pair<int, int> choose_randomly() {
+    int choose_randomly() {
         vector<int> edge_idx = available_edge_indices();
         int idx = edge_idx[rand() % edge_idx.size()];
-        return {sources[idx], targets[idx]};
+        return idx;
     }
     // }}}
 
@@ -279,7 +285,10 @@ public:
                     if (uf[i].eq(v, e.to))
                         continue;
 
-                    if (used[e.idx] != 0)
+                    if (!available_edge(e.idx))
+                        continue;
+
+                    if (using_edge(e.idx, punter_id))
                         continue;
 
                     //// O(V)
@@ -303,7 +312,8 @@ public:
                     if (i == punter_id) {
                         e.weight += lnow;
                     } else {
-                        e.weight += (lnow * 0.5 / (number_of_players - 1));
+                        e.weight += (lnow * 0.5 / (number_of_players - 1) /
+                                     (number_of_players));
                     }
 
                     // add edge weight
@@ -323,54 +333,6 @@ public:
                                     VERTEX_COEFFICIENT * vertex_weight[mi][v];
                             }
                         }
-                    }
-                }
-            }
-        }
-    }
-
-    void add_near_lambda() {
-        // m(lambda)に近い頂点に高い得点を与える
-        for (int mi = 0; mi < M; mi++) {
-
-            int m = mines[mi];
-            bool mine = false;
-
-            for (const int &eidx : claim[punter_id]) {
-                mine |= (m == sources[eidx]);
-                mine |= (m == targets[eidx]);
-            }
-
-            // 既につながっているならむし
-            if (mine)
-                return;
-
-            // BFSしてADD
-            queue<int> q;
-            vector<int> dist(V, -1);
-
-            q.push(m);
-            dist[m] = 0;
-
-            while (!q.empty()) {
-                int v = q.front();
-                q.pop();
-
-                for (Edge &e : G[v]) {
-                    if (used[e.idx] != 0 && used[e.idx] != punter_id + 1)
-                        continue;
-                    if (dist[e.to] != -1)
-                        continue;
-
-                    dist[e.to] = dist[v] + 1;
-                    if (dist[e.to] <= 1) {
-                        e.weight += 1145141919.0;
-                        q.push(e.to);
-                    }
-
-                    if (dist[e.to] <= 2) {
-                        e.weight += 364364.0;
-                        q.push(e.to);
                     }
                 }
             }
@@ -438,8 +400,11 @@ public:
     }
 
     // O(M^2 E)
-    pair<int, int> choose_steiner() {
-        if (M * 1.0 * M * E > 1e7) return choose_greedily();
+    int choose_steiner() {
+        if (M * 1.0 * M * E > 1e7)
+            return choose_greedily();
+
+        int vcnt = V - T * number_of_players;
 
         vector<double> edge_weight(E, 0);
 
@@ -458,10 +423,10 @@ public:
                 for (const Edge &e : G[v]) {
                     if (dist[e.to] != -1)
                         continue;
-                    if (used[e.idx] == punter_id + 1) {
+                    if (using_edge(e.idx, punter_id)) {
                         dist[e.to] = dist[v];
                         q.push_front(e.to);
-                    } else if (used[e.idx] == 0) {
+                    } else if (available_edge(e.idx)) {
                         dist[e.to] = dist[v] + 1;
                         q.push_back(e.to);
                     }
@@ -478,34 +443,47 @@ public:
 
                 double w = 1e6 * pow(0.998, T) / dist[cur];
 
-                for (int v = 0; v < V; v++) {
-                    for(const Edge &e: G[v]) {
-                        if (used[e.idx] == 0 && dist[e.to] == dist[v] + 1) {
-                            // w適用
-                            edge_weight[e.idx] += w;
+                // for (int v = 0; v < V; v++) {
+                //     for (const Edge &e : G[v]) {
+                //         if (available_edge(e.idx) &&
+                //             dist[e.to] == dist[v] + 1) {
+                //             // w適用
+                //             edge_weight[e.idx] += w;
+                //         }
+                //     }
+                // }
+
+                for (int mj = 0; mj < M; mj++) {
+                    if (mi == mj)
+                        continue;
+                    int cur = mines[mj];
+                    // いけない or すでにれんけつ
+                    if (dist[cur] <= 0)
+                        continue;
+
+                    // 逆数なのはとくべつないみはあに
+                    double w = 1e6 * pow(0.99, T) / dist[cur];
+                    queue<int> q;
+                    vector<int> seen(V, 0);
+                    q.push(cur);
+                    seen[cur] = 1;
+
+                    while (!q.empty()) {
+                        int v = q.front();
+                        q.pop();
+
+                        for (Edge &e : G[v]) {
+                            int cost = using_edge(e.idx, punter_id) ? 0 : 1;
+                            if (!seen[e.to] && dist[v] >= dist[e.to] &&
+                                dist[v] == dist[e.to] + cost) {
+                                seen[e.to] = 1;
+                                q.push(cur);
+                                edge_weight[e.idx] += w;
+                            }
                         }
                     }
                 }
             }
-
-            // for(int mj = 0; mj < M; mj++) {
-            //     if(mi == mj) continue;
-
-            //     int cur = mines[mj];
-            //     // いけない or すでにれんけつ
-            //     if(dist[cur] <= 0) continue;
-
-            //     // 逆数なのはとくべつないみはあに
-            //     double w = 1e6 *pow(0.99, T) / dist[cur];
-
-            //     while(cur != m) {
-            //         int edge = from_e[cur];
-            //         int vert = from_v[cur];
-
-            //         edge_weight[edge] += w;
-            //         cur = vert;
-            //     }
-            // }
         }
 
         init_union_find();
@@ -521,9 +499,11 @@ public:
         int idx = -1;
         for (int v = 0; v < V; v++) {
             for (Edge &e : G[v]) {
-                if (used[e.idx])
+                if (!available_edge(e.idx))
                     continue;
-                if (uf[punter_id].eq(v, e.to)) //まじで意味ないのでやめよう
+                if (using_edge(e.idx, punter_id))
+                    continue;
+                if (uf[punter_id].eq(v, e.to) && used[idx] != 0)
                     continue;
                 if (max_weight < edge_weight[e.idx]) {
                     max_weight = edge_weight[e.idx];
@@ -532,15 +512,11 @@ public:
             }
         }
 
-        if (idx == -1) {
-            return make_pair(-1, -1);
-        } else {
-            return make_pair(sources[idx], targets[idx]);
-        }
+        return idx;
     }
 
     // O(ME)
-    pair<int, int> choose_greedily() {
+    int choose_greedily() {
         if (M * 1.0 * number_of_players * E > 1e7) {
             return choose_randomly();
         }
@@ -554,7 +530,6 @@ public:
         // cout << "ANSW" << endl;
         add_next_score_weight_kai();
         // cout << "ANL" << endl;
-        add_near_lambda();
 
         // cerr << "idx = " << idx << endl;
         // cerr << "score = " << max_score << endl;
@@ -562,8 +537,15 @@ public:
         double max_score = 0;
         int idx = -1;
 
+        int vcnt = V - T * number_of_players;
         for (int v = 0; v < V; v++) {
-            for (const Edge &e : G[v]) {
+            for (Edge &e : G[v]) {
+                if (using_edge(e.idx, punter_id))
+                    continue;
+                if(op[e.idx] == punter_id + 1) {
+                    e.weight *= pow(0.9999, vcnt);
+                    //  残り少ないほど重み軽くする
+                }
                 if (max_score < e.weight) {
                     max_score = e.weight;
                     idx = e.idx;
@@ -571,12 +553,7 @@ public:
             }
         }
 
-        if (idx == -1) {
-            return make_pair(-1, -1);
-            // return choose_randomly();
-        } else {
-            return make_pair(sources[idx], targets[idx]);
-        }
+        return idx;
     }
 
     // O(NE)
@@ -585,12 +562,19 @@ public:
             return;
 
         // TODO あとで高速化？
-        for (int i = 0; i < used.size(); i++) {
-            if ((sources[i] == u && targets[i] == v) ||
-                (sources[i] == v && targets[i] == u)) {
-                if(used[i] != 0) op[i] = uid + 1;
-                used[i] = uid + 1;
-                claim[uid].push_back(i);
+        for (int eidx = 0; eidx < E; eidx++) {
+            if ((sources[eidx] == u && targets[eidx] == v) ||
+                (sources[eidx] == v && targets[eidx] == u)) {
+
+                if (used[eidx] == 0) {
+                    used[eidx] = uid + 1;
+                } else {
+                    op[eidx] = uid + 1;
+                    if (uid == punter_id)
+                        O--;
+                }
+
+                claim[uid].push_back(eidx);
                 break;
             }
         }
@@ -605,9 +589,22 @@ void doit_first(State &s) {
 void doit(State &s) {
     cout << s.to_json() << endl; // print new state
 
-    auto e = s.choose_steiner();
-    if(e.first == e.second) e = s.choose_randomly();
-    cout << s.punter_id << " " << e.second << " " << e.first << endl;
+    int eidx = s.choose_steiner();
+    if (eidx == -1 || (s.sources[eidx] == s.targets[eidx]))
+        eidx = s.choose_greedily();
+    if (eidx == -1 || (s.sources[eidx] == s.targets[eidx]))
+        eidx = s.choose_randomly();
+
+    bool use_option = (eidx != -1 && s.used[eidx] != 0);
+
+    auto e = eidx == -1 ? make_pair(-1, -1)
+                        : make_pair(s.sources[eidx], s.targets[eidx]);
+
+    if (use_option) {
+        cout << s.punter_id << " " << ~e.first << " " << ~e.second << endl;
+    } else {
+        cout << s.punter_id << " " << e.first << " " << e.second << endl;
+    }
 }
 
 int main() {

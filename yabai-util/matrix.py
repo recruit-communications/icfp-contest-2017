@@ -5,35 +5,54 @@ mapごとの勝率マトリックスを生成するスクリプト
 
 ./matrix/以下にcsvを作る
 勝率ではなく勝数を見たい場合はrateの代わりにcountを出力すると良い
+
+usage: ./matrix.py ['%Y-%m-%d %H:%M:%S']
+例) ./matrix.py "2017-08-07 13:00:00"
 '''
 
 import collections
 import commands
-import datetime
+from datetime import datetime
 import os
+from pytz import timezone
+import shutil
 import sys
 
-os.system("curl -s http://13.112.208.142:3000/game/list > /tmp/gamelist.txt")
-if not os.path.exists("./matrix"): os.makedirs("./matrix")
-maplist = commands.getoutput("curl -s http://13.112.208.142:3000/map/list | jq -r '.[].id'").split("\n")
+zero = datetime(1970, 1, 1, 0, 0, 0, tzinfo=timezone('UTC'))
+origin = zero
 
-for mapname in maplist:
-  tsv = commands.getoutput("cat /tmp/gamelist.txt | jq -r '.[] | if .job.status == \"success\" and .map_id == \"%s\" then . else empty end | .id + \"\t\" + (.results | sort_by(.score) | reverse | map(.punter) | @tsv)'" % mapname).split("\n")
+if len(sys.argv) > 1:
+  try: 
+    origin = datetime.strptime(sys.argv[1], '%Y-%m-%d %H:%M:%S').replace(tzinfo=timezone('Asia/Tokyo'))
+  except ValueError:
+    pass
 
-  count = collections.defaultdict(int)
-  rate = collections.defaultdict(float)
-  win = collections.defaultdict(int)
-  ratesum = collections.defaultdict(float)
+timestamp = int((origin - zero).total_seconds()) * 1000
+print "origin timestamp: %d"%timestamp
 
+os.system("curl -s http://13.112.208.142:3000/game/list?count=999999&all=1 > /tmp/gamelist.txt")
+shutil.rmtree("./matrix")
+os.makedirs("./matrix")
+maplist = [tuple(line.split("\t")) for line in commands.getoutput("curl -s http://13.112.208.142:3000/map/list | jq -r '.[] | [.id, .punter_num] | @tsv'").split("\n")]
+puntlist = set(commands.getoutput("curl -s http://13.112.208.142:3000/punter/list | jq -r '.[].id'").split("\n"))
+
+def cumulate(c, w, tsv):
   for line in tsv:
     ary = line.split()
-    id, punters = ary[0], ary[1:]
+    t, id, punters = ary[0], ary[1], ary[2:]
+    if int(t) < timestamp: continue
     for i in xrange(len(punters)):
       for j in xrange(i+1, len(punters)):
-        count[(punters[i], punters[j])] += 1
-        win[punters[i]] += 1
-        win[punters[j]] += 0
+        if punters[i] not in puntlist or punters[j] not in puntlist: continue
+        c[(punters[i], punters[j])] += 1
+        w[punters[i]] += 1
+        w[punters[j]] += 0
 
+  return (c, w)
+
+def output(count, win, name):
+  rate = collections.defaultdict(float)
+  ratesum = collections.defaultdict(float)
   punters = win.keys()
   denom = {}
 
@@ -55,5 +74,44 @@ for mapname in maplist:
       ary.append(str(rate[(p1, p2)]) if denom[(p1, p2)] > 0 else '-')
     ans.append(",".join(ary))
 
-  with open("./matrix/%s.csv"%mapname, 'w') as f:
+  with open("./matrix/%s.csv"%name, 'w') as f:
     f.write("\n".join(ans))
+
+  ans = ["," + ",".join(punters)]
+  for p1 in punters:
+    ary = [p1]
+    for p2 in punters:
+      ary.append(str(count[(p1, p2)]) if denom[(p1, p2)] > 0 else '-')
+    ans.append(",".join(ary))
+
+  with open("./matrix/_%s.csv"%name, 'w') as f:
+    f.write("\n".join(ans))
+
+
+subtotal = {}
+for i in [2,4,8,16]:
+  subtotal[i] = {}
+  subtotal[i]["count"] = collections.defaultdict(int)
+  subtotal[i]["win"] = collections.defaultdict(int)
+
+for mapname, punter_num in maplist:
+  tsv = commands.getoutput("cat /tmp/gamelist.txt | jq -r '.[] | if .job.status == \"success\" and .map_id == \"%s\" then . else empty end | (.created_at | tostring) + \"\t\" + .id + \"\t\" + (.results | sort_by(.score) | reverse | map(.punter) | @tsv)'" % mapname).split("\n")
+
+  punter_num = int(punter_num)
+  if tsv[0] == '': continue
+
+  count, win = cumulate(collections.defaultdict(int), collections.defaultdict(int), tsv)
+
+  if punter_num <= 2:
+    subtotal[2]["count"], subtotal[2]["win"] = cumulate(subtotal[2]["count"], subtotal[2]["win"], tsv)
+  elif punter_num <= 4:
+    subtotal[4]["count"], subtotal[4]["win"] = cumulate(subtotal[4]["count"], subtotal[4]["win"], tsv)
+  elif punter_num <= 8:
+    subtotal[8]["count"], subtotal[8]["win"] = cumulate(subtotal[8]["count"], subtotal[8]["win"], tsv)
+  else:
+    subtotal[16]["count"], subtotal[16]["win"] = cumulate(subtotal[16]["count"], subtotal[16]["win"], tsv) 
+
+  output(count, win, mapname)
+
+for i in subtotal.keys():
+  output(subtotal[i]["count"], subtotal[i]["win"], "subtotal%d"%i)

@@ -1,5 +1,7 @@
 /* Globals */
 /* Graph style */
+let idSize = 32;
+let edgeWidth = 13;
 const graphStyle = [
   {
     "selector": "node",
@@ -10,7 +12,7 @@ const graphStyle = [
       "height": 20,
       "min-zoomed-font-size": 12,
       "color": "#fff",
-      "font-size": 32,
+      "font-size": idSize,
       "z-index": 2,
       "content": "data(id)",
     }
@@ -53,10 +55,9 @@ const graphStyle = [
       "font-size": 64,
       "color": "#FFF",
       "line-color": "#009",
-      "width": 13,
+      "width": edgeWidth,
       "z-index" : 1,
-      "curve-style": "haystack",
-      "haystack-radius": 0
+      "curve-style": "bezier"
       }
   },
 

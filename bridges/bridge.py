@@ -160,6 +160,8 @@ class OnlineBridge:
         print('RECV', json_string.rstrip())
         self.buffer = self.buffer[n:]
         obj = json.loads(json_string)
+        if 'timeout' in obj:
+            return self.read_json()
         return obj
 
     def handshake(self, name):

@@ -1,0 +1,5 @@
+#!/bin/bash
+DIR=src/ai/uwi/src/icfpc2017/
+TARGET="MeijinIDAI"
+sed -e "s/package icfpc2017;//" $DIR$TARGET.java > $TARGET.java
+javac $TARGET.java

@@ -10,7 +10,7 @@ import org.scalatest.{FunSuite, Matchers}
 class SugoiDealerSuite extends FunSuite with Matchers with MockitoSugar {
   test("fork process") {
     val testAi = new File(getClass.getClassLoader.getResource("test_ai.py").toURI).toPath.toString
-    val punterProgram = new PunterProgram(s"python $testAi", 1)
+    val punterProgram = new PunterProgram(s"python $testAi", 1, true, 10)
     val (_, code) = punterProgram.putCommand("{}", 10)
     code shouldBe 0
   }
@@ -81,5 +81,26 @@ class SugoiDealerSuite extends FunSuite with Matchers with MockitoSugar {
     deque(0).asInstanceOf[ClaimMove].claim.target shouldBe 7
 
     verify(gameState, times(1)).addEdge(5, 7, 1)
+  }
+
+  test("option test") {
+    val program = mock[PunterProgram]
+    val gameState = mock[GameState]
+
+    when(program.punter).thenReturn(1)
+    when(program.penaltyCount).thenReturn(9)
+    when(program.putCommand(any(), any())).thenReturn(("{\"option\":{\"punter\":1,\"source\":5,\"target\":7},\"state\":[\"test\"]}", 0L))
+    when(program.optionRemain).thenReturn(1)
+
+    when(gameState.edgeCount).thenReturn(1)
+    when(gameState.canBuy(5, 7, 1)).thenReturn(true)
+    
+    val deque = SugoiDealer.play(Seq(program), gameState)
+    deque(0) shouldBe a[OptionMove]
+    deque(0).asInstanceOf[OptionMove].option.punter shouldBe 1
+    deque(0).asInstanceOf[OptionMove].option.source shouldBe 5
+    deque(0).asInstanceOf[OptionMove].option.target shouldBe 7
+
+    verify(gameState, times(1)).buyEdge(5, 7, 1)
   }
 }

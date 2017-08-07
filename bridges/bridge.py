@@ -173,8 +173,8 @@ class OnlineBridge:
         self.map = sup['map']
         if 'settings' in sup and 'futures' in sup['settings']:
             self.future = 1 if sup['settings']['futures'] else 0
-        if 'settings' in sup and 'splurge' in sup['settings']:
-            self.splurge = 1 if sup['settings']['splurge'] else 0
+        if 'settings' in sup and 'splurges' in sup['settings']:
+            self.splurge = 1 if sup['settings']['splurges'] else 0
         if 'settings' in sup and 'options' in sup['settings']:
             self.option = 1 if sup['settings']['options'] else 0
 
@@ -302,9 +302,9 @@ class Process:
         vs = []
         for v in pid_vs[1:]:
             if v >= 0:
-                v.append(sorted_site_ids[v])
+                vs.append(sorted_site_ids[v])
             else:
-                v.append(-(sorted_site_ids[-(v + 1)] + 1))
+                vs.append(-(sorted_site_ids[-(v + 1)] + 1))
         return pid, vs, new_state
 
 

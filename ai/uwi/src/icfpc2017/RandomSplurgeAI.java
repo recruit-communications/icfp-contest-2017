@@ -23,7 +23,7 @@ class RandomSplurgeAI {
 	public PrintWriter out;
 	String INPUT = "";
 
-	SplittableRandom gen = new SplittableRandom();
+	static SplittableRandom gen = new SplittableRandom();
 	
 	public void solve() {
 		char phase = ns().charAt(0);
@@ -65,6 +65,7 @@ class RandomSplurgeAI {
 			state.M = M;
 			state.F = F;
 			state.S = S;
+			state.phase = 0;
 			state.mindistss = mindistss;
 			if(F == 1){
 				state.futures = new ArrayList<>();
@@ -104,34 +105,36 @@ class RandomSplurgeAI {
 			// ゲーム中入力
 			State state = (State)fromBase64(ns());
 			int C = state.C;
-			outer:
 			for(int i = 0;i < C;i++){
 				int L = ni();
-				if(state.S == 1 && L == 0){
+				if(state.S == 1 && L == 0 && (state.phase > 0 || state.phase == 0 && i < state.P)){
 					state.charges.set(i, state.charges.get(i)+1);
 				}
 				int[] a = new int[L];
 				for(int j = 0;j < L;j++){
 					a[j] = ni();
 				}
+				inner:
 				for(int j = 0;j < L-1;j++){
 					int s = a[j], t = a[j+1];
 					for(Edge e : state.g.get(s)){
 						if((e.x^e.y^s) == t && e.owner == -1){
 							e.owner = i;
-							continue outer;
+							continue inner;
 						}
 					}
+					throw new RuntimeException("invalid input");
 				}
 			}
 			
-			out.println(toBase64(state));
-			out.print(state.P);
-			if(state.S == 0 || gen.nextInt(10) < 5){
+			StringBuilder line2 = new StringBuilder();
+			line2.append(state.P);
+			if(state.S == 0 || gen.nextInt(10) < 7){
 				// pass
 			}else{
 //				int use = gen.nextInt(state.charges.get(state.P)+1);
 				int len = state.charges.get(state.P) + 1;
+//				tr("charge", state.charges.get(state.P));
 				outer:
 				for(int grep = 0;grep < 10;grep++){
 					int id = gen.nextInt(state.M*2);
@@ -157,14 +160,14 @@ class RandomSplurgeAI {
 								}
 								break;
 							}
-							out.print(" " + e.x);
-							ap = e.y;
+							line2.append(" " + es.get(0).x);
+							ap = es.get(0).x;
 							for(Edge z : es){
-								z.owner = -1;
-								out.print(" " + ap);
 								ap ^= z.x ^ z.y;
+								z.owner = -1;
+								line2.append(" " + ap);
 							}
-							state.charges.set(state.P, state.charges.get(state.P) - es.size());
+							state.charges.set(state.P, state.charges.get(state.P) - (es.size() - 1));
 							break outer;
 						}else{
 							id -= state.g.get(i).size();
@@ -172,7 +175,9 @@ class RandomSplurgeAI {
 					}
 				}
 			}
-			out.println();
+			state.phase++;
+			out.println(toBase64(state));
+			out.println(line2);
 		}else{
 			throw new RuntimeException();
 		}
@@ -230,6 +235,7 @@ class RandomSplurgeAI {
 		int P; // お前のID(0~N-1)
 		int N, M;
 		int F, S; // future splurge対応フラグ
+		int phase; // 何回目か
 		List<List<Edge>> g; // グラフ
 		List<Integer> charges; // splurgeチャージ量
 		BitSet mines; // mineかどうか

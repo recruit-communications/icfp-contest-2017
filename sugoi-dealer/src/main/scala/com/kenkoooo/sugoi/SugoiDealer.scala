@@ -81,11 +81,13 @@ object SugoiDealer extends Logging with BattleLogging {
       val playToPunterString = mapper.writeValueAsString(PlayToPunter(PreviousMoves(deque.toArray), p.state))
       deque.remove(0)
 
-      def penaltyProcess(): Unit = if (p.battler) {
+      def penaltyProcess(): Unit = {
         p.penaltyCount += 1
         deque.append(PassMove(Pass(p.punter)))
-        battleLogger.info(s"RECV ${SugoiMapper.purify(playToPunterString)}")
-        battleLogger.info(s"SEND ${mapper.writeValueAsString(PassMove(Pass(p.punter)))}")
+        if (p.battler) {
+          battleLogger.info(s"RECV ${SugoiMapper.purify(playToPunterString)}")
+          battleLogger.info(s"SEND ${mapper.writeValueAsString(PassMove(Pass(p.punter)))}")
+        }
       }
 
       if (p.penaltyCount >= 10) {

@@ -22,6 +22,7 @@ class OfflineBridge:
         self.buffer = b''
         self.future = 0
         self.splurge = 0
+        self.option = 0
 
     def send_json(self, obj):
         d = json.dumps(obj) + '\n'
@@ -65,6 +66,8 @@ class OfflineBridge:
             self.future = 1 if obj['settings']['futures'] else 0
         if 'settings' in obj and 'splurges' in obj['settings']:
             self.splurge = 1 if obj['settings']['splurges'] else 0
+        if 'settings' in obj and 'options' in obj['settings']:
+            self.option = 1 if obj['settings']['options'] else 0
 
     def ready(self, F, state, sorted_site_ids, proc_idx=-1):
         obj = {'ready': self.punter_id, 'state': [state, sorted_site_ids, proc_idx]}
@@ -90,6 +93,12 @@ class OfflineBridge:
             elif 'pass' in move:
                 pid = move['pass']['punter']
                 G.append((pid, []))
+            elif 'option' in move:
+                option = move['option']
+                pid = option['punter']
+                s = option['source']
+                t = option['target']
+                G.append((pid, [s, t]))
             elif 'splurge' in move:
                 splurge = move['splurge']
                 pid = splurge['punter']
@@ -100,7 +109,10 @@ class OfflineBridge:
 
     def sendmove(self, pid, vs, state, sorted_site_ids, proc_idx=-1):
         if len(vs) == 2:
-            obj = {'claim': {'punter': pid, 'source': vs[0], 'target': vs[1]}}
+            if vs[0] >= 0:
+                obj = {'claim': {'punter': pid, 'source': vs[0], 'target': vs[1]}}
+            else:
+                obj = {'option': {'punter': pid, 'source': -(vs[0] + 1), 'target': -(vs[1] + 1)}}
         elif len(vs) == 0:
             obj = {'pass': {'punter': pid}}
         else:
@@ -116,6 +128,7 @@ class OnlineBridge:
         self.buffer = b''
         self.future = 0
         self.splurge = 0
+        self.option = 0
 
     def close(self):
         self.telnet.close()
@@ -162,6 +175,8 @@ class OnlineBridge:
             self.future = 1 if sup['settings']['futures'] else 0
         if 'settings' in sup and 'splurge' in sup['settings']:
             self.splurge = 1 if sup['settings']['splurge'] else 0
+        if 'settings' in sup and 'options' in sup['settings']:
+            self.option = 1 if sup['settings']['options'] else 0
 
     def ready(self, F):
         obj = {'ready': self.punter_id}
@@ -188,6 +203,12 @@ class OnlineBridge:
             elif 'pass' in move:
                 pid = move['pass']['punter']
                 G.append((pid, []))
+            elif 'option' in move:
+                option = move['option']
+                pid = option['punter']
+                s = option['source']
+                t = option['target']
+                G.append((pid, [s, t]))
             elif 'splurge' in move:
                 splurge = move['splurge']
                 pid = splurge['punter']
@@ -198,7 +219,10 @@ class OnlineBridge:
 
     def sendmove(self, vs, state, sorted_site_ids):
         if len(vs) == 2:
-            obj = {'claim': {'punter': self.punter_id, 'source': vs[0], 'target': vs[1]}}
+            if vs[0] >= 0:
+                obj = {'claim': {'punter': self.punter_id, 'source': vs[0], 'target': vs[1]}}
+            else:
+                obj = {'option': {'punter': self.punter_id, 'source': -(vs[0] + 1), 'target': -(vs[1] + 1)}}
         elif len(vs) == 0:
             obj = {'pass': {'punter': self.punter_id}}
         else:
@@ -222,7 +246,7 @@ class Process:
     def handshake(self):
         return self.exec('?\n')
 
-    def I(self, num_players, punter_id, future, splurge, ma):
+    def I(self, num_players, punter_id, future, splurge, option, ma):
         n = len(ma['sites'])
         m = len(ma['rivers'])
         k = len(ma['mines'])
@@ -242,7 +266,8 @@ class Process:
             T.append(t)
         M = [conv[m] for m in ma['mines']]
 
-        lines = ['I', ' '.join(map(str, [num_players, punter_id, future, splurge])), ' '.join(map(str, [n, m, k]))]
+        lines = ['I', ' '.join(map(str, [num_players, punter_id, future, splurge, option])),
+                 ' '.join(map(str, [n, m, k]))]
         for i in range(m):
             lines.append(' '.join(map(str, [S[i], T[i]])))
         lines.append(' '.join(map(str, M)))
@@ -272,8 +297,14 @@ class Process:
         recv = self.exec(txt)
         new_state, vline = recv.split('\n')
         pid_vs = list(map(int, vline.split(' ')))
-        pid, vs = pid_vs[0], pid_vs[1:]
-        vs = [sorted_site_ids[v] for v in vs]
+        pid = pid_vs[0]
+
+        vs = []
+        for v in pid_vs[1:]:
+            if v >= 0:
+                v.append(sorted_site_ids[v])
+            else:
+                v.append(-(sorted_site_ids[-(v + 1)] + 1))
         return pid, vs, new_state
 
 
@@ -290,7 +321,8 @@ def offline():
     if 'punter' in obj:
         # Setup
         bridge.setup(obj)
-        state, sorted_site_ids, futures = proc.I(bridge.punters, bridge.punter_id, bridge.future, bridge.splurge, bridge.map)
+        state, sorted_site_ids, futures = proc.I(bridge.punters, bridge.punter_id, bridge.future, bridge.splurge,
+                                                 bridge.option, bridge.map)
         bridge.ready(futures, state, sorted_site_ids)
     elif 'move' in obj:
         # Gameplay
@@ -314,7 +346,8 @@ def online():
     bridge.handshake(name)
     bridge.setup()
 
-    state, sorted_site_ids, futures = proc.I(bridge.punters, bridge.punter_id, bridge.future, bridge.splurge, bridge.map)
+    state, sorted_site_ids, futures = proc.I(bridge.punters, bridge.punter_id, bridge.future, bridge.splurge,
+                                             bridge.option, bridge.map)
     bridge.ready(futures)
 
     while 1:
@@ -363,7 +396,8 @@ def junction():
         bridge.setup(obj)
         proc_idx = decision(bridge)
         proc = procs[proc_idx]
-        state, sorted_site_ids, futures = proc.I(bridge.punters, bridge.punter_id, bridge.future, bridge.splurge, bridge.map)
+        state, sorted_site_ids, futures = proc.I(bridge.punters, bridge.punter_id, bridge.future, bridge.splurge,
+                                                 bridge.option, bridge.map)
         bridge.ready(futures, state, sorted_site_ids, proc_idx)
     elif 'move' in obj:
         # Gameplay

@@ -67,13 +67,14 @@ public class LocalSimulator {
 		long[] scores = game(-1, N, M, K, true, 
 //				new Instanciator(PassOnlyAI2.class),
 //				new Instanciator(PassOnlyAI2.class)
-//				new Instanciator(YoshikoAI.class),
+				new Instanciator(RandomSplurgeAI.class),
+				new Instanciator(YoshikoAI.class)
 //				new Instanciator(YoshikoAI.class),
 //				new Instanciator(YoshikoAI.class)
-				new Instanciator(GrowAI.class, new Class[]{int.class}, new Object[]{2}),
+//				new Instanciator(GrowAI.class, new Class[]{int.class}, new Object[]{2}),
 //				new Instanciator(MeijinAI.class, new Class[]{int.class}, new Object[]{5})
 //				new Instanciator(MeijinAI.class, new Class[]{int.class}, new Object[]{8}),
-				new Instanciator(MeijinIDAI.class, new Class[]{long.class}, new Object[]{900L})
+//				new Instanciator(MeijinIDAI.class, new Class[]{long.class}, new Object[]{900L})
 //				new Instanciator(GrowAI.class, new Class[]{int.class}, new Object[]{0})
 				);
 		tr(scores);

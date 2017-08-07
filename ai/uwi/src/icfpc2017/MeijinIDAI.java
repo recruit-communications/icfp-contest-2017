@@ -364,16 +364,48 @@ class MeijinIDAI {
 			state.S = S;
 			state.mindistss = mindistss;
 			state.remturn = (M-P+C-1)/C;
+			state.futures = new ArrayList<>();
+			for(int i = 0;i < N;i++)state.futures.add(null);
 			if(F == 1){
-				state.futures = new ArrayList<>();
-				for(int i = 0;i < N;i++)state.futures.add(null);
+				if(N <= 400 && check4EC(g)){ // 調子乗りすぎ
+					for(int i = 0;i < N;i++){
+						if(mines.get(i)){
+							int maxd = 0;
+							int arg = -1;
+							for(int j = 0;j < N;j++){
+								if(!mines.get(j)){
+									if(mindistss.get(i).get(j) > maxd){
+										maxd = mindistss.get(i).get(j);
+										arg = j;
+									}
+								}
+							}
+							if(arg != -1){
+								state.futures.set(i, arg);
+							}
+						}
+					}
+				}
 			}
 			if(S == 1){
 				state.charges = new ArrayList<>();
 				for(int i = 0;i < C;i++)state.charges.add(0);
 			}
 			out.println(toBase64(state));
-			out.println(0);
+			if(F == 0){
+				out.println(0);
+			}else{
+				int ct = 0;
+				for(Integer x : state.futures){
+					if(x != null)ct++;
+				}
+				out.println(ct);
+				for(int i = 0;i < N;i++){
+					if(state.futures.get(i) != null){
+						out.println(i + " " + state.futures.get(i));
+					}
+				}
+			}
 		}else if(phase == 'G'){
 			// ゲーム中入力
 			START = System.currentTimeMillis();
@@ -426,6 +458,66 @@ class MeijinIDAI {
 			}
 		}
 		return ds;
+	}
+	
+	// 4重辺連結か調べる
+	public static boolean check4EC(List<List<Edge>> g)
+	{
+		for(List<Edge> row : g){
+			if(row.size() < 4)return false; // すべての点が次数4以上
+		}
+		long mincut = minCut(toDense(g));
+		return mincut >= 4;
+	}
+	
+	public static long minCut(long[][] g)
+	{
+		int n = g.length;
+		long mincut = Long.MAX_VALUE;
+		for(int t = 0;t < n-1;t++){
+			long[] ws = new long[n-t];
+			// local merge
+			int u = 0, v = 0;
+			for(int i = 0;i < n-t;i++){
+				u = v;
+				v = -1;
+				long max = -1;
+				for(int j = 0;j < n-t;j++){
+					if(ws[j] > max){
+						max = ws[j];
+						v = j;
+					}
+				}
+				if(i == n-t-1)mincut = Math.min(mincut, ws[v]);
+				ws[v] = -1;
+				for(int j = 0;j < n-t;j++){
+					if(ws[j] >= 0)ws[j] += g[v][j];
+				}
+			}
+			// merge u-v
+			for(int i = 0;i < n-t;i++){
+				g[i][u] += g[i][v];
+				g[u][i] += g[v][i];
+			}
+			// swap(n-1-t,v)
+			for(int i = 0;i < n-t;i++){
+				g[i][v] = g[i][n-1-t];
+				g[v][i] = g[n-1-t][i];
+			}
+		}
+		return mincut;
+	}
+	
+	static long[][] toDense(List<List<Edge>> g)
+	{
+		int n = g.size();
+		long[][] h = new long[n][n];
+		for(int i = 0;i < n;i++){
+			for(Edge e : g.get(i)){
+				h[e.x][e.y] = h[e.y][e.x] = 1;
+			}
+		}
+		return h;
 	}
 	
 	public static String toBase64(Object obj)

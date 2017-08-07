@@ -95,8 +95,7 @@
         }
         const query = decodeURIComponent(location.search);
         $.getJSON(`/game/list${query}`, (res) => {
-          const count = simpleQueryString.parse(location.search).count || 100;
-          _.sortBy(res, (d) => d.created_at).reverse().slice(0, count).forEach((d, i) => {
+          res.forEach((d, i) => {
             $('#list>table tbody').append(createRow(d, i));
           });
           $("#list>table").tablesorter();

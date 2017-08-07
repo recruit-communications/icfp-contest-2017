@@ -1,2 +1,3 @@
 #!/bin/bash
+cd `dirname $0`
 g++ -O2 -std=c++14 src/ai/ehafib/src/json11/json11.cpp src/ai/ehafib/src/steiner.cpp -o ehafib

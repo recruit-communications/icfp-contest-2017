@@ -71,7 +71,11 @@ class YoshikoAI {
 			}
 		}
 		assert best != null;
-		return best.x + " " + best.y;
+		if(best.owner != -1){
+			return (-best.x-1) + " " + (-best.y-1);
+		}else{
+			return best.x + " " + best.y;
+		}
 	}
 	
 	public static class DJSet {

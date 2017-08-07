@@ -1,0 +1,3 @@
+#!/bin/bash
+cd `dirname $0`
+g++ -O2 -std=c++14 src/ai/tomerun/main.cpp -o tomerun_greedy

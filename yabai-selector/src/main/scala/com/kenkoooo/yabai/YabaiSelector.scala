@@ -125,7 +125,7 @@ object YabaiSelector extends Logging {
 
 object YabaiUrl extends Logging {
   val host = "http://13.112.208.142:3000"
-  val gameLog = s"$host/game/list?count=10000"
+  val gameLog = s"$host/game/list?count=5000&all=1"
   val punterList = s"$host/punter/list"
   val mapList = s"$host/map/list"
 

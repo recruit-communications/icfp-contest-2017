@@ -401,6 +401,7 @@ class GrowAI {
 			}
 			
 			String output = guess(state);
+			state.phase++;
 			out.println(toBase64(state));
 			out.println(state.P + " " + output);
 		}else{

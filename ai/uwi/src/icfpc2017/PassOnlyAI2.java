@@ -109,6 +109,7 @@ class PassOnlyAI2 {
 				}
 			}
 			
+			state.phase++;
 			out.println(toBase64(state));
 			out.println(state.P);
 		}else{
@@ -171,7 +172,7 @@ class PassOnlyAI2 {
 		private static final long serialVersionUID = -4623606164150300132L;
 		int C; // プレー人数
 		int P; // お前のID(0~N-1)
-		int F, S, O; // future splurge options対応フラグ
+		int F, S, O; // future splurge option対応フラグ
 		int phase; // 何回目か
 		List<List<Edge>> g; // グラフ
 		List<Integer> charges; // splurgeチャージ量

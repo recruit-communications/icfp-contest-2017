@@ -180,6 +180,7 @@ class YoshikoAI {
 				}
 			}
 			
+			state.phase++;
 			out.println(toBase64(state));
 			out.print(state.P + " ");
 			out.println(guess(state));

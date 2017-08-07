@@ -1,4 +1,4 @@
-package icfpc2017;
+package icfpc2017.old;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -19,14 +19,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 
-class MeijinAI {
+// alpha-beta
+// 連結成分をメモ化
+class MeijinAI2 {
 	public InputStream is;
 	public PrintWriter out;
 	String INPUT = "";
 	
 	int level;
 	
-	public MeijinAI(int level)
+	public MeijinAI2(int level)
 	{
 		this.level = level;
 	}
@@ -65,6 +67,9 @@ class MeijinAI {
 			}
 		}
 		List<Edge> cans = new ArrayList<>(map.values());
+		cache.add(new HashMap<>());
+		cache.add(new HashMap<>());
+		
 		int maxdep = Math.min(s.remturn, level);
 		long ec = go(maxdep, maxdep, s.P, s, cans, rdss, Long.MIN_VALUE/2, Long.MAX_VALUE/2);
 		s.remturn--;
@@ -82,6 +87,8 @@ class MeijinAI {
 		}
 	}
 	
+	List<Map<Long, Long>> cache = new ArrayList<>();
+	
 	long go(int rem, int dep, int turn, State s, List<Edge> cans, RestorableDisjointSet2[] rdss, long alpha, long beta)
 	{
 		if(rem == 0)return 0;
@@ -97,10 +104,16 @@ class MeijinAI {
 					for(int cur = rx;cur != -1;cur = rdss[turn].next[cur]){
 						if(s.mines.get(cur)){
 							int ry = rdss[turn].root(e.y);
-							for(int tar = ry;tar != -1; tar = rdss[turn].next[tar]){
-								long d = s.mindistss.get(cur).get(tar);
-								plus += d*d;
+							long code = cur * 1000000009L + (rdss[turn].hash0[ry]<<32|rdss[turn].hash1[ry]);
+							if(!cache.get(turn).containsKey(code)){
+								long lplus = 0;
+								for(int tar = ry;tar != -1; tar = rdss[turn].next[tar]){
+									long d = s.mindistss.get(cur).get(tar);
+									lplus += d*d;
+								}
+								cache.get(turn).put(code, lplus);
 							}
+							plus += cache.get(turn).get(code);
 						}
 					}
 				}
@@ -109,10 +122,16 @@ class MeijinAI {
 					for(int cur = rx;cur != -1;cur = rdss[turn].next[cur]){
 						if(s.mines.get(cur)){
 							int ry = rdss[turn].root(e.x);
-							for(int tar = ry;tar != -1; tar = rdss[turn].next[tar]){
-								long d = s.mindistss.get(cur).get(tar);
-								plus += d*d;
+							long code = cur * 1000000009L + (rdss[turn].hash0[ry]<<32|rdss[turn].hash1[ry]);
+							if(!cache.get(turn).containsKey(code)){
+								long lplus = 0;
+								for(int tar = ry;tar != -1; tar = rdss[turn].next[tar]){
+									long d = s.mindistss.get(cur).get(tar);
+									lplus += d*d;
+								}
+								cache.get(turn).put(code, lplus);
 							}
+							plus += cache.get(turn).get(code);
 						}
 					}
 				}
@@ -124,15 +143,18 @@ class MeijinAI {
 		data.sort((x, y) -> -Long.compare(x.score, y.score)); // スコア降順にソート
 		if(rem < dep){
 			int ohp = rdss[turn].hp;
+//			long[] old = Arrays.copyOf(rdss[turn].hash0, rdss[turn].hash0.length);
 			for(Datum d : data){
 				rdss[turn].union(d.e.x, d.e.y);
 				d.e.dup--;
 				long val = d.score - (rem > 0 ? go(rem-1, dep, turn^1, s, cans, rdss, -beta, -alpha) : 0);
+				alpha = Math.max(alpha, val);
 				d.e.dup++;
 				rdss[turn].revert(ohp);
-				alpha = Math.max(alpha, val);
 				if(alpha >= beta)return alpha; // alpha-beta cut
 			}
+//			long[] anew = Arrays.copyOf(rdss[turn].hash0, rdss[turn].hash0.length);
+//			assert Arrays.equals(old, anew);
 			return alpha;
 		}else{
 			// 手をかえす
@@ -143,7 +165,6 @@ class MeijinAI {
 				rdss[turn].union(d.e.x, d.e.y);
 				d.e.dup--;
 				long val = d.score - (rem > 0 ? go(rem-1, dep, turn^1, s, cans, rdss, -beta, -alpha) : 0);
-//				tr(d.e, d.score, val);
 				if(val > ret){
 					ret = val;
 					arg = (long)d.e.x<<32|d.e.y;
@@ -163,6 +184,15 @@ class MeijinAI {
 		public int[] tail;
 		public int[] histtail;
 		
+		public long[] histhash0;
+		public long[] histhash1;
+		public long[] hash0;
+		public long[] hash1;
+		public int mod0 = 1000000009;
+		public int mod1 = 1000000007;
+		public int offset0 = 114514;
+		public int offset1 = 893810;
+		
 		public int hp = 0;
 		
 		public RestorableDisjointSet2(int n, int m)
@@ -178,6 +208,15 @@ class MeijinAI {
 			histtail = new int[m];
 			Arrays.fill(next, -1);
 			for(int i = 0;i < n;i++)tail[i] = i;
+			
+			histhash0 = new long[2*m];
+			histhash1 = new long[2*m];
+			hash0 = new long[n];
+			hash1 = new long[n];
+			for(int i = 0;i < n;i++){
+				hash0[i] = offset0 + i;
+				hash1[i] = offset1 + i;
+			}
 		}
 		
 		public RestorableDisjointSet2(RestorableDisjointSet2 ds)
@@ -212,6 +251,9 @@ class MeijinAI {
 				next[tail[x]] = y;
 				tail[x] = tail[y];
 				
+				hash0[x] = hash0[x] * hash0[y] % mod0;
+				hash1[x] = hash1[x] * hash1[y] % mod1;
+				
 				upper[x] += upper[y];
 				upper[y] = x;
 			}
@@ -224,6 +266,8 @@ class MeijinAI {
 		{
 			targets[hp] = x;
 			histupper[hp] = upper[x];
+			histhash0[hp] = hash0[x];
+			histhash1[hp] = hash1[x];
 			// 
 			hp++;
 		}
@@ -232,6 +276,8 @@ class MeijinAI {
 		{
 			while(hp > to){
 				upper[targets[hp-1]] = histupper[hp-1];
+				hash0[targets[hp-1]] = histhash0[hp-1];
+				hash1[targets[hp-1]] = histhash1[hp-1];
 				if((hp&1) == 1){
 					tail[targets[hp-1]] = histtail[hp/2];
 					next[tail[targets[hp-1]]] = -1;
@@ -328,11 +374,6 @@ class MeijinAI {
 					throw new RuntimeException(); // ここにはこない
 				}
 			}
-//			for(List<Edge> row : state.g){
-//				for(Edge e : row){
-//					tr(e);
-//				}
-//			}
 			
 			String output = guess(state);
 			out.println(toBase64(state));
@@ -440,7 +481,7 @@ class MeijinAI {
 	}
 
 	public static void main(String[] args) throws Exception {
-		new MeijinAI(3).run();
+		new MeijinAI2(3).run();
 	}
 
 	private byte[] inbuf = new byte[1024];

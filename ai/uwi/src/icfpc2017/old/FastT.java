@@ -1,4 +1,4 @@
-package icfpc2017;
+package icfpc2017.old;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;

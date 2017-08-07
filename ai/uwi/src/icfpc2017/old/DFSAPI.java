@@ -1,4 +1,4 @@
-package icfpc2017;
+package icfpc2017.old;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -11,12 +11,16 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.BitSet;
+import java.util.Collections;
 import java.util.List;
 import java.util.Queue;
 import java.util.Scanner;
 
-// Splurge非対応
-public class PassOnlyAI {
+/**
+ * 単純に3手先まで読むやつ
+ *
+ */
+public class DFSAPI {
 	static Scanner in;
 	static PrintWriter out;
 	static String INPUT = "";
@@ -25,7 +29,7 @@ public class PassOnlyAI {
 		char phase = in.next().charAt(0);
 		if(phase == '?'){
 			// 初回入力
-			out.println("PASSONLY");
+			out.println(DFSAPI.class.getSimpleName());
 			out.flush();
 		}else if(phase == 'I'){
 			// 初回入力2
@@ -63,7 +67,6 @@ public class PassOnlyAI {
 				for(int i = 0;i < V;i++)state.futures.add(null);
 			}
 			out.println(toBase64(state));
-			out.println(0);
 		}else if(phase == 'G'){
 			// ゲーム中入力
 			State state = (State)fromBase64(in.next());
@@ -83,10 +86,199 @@ public class PassOnlyAI {
 			}
 			
 			out.println(toBase64(state));
-			out.println(-1 + " " + -1);
+			
+			int E = 0;
+			for(List<Edge> row : state.g)E += row.size();
+			E /= 2;
+			
+			RestorableDisjointSet2 rds = new RestorableDisjointSet2(state.g.size(), E+5);
+			for(List<Edge> row : state.g){
+				for(Edge e : row){
+					if(e.owner == state.P){
+						rds.union(e.x, e.y);
+					}
+				}
+			}
+			
+			Hand h = dfs(3, rds, state);
+			System.err.println("hand:" + h);
+			out.println(h.s + " " + h.t);
 		}else{
 			throw new RuntimeException();
 		}
+	}
+	
+	static long calcScore(RestorableDisjointSet2 rds, State s)
+	{
+		long score = 0;
+		for(int i = 0;i < s.g.size();i++){
+			if(s.mines.get(i)){
+				for(int j = 0;j < s.g.size();j++){
+					if(rds.equiv(i, j)){
+						long d = s.mindistss.get(i).get(j);
+						score += d*d;
+					}
+				}
+			}
+		}
+		return score;
+	}
+	
+	static class Hand
+	{
+		long score;
+		int s, t;
+		public Hand(long score, int s, int t) {
+			this.score = score;
+			this.s = s;
+			this.t = t;
+		}
+		@Override
+		public String toString() {
+			return "Hand [score=" + score + ", s=" + s + ", t=" + t + "]";
+		}
+	}
+	
+	static long dfsCore(int rem, RestorableDisjointSet2 rds, State s)
+	{
+		int ohp = rds.hp;
+		List<Long> scores = new ArrayList<>();
+		for(int i = 0;i < s.g.size();i++){
+			for(Edge e : s.g.get(i)){
+				if(e.owner == -1 && e.x == i){
+					e.owner = s.P;
+					rds.union(e.x, e.y);
+					long score = rem == 0 ? calcScore(rds, s) : dfsCore(rem-1, rds, s);
+					scores.add(score);
+					rds.revert(ohp);
+				}
+			}
+		}
+		Collections.sort(scores);
+		long ret = 0;
+		for(long v : scores){
+			ret = (ret+v)/2;
+		}
+		return ret;
+	}
+	
+	static Hand dfs(int rem, RestorableDisjointSet2 rds, State s)
+	{
+		int ohp = rds.hp;
+		int bx = -1, by = -1;
+		long maxscore = -1;
+		for(int i = 0;i < s.g.size();i++){
+			for(Edge e : s.g.get(i)){
+				if(e.owner == -1 && e.x == i){
+					e.owner = s.P;
+					rds.union(e.x, e.y);
+					long score = dfsCore(rem-1, rds, s);
+					if(score > maxscore){
+						maxscore = score;
+						bx = e.x; by = e.y;
+					}
+					rds.revert(ohp);
+				}
+			}
+		}
+		return new Hand(maxscore, bx, by);
+	}
+	
+	public static class RestorableDisjointSet2 {
+		public int[] upper; // minus:num_element(root) plus:root(normal)
+		private int[] targets;
+		private int[] histupper;
+		public int hp = 0;
+		
+		public RestorableDisjointSet2(int n, int m)
+		{
+			upper = new int[n];
+			Arrays.fill(upper, -1);
+			
+			targets = new int[2*m];
+			histupper = new int[2*m];
+			// 
+//				w = new int[n];
+		}
+		
+		public RestorableDisjointSet2(RestorableDisjointSet2 ds)
+		{
+			this.upper = Arrays.copyOf(ds.upper, ds.upper.length);
+			this.histupper = Arrays.copyOf(ds.histupper, ds.histupper.length);
+			// 
+			this.hp = ds.hp;
+		}
+		
+		public int root(int x)
+		{
+			return upper[x] < 0 ? x : root(upper[x]);
+		}
+		
+		public boolean equiv(int x, int y)
+		{
+			return root(x) == root(y);
+		}
+		
+		public boolean union(int x, int y)
+		{
+			x = root(x);
+			y = root(y);
+			if(x != y) {
+				if(upper[y] < upper[x]) {
+					int d = x; x = y; y = d;
+				}
+//					w[x] += w[y];
+				record(x); record(y);
+				upper[x] += upper[y];
+				// 
+				upper[y] = x;
+			}
+			return x == y;
+		}
+		
+		public int time() { return hp; }
+		
+		private void record(int x)
+		{
+			targets[hp] = x;
+			histupper[hp] = upper[x];
+			// 
+			hp++;
+		}
+		
+		public void revert(int to)
+		{
+			while(hp > to){
+				upper[targets[hp-1]] = histupper[hp-1];
+				// 
+				hp--;
+			}
+		}
+		
+		public int count()
+		{
+			int ct = 0;
+			for(int u : upper){
+				if(u < 0)ct++;
+			}
+			return ct;
+		}
+		
+		public int[][] makeUp()
+		{
+			int n = upper.length;
+			int[][] ret = new int[n][];
+			int[] rp = new int[n];
+			for(int i = 0;i < n;i++){
+				if(upper[i] < 0)ret[i] = new int[-upper[i]];
+			}
+			for(int i = 0;i < n;i++){
+				int r = root(i);
+				ret[r][rp[r]++] = i;
+			}
+			return ret;
+		}
+
 	}
 	
 	public static List<Integer> mindists(List<List<Edge>> g, int start)
@@ -142,7 +334,7 @@ public class PassOnlyAI {
 		List<List<Edge>> g; // グラフ
 		BitSet mines; // mineかどうか
 		List<List<Integer>> mindistss; // 最短経路長
-		List<Integer> futures;
+		List<Future> futures;
 	}
 	
 	static class Future implements Serializable
@@ -169,26 +361,6 @@ public class PassOnlyAI {
 	}
 
 	public static void main(String[] args) throws Exception {
-//		int n = 3000, m = 3000;
-//		Random gen = new Random();
-//		StringBuilder sb = new StringBuilder();
-//		sb.append("I" + " " + 16 + " ");
-//		sb.append(15 + " ");
-//		sb.append(n + " ");
-//		sb.append(m + " ");
-//		sb.append(n + " ");
-//		for (int i = 0; i < m; i++) {
-//			int v1 = gen.nextInt(n);
-//			int v2 = gen.nextInt(n);
-//			sb.append(Math.min(v1, v2) + " ");
-//			sb.append(Math.max(v1, v2) + " ");
-//		}
-//		for(int i = 0;i < n;i++){
-//			sb.append(gen.nextInt(n) + " ");
-//		}
-//		INPUT = sb.toString();
-
-		
 		in = INPUT.isEmpty() ? new Scanner(System.in) : new Scanner(INPUT);
 		out = new PrintWriter(System.out);
 

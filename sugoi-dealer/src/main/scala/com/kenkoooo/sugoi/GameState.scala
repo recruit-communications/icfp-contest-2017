@@ -55,15 +55,10 @@ class GameState(map: LambdaMap, punterNum: Int, futures: ArrayBuffer[Array[Lambd
     * @return Map[Player, Score]
     */
   def calcScore(): mutable.TreeMap[Punter, Score] = {
-    val futureDist: mutable.TreeMap[Vertex, mutable.TreeMap[Vertex, Long]] = {
+    val distFromMines: mutable.TreeMap[Vertex, mutable.TreeMap[Vertex, Long]] = {
       val res = new mutable.TreeMap[Vertex, mutable.TreeMap[Vertex, Long]]()
-      val startSet = new mutable.TreeSet[Vertex]
-      futureVector.foreach(_.foreach { case (v, u) =>
-        if (mines.contains(v)) startSet.add(v)
-        if (mines.contains(u)) startSet.add(u)
-      })
 
-      startSet.foreach(start => {
+      mines.foreach(start => {
         val deque = new util.ArrayDeque[Vertex]()
         val dist = new mutable.TreeMap[Vertex, Long]
         dist += (start -> 0)
@@ -84,11 +79,11 @@ class GameState(map: LambdaMap, punterNum: Int, futures: ArrayBuffer[Array[Lambd
     }
 
     val map = new mutable.TreeMap[Punter, Score]()
-    for (punter <- 0 until punterNum) map += (punter -> calcForOne(punter, futureDist))
+    for (punter <- 0 until punterNum) map += (punter -> calcForOne(punter, distFromMines))
     map
   }
 
-  private def calcForOne(punter: Punter, futureDist: mutable.TreeMap[Vertex, mutable.TreeMap[Vertex, Long]]): Score = {
+  private def calcForOne(punter: Punter, distFromMines: mutable.TreeMap[Vertex, mutable.TreeMap[Vertex, Long]]): Score = {
     val sourceToTarget = futureVector(punter)
 
     var score: Score = 0
@@ -101,22 +96,20 @@ class GameState(map: LambdaMap, punterNum: Int, futures: ArrayBuffer[Array[Lambd
       while (!deque.isEmpty) {
         val v = deque.poll()
         for ((u, p) <- graph(v)) {
-          if (p == punter) {
-            val du = dist.getOrElse(u, Integer.MAX_VALUE)
-            if (du > dist(v) + 1) {
-              dist += (u -> (dist(v) + 1))
-              deque.add(u)
+          if (p == punter && !dist.contains(u)) {
+            dist += (u -> (dist(v) + 1))
+            deque.add(u)
 
-              val s = dist(v) + 1
-              score += (s * s)
-            }
+            val d = distFromMines(start)(u)
+
+            score += d * d
           }
         }
       }
 
       // future
       sourceToTarget.get(start).foreach(target => {
-        val d = futureDist(start)(target)
+        val d = distFromMines(start)(target)
         if (dist.contains(target)) {
           score += d * d * d
           logger.info(s"future bonus $punter: ${d * d * d}")

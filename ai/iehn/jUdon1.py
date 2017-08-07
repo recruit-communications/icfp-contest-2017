@@ -13,7 +13,7 @@ def I(): return int(sys.stdin.readline())
 def F(): return float(sys.stdin.readline())
 def S(): return input()
 
-DEBUG = False
+DEBUG = True
 
 def pe(*a, **b):
     if not DEBUG:
@@ -68,7 +68,7 @@ class UnionFind:
         return a
 
 def setup():
-    C,P,F = LI()
+    C,P,F,S = LI()
     N, M, K = LI()
     pe(K=K)
     e = set([tuple(LI()) for _ in range(M)])
@@ -151,16 +151,21 @@ def play():
     pe(P=P,N=N,C=C)
 
     for i in range(C):
-        s,t = LI()
-        if s == -1:
-            # passの場合
+        na = LI()
+        if na[0] < 1:
             continue
-        te[i].add((s,t))
-        if (s,t) in e:
-            e.remove((s,t))
-        if (t,s) in e:
-            e.remove((t,s))
-        ufs[i].union(s,t)
+        pe(na=na)
+        for ni in range(1, na[0]):
+            s,t = na[ni],na[ni+1]
+            if s == -1:
+                # passの場合
+                continue
+            te[i].add((s,t))
+            if (s,t) in e:
+                e.remove((s,t))
+            elif (t,s) in e:
+                e.remove((t,s))
+            ufs[i].union(s,t)
 
     def res(te):
         scores = [0] * C
@@ -237,7 +242,10 @@ def play():
     pf(str(pickle.dumps(state)))
 
     pe(mr=mr,ms=ms,el=mel[mri],len=ell)
-    pf('{} {} {}'.format(P, mel[mri][0], mel[mri][1]))
+    if mri == -1:
+        pf('{}'.format(P))
+    else:
+        pf('{} {} {}'.format(P, mel[mri][0], mel[mri][1]))
 
 def init():
     pf('jUdon1')

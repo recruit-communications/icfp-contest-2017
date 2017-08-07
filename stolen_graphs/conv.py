@@ -23,7 +23,7 @@ def solve(fn):
 
         obj = {'sites': sites, 'rivers': rivers}
 
-        for d in [50, 500]:
+        for d in [20, 500]:
             k = (n + d - 1) // d
 
             if k > 1:

@@ -101,10 +101,11 @@ public class LocalSimulator {
 			RandomSplurgeAI.gen = new SplittableRandom(i);
 			long[] scores = game(i, N, M, K, true, 
 //					new Instanciator(PassOnlyAI2.class),
-					new Instanciator(RandomSplurgeAI.class),
+//					new Instanciator(RandomSplurgeAI.class),
 //					new Instanciator(PassOnlyAI2.class),
-					new Instanciator(RandomSplurgeAI.class)
+					new Instanciator(RandomSplurgeAI.class),
 //					new Instanciator(YoshikoAI.class),
+					new Instanciator(YoshikoAI.class)
 //					new Instanciator(RandomSplurgeAI.class),
 //					new Instanciator(GrowAI.class, new Class[]{int.class}, new Object[]{3})
 //					new Instanciator(MeijinIDAI.class, new Class[]{long.class}, new Object[]{800L})

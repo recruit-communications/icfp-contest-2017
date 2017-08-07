@@ -69,7 +69,6 @@ function setScores(scores, punterId) {
 
 function updateSplurge(punterId) {
   if (canSplurge) {
-    console.log(punterId, splurges[punterId]);
     $("#splurge" + punterId).text(splurges[punterId]);
   }
 }
@@ -325,7 +324,7 @@ function handleBack() {
     let source = data.splurge.route[0];
     for (let i = 1; i < data.splurge.route.length; i++) {
       let target = data.splurge.route[i];
-      removeEdgeOwner(data.splurge.puter, source, target);
+      removeEdgeOwner(data.splurge.punter, source, target);
       source = target;
     }
     splurges[data.splurge.punter] += data.splurge.route.length - 2;
@@ -362,10 +361,10 @@ function forwardBattle(logging) {
     let source = data.splurge.route[0];
     for (let i = 1; i < data.splurge.route.length; i++) {
       let target = data.splurge.route[i];
-      if (existEdge(source, target)) {
+      if (existEdgeOwner(source, target)) {
         addEdgeAndUpdateEdgeOwner(data.splurge.punter, source, target);
-        if (canOption) options[data.option.punter]--;
-        updateOption(data.option.punter);
+        if (canOption) options[data.splurge.punter]--;
+        updateOption(data.splurge.punter);
       } else {
         updateEdgeOwner(data.splurge.punter, source, target)
       }
@@ -485,22 +484,29 @@ function updateEdgeOwner(punter, source, target) {
 function addEdgeAndUpdateEdgeOwner(punter, source, target) {
   let e = cy.add({group: "edges", data: {source: source, target: target}});
   e.data()["owner"] = punter;
-  e.style("control-point-step-size", 40);
+  e.style("control-point-step-size", 100);
   e.style("line-color", getPunterColour(punter));
   console.log(e);
 }
 
 function removeEdgeOwner(punter, source, target) {
-  let es = cy.edges("[source=\"" + source + "\"][target=\"" + target + "\"]")
-  if (es.length == 0) es = cy.edges("[source=\"" + target + "\"][target=\"" + source + "\"]")
-  if (es.length == 1) {
-    const e = es[0];
+  let es1 = cy.edges("[source=\"" + source + "\"][target=\"" + target + "\"]");
+  let es2 = cy.edges("[source=\"" + target + "\"][target=\"" + source + "\"]");
+  if (es1.length == 1 && es2.length == 0) {
+    const e = es1[0];
     e.data()["owner"] = undefined;
     e.style("line-color", "#009");
-  } else if (es.length > 1) {
-    const e = es[es.legth - 1]
+  } else if (es1.length == 0 && es2.length == 1) {
+    const e = es2[0];
+    e.data()["owner"] = undefined;
+    e.style("line-color", "#009");
+  } else if (es1.length > 1 || es1.length >= 1 && es2.length >= 1) {
+    const e = es1[es1.length - 1]
+    e.data()["owner"] = undefined;
     cy.remove(e);
-    options[punter]++;
+    console.log(options[punter]);
+    if (canOption) options[punter]++;
+    console.log(options[punter]);
     updateOption(punter);
   } else {
     logError("Trying to remove nonexistent edge! (" + source + " -- " + target + ")");
@@ -513,10 +519,16 @@ function removeEdge(punter, source, target) {
   cy.remove(e);
 }
 
-function existEdge(source, target) {
+function existEdgeOwner(source, target) {
   let es1 = cy.edges("[source=\"" + source + "\"][target=\"" + target + "\"]")
+  for (let i = 0; i < es1.length; i++) {
+    if (es1[i].data()["owner"] != undefined) return true;
+  }
   let es2 = cy.edges("[source=\"" + target + "\"][target=\"" + source + "\"]")
-  return es1.length > 0 || es2.length > 0
+  for (let i = 0; i < es2.length; i++) {
+    if (es2[i].data()["owner"] != undefined) return true;
+  }
+  return false;
 }
 
 function selectBattle(url) {

@@ -12,6 +12,8 @@ let timeSpan = 500;
 let splurges = [];
 let canSplurge = false;
 let canFeature = false;
+let canOption = false;
+let options = [];
 
 /* Graph rendering */
 
@@ -54,11 +56,13 @@ function getRank(scores) {
 }
 
 function setScores(scores, punterId) {
-  $("#game-scores").append("<tr><th>punter No</th><th>Score</th><th>Rank</th><th>Splurge</th></tr>");
+  $("#game-scores").append("<tr><th>punter No</th><th>Score</th><th>Rank</th><th>Sp</th><th>Op</th></tr>");
   let rank = getRank(scores);
   for (let i = 0; i < scores.length; i++) {
     $("#game-scores").append("<tr><td class=\"c0 punter" + scores[i].punter + "\" >punter #" + scores[i].punter + (punterId - scores[i].punter == 0 ? " (You)":"")
-      + "</td><td class='c1'>" + scores[i].score + "</td><td class='c2'>" + rank[i] +"</td><td class='c3' id='splurge" + scores[i].punter + "'>" + splurges[scores[i].punter] + "</td></tr>");
+      + "</td><td class='c1'>" + scores[i].score + "</td><td class='c2'>" + rank[i]
+      + "</td><td class='c3' id='splurge" + scores[i].punter + "'>" + splurges[scores[i].punter]
+      + "</td><td class='c4' id='option" + scores[i].punter + "'>" + options[scores[i].punter] + "</td></tr>");
     $(".punter" + i).css({"background-color":colours[scores[i].punter]});
   }
 }
@@ -67,6 +71,12 @@ function updateSplurge(punterId) {
   if (canSplurge) {
     console.log(punterId, splurges[punterId]);
     $("#splurge" + punterId).text(splurges[punterId]);
+  }
+}
+
+function updateOption(punterId) {
+  if (canOption) {
+    $("#option" + punterId).text(options[punterId]);
   }
 }
 
@@ -94,8 +104,13 @@ function logPass(pass) {
 }
 
 function logSplurge(splurge) {
-  console.log(splurge);
   writeLog("splurge: punter #" + splurge.punter + " splurge " + (splurge.route.length - 1) + " edges and splurge gage decreased to " + splurges[splurge.punter] + ".");
+}
+
+function logOption(option) {
+  writeLog("option: punter #" + option.punter + " opition edge " +
+    option.source + " -- " + option.target + ".");
+  return;
 }
 
 function logScore(punter_id, score) {
@@ -109,6 +124,8 @@ function logMove(move) {
     logPass(move.pass);
   } else if (move.splurge != undefined) {
     logSplurge(move.splurge);
+  } else if (move.option != undefined) {
+    logOption(move.option);
   }
 }
 
@@ -125,6 +142,12 @@ function logUnPass(pass) {
 
 function logUnSplurge(splurge) {
   writeLog("unsplurge: punter #" + splurge.punter + ".");
+  return;
+}
+
+function logUnOption(option) {
+  writeLog("unoption: punter #" + option.punter + ".");
+  return;
 }
 
 function logRemove(move) {
@@ -134,6 +157,8 @@ function logRemove(move) {
     logUnPass(move.pass);
   } else if (move.splurge != undefined) {
     logUnSplurge(move.splurge);
+  } else if (move.option != undefined) {
+    logUnOption(move.option);
   }
 }
 
@@ -168,10 +193,14 @@ function start() {
           canReature = battleEnv.settings.features;
         if (battleEnv.settings.splurges != undefined)
           canSplurge = battleEnv.settings.splurges;
+        if (battleEnv.settings.options != undefined)
+          canOption = battleEnv.settings.options;
       }
-      splurges = []
+      splurges = [];
+      options = [];
       for (let i = 0; i < numPunters; i++) {
         splurges.push(canSplurge ? 0:"-");
+        options.push(canOption ? battleEnv.map.mines.length:"-");
       }
 
       logInfo("number of punters: " + numPunters);
@@ -184,7 +213,7 @@ function start() {
       logInfo("rendering game graph...");
       renderGraph(graph);
       logInfo("You are punter #" + punterId);
-      logInfo("Features: " + canFeature + ",   Splurges: " + canSplurge);
+      logInfo("Features: " + canFeature + ",   Splurges: " + canSplurge + ",   Options:" + canOption);
       move_start = i + 1;
       break;
     }
@@ -228,6 +257,9 @@ function start() {
           if (ele.splurge != undefined && ele.splurge.punter == punter) {
             move.push(ele);
             break;
+          } if (ele.option != undefined && ele.option.punter == punter) {
+            move.push(ele);
+            break;
           }
         }
       }
@@ -244,7 +276,10 @@ function start() {
         move.push(stop.moves[i]);
       } else if (stop.moves[i].splurge != undefined) {
         if (stop.moves[i].splurge.punter < punterId) continue;
-        move.push(xtop.moves[i]);
+        move.push(stop.moves[i]);
+      } else if (stop.moves[i].option != undefined) {
+        if (stop.moves[i].option.punter < punterId) continue;
+        move.push(stop.moves[i]);
       }
     }
     if (move.length > 0) moves.push(move);
@@ -286,7 +321,7 @@ function handleBack() {
   } else if (data.pass != undefined) {
     splurges[data.pass.punter]--;
     updateSplurge(data.pass.punter);
-  } else if (data.splurge !=undefined) {
+  } else if (data.splurge != undefined) {
     let source = data.splurge.route[0];
     for (let i = 1; i < data.splurge.route.length; i++) {
       let target = data.splurge.route[i];
@@ -295,6 +330,10 @@ function handleBack() {
     }
     splurges[data.splurge.punter] += data.splurge.route.length - 2;
     updateSplurge(data.splurge.punter);
+  } else if (data.option != undefined) {
+    removeEdge(data.option.punter, data.option.source, data.option.target);
+    if (canOption) options[data.option.punter]++;
+    updateOption(data.option.punter);
   }
   logRemove(data);
 
@@ -323,7 +362,13 @@ function forwardBattle(logging) {
     let source = data.splurge.route[0];
     for (let i = 1; i < data.splurge.route.length; i++) {
       let target = data.splurge.route[i];
-      updateEdgeOwner(data.splurge.punter, source, target)
+      if (existEdge(source, target)) {
+        addEdgeAndUpdateEdgeOwner(data.splurge.punter, source, target);
+        if (canOption) options[data.option.punter]--;
+        updateOption(data.option.punter);
+      } else {
+        updateEdgeOwner(data.splurge.punter, source, target)
+      }
       source = target;
     }
     // splurgeは(指定した辺の数 - 1)だけsplurge gageを消費する。
@@ -331,6 +376,10 @@ function forwardBattle(logging) {
     if (logging) {
       updateSplurge(data.splurge.punter);
     }
+  } else if (data.option != undefined) {
+    addEdgeAndUpdateEdgeOwner(data.option.punter, data.option.source, data.option.target);
+    if (canOption) options[data.option.punter]--;
+    updateOption(data.option.punter);
   }
 
   if (logging) {
@@ -433,16 +482,41 @@ function updateEdgeOwner(punter, source, target) {
   }
 }
 
+function addEdgeAndUpdateEdgeOwner(punter, source, target) {
+  let e = cy.add({group: "edges", data: {source: source, target: target}});
+  e.data()["owner"] = punter;
+  e.style("control-point-step-size", 40);
+  e.style("line-color", getPunterColour(punter));
+  console.log(e);
+}
+
 function removeEdgeOwner(punter, source, target) {
   let es = cy.edges("[source=\"" + source + "\"][target=\"" + target + "\"]")
   if (es.length == 0) es = cy.edges("[source=\"" + target + "\"][target=\"" + source + "\"]")
-  if (es.length > 0) {
+  if (es.length == 1) {
     const e = es[0];
     e.data()["owner"] = undefined;
     e.style("line-color", "#009");
+  } else if (es.length > 1) {
+    const e = es[es.legth - 1]
+    cy.remove(e);
+    options[punter]++;
+    updateOption(punter);
   } else {
     logError("Trying to remove nonexistent edge! (" + source + " -- " + target + ")");
   }
+}
+
+function removeEdge(punter, source, target) {
+  let es = cy.edges("[source=\"" + source + "\"][target=\"" + target + "\"]");
+  const e = es[es.length - 1];
+  cy.remove(e);
+}
+
+function existEdge(source, target) {
+  let es1 = cy.edges("[source=\"" + source + "\"][target=\"" + target + "\"]")
+  let es2 = cy.edges("[source=\"" + target + "\"][target=\"" + source + "\"]")
+  return es1.length > 0 || es2.length > 0
 }
 
 function selectBattle(url) {

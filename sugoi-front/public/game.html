@@ -7,13 +7,18 @@
   </head>
   <body>
     <h1>
-      <a href="top.html">トップ</a> | 
       対戦一覧 | 
       <a href="registry.html">対戦登録</a> | 
       <a href="punter.html">クライアント一覧</a> |
       <a href="map.html">マップ一覧</a> |
+      <a href="matrix.html">対戦結果マトリクス</a>
     </h1>
-    <h2>対戦一覧 <a href="./game.html?count=10000">(全ての結果を見る)</a></h2>
+    <h2>対戦一覧</h2>
+    <h4>
+      <a href="./game.html?count=100000">全ての結果を見る</a> |
+      <a href="./game.html?status=success">正常終了対戦のみ</a> |
+      <a href="./game.html?status=fail">エラー対戦のみ</a>
+    </h4>
     <div id="list">
       <table class="table table-bordered tablesorter">
         <thead>
@@ -34,36 +39,9 @@
     <script src="https://cdn.rawgit.com/khalidsalomao/simple-query-string/22cc5bbe/src/simplequerystring.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.8.3/underscore-min.js"></script>
     <script src="./js/jquery.tablesorter.min.js"></script>
+    <script src="./js/util.js"></script>
     <script>
       $(() => {
-        function formatDate(date) {
-          const ff = (f) => ('0'+f).slice(-2);
-          const MM = ff(date.getMonth() + 1)
-          const DD = ff(date.getDate())
-          const HH = ff(date.getHours())
-          const mm = ff(date.getMinutes())
-          const ss = ff(date.getSeconds());
-          return `${MM}/${DD} ${HH}:${mm}:${ss}`
-        }
-        function dialog(status) {
-          let params = {};
-          if (status === 'success') {
-            return '';
-          } else if (status === 'fail') {
-            params = {
-              type: 'danger',
-              msg: '対戦エラー'
-            };
-          } else {
-            // 進行中？
-            params = {
-              type: 'info',
-              msg: '対戦中'
-            };
-          }
-          return `<div class="alert alert-${params.type}" role="alert">${params.msg}</div>`;
-        }
-
         function createRow(data, idx) {
           const date = formatDate(new Date(data.created_at));
           const punters = data.punter_ids.join('<br />');

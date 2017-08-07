@@ -69,15 +69,15 @@ public class LocalSimulator {
 //		int N = 5, M = 10, K = 3;
 		long[] scores = game(-1, N, M, K, true, 
 //				new Instanciator(PassOnlyAI2.class),
-				new Instanciator(PassOnlyAI2.class),
-//				new Instanciator(YoshikoAI.class),
-				new Instanciator(RandomSplurgeAI.class)
 //				new Instanciator(PassOnlyAI2.class),
-//				new Instanciator(RandomSplurgeAI.class),
+//				new Instanciator(YoshikoAI.class),
+//				new Instanciator(RandomSplurgeAI.class)
+//				new Instanciator(PassOnlyAI2.class),
+				new Instanciator(RandomSplurgeAI.class),
 //				new Instanciator(YoshikoAI.class)
 //				new Instanciator(YoshikoAI.class),
 //				new Instanciator(YoshikoAI.class)
-//				new Instanciator(GrowAI.class, new Class[]{int.class}, new Object[]{2})
+				new Instanciator(GrowAI.class, new Class[]{int.class}, new Object[]{2})
 //				new Instanciator(MeijinAI.class, new Class[]{int.class}, new Object[]{5})
 //				new Instanciator(MeijinAI.class, new Class[]{int.class}, new Object[]{8}),
 //				new Instanciator(MeijinIDAI.class, new Class[]{long.class}, new Object[]{900L})
@@ -100,11 +100,14 @@ public class LocalSimulator {
 //			int N = 8, M = 12, K = 3;
 			RandomSplurgeAI.gen = new SplittableRandom(i);
 			long[] scores = game(i, N, M, K, true, 
-					new Instanciator(PassOnlyAI2.class),
-//					new Instanciator(YoshikoAI.class),
+//					new Instanciator(PassOnlyAI2.class),
+					new Instanciator(RandomSplurgeAI.class),
+//					new Instanciator(PassOnlyAI2.class),
 					new Instanciator(RandomSplurgeAI.class)
-//					new Instanciator(MeijinAI2.class, new Class[]{int.class}, new Object[]{6}),
+//					new Instanciator(YoshikoAI.class),
+//					new Instanciator(RandomSplurgeAI.class),
 //					new Instanciator(GrowAI.class, new Class[]{int.class}, new Object[]{3})
+//					new Instanciator(MeijinIDAI.class, new Class[]{long.class}, new Object[]{800L})
 //					new Instanciator(MeijinAI.class, new Class[]{int.class}, new Object[]{6})
 //					new Instanciator(GrowAI.class, new Class[]{int.class}, new Object[]{0})
 					);
@@ -122,7 +125,9 @@ public class LocalSimulator {
 	
 	static long[] game(long seed, int N, int M, int K, boolean detailed, Instanciator... players)
 	{
-//		N = 25; M = 60; K = 4;
+		int FUTURE = 1;
+		int SPLURGE = 1;
+		int OPTION = 1;
 		int C = players.length;
 		
 		// 環境作成
@@ -130,35 +135,19 @@ public class LocalSimulator {
 		int[][] es = genGraph(gen, N, M, false, false);
 		int[] mines = distinct(N, K, gen);
 		
-//		int[][] es = {
-//				{
-//					0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
-//					12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23,	
-//					0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
-//					12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23,	
-//					0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
-//				},
-//				{
-//					1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 0,
-//					13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23,	12,
-//					12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23,	
-//					1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 0,
-//					24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24
-//				}
-//		};
-//		int[] mines = {0, 3, 6, 9};
-		
 		String[] names = new String[C];
 		String[] states = new String[C];
 		// ターンの履歴
 		List<List<Integer>> prevs = new ArrayList<>();
 		for(int i = 0;i < C;i++)prevs.add(new ArrayList<>());
 		// 残りoption数
-//		int[] options = new int[C];
-//		for(int i = 0;i < C;i++)options[i] = 
+		int[] options = new int[C];
+		if(OPTION == 1)Arrays.fill(options, K);
 		
-		int[] colors = new int[M];
-		Arrays.fill(colors, -1);
+		int[][] colors = new int[M][2];
+		for(int i = 0;i < M;i++){
+			colors[i][0] = colors[i][1] = -1;
+		}
 		int[][][] futures = new int[C][][];
 		
 		// splurge用チャージ
@@ -177,8 +166,7 @@ public class LocalSimulator {
 			StringBuilder sb = new StringBuilder();
 			sb.append("I\n");
 			// C P F S O 
-			sb.append(C + " " + i + " " + 1 + " " + 1 + "\n");
-//			sb.append(C + " " + i + " " + 1 + " " + 1 + " " + 1 + "\n");
+			sb.append(C + " " + i + " " + FUTURE + " " + SPLURGE + " " + OPTION + "\n");
 			sb.append(N + " " + M + " " + K + "\n");
 			for(int j = 0;j < M;j++){
 				sb.append(es[0][j] + " " + es[1][j] + "\n");
@@ -253,15 +241,28 @@ public class LocalSimulator {
 							int x = q.get(k), y = q.get(k+1);
 							for(int j = 0;j < M;j++){
 								if(es[0][j] == x && es[1][j] == y || es[0][j] == y && es[1][j] == x){
-									if(colors[j] == -1){
-										colors[j] = i;
+									if(colors[j][0] == -1){
+										// normal
+										colors[j][0] = i;
 										ok = true;
-										break;
+									}else if(colors[j][0] == i){
+										print(N, M, K, mines, es, colors);
+										throw new RuntimeException("already: " + i + " " + x + "," + y);
+									}else if(colors[j][1] == -1 && options[i] > 0){
+										// option
+										if(colors[j][1] == i){
+											print(N, M, K, mines, es, colors);
+											throw new RuntimeException("option already: " + i + " " + x + "," + y);
+										}else{
+											options[i]--;
+											colors[j][1] = i;
+											ok = true;
+										}
 									}else{
-										// TODO optionによりかわる
 										print(N, M, K, mines, es, colors);
 										throw new RuntimeException("invalid move: " + i + " " + x + "," + y);
 									}
+									break;
 								}
 							}
 							if(!ok){
@@ -289,7 +290,7 @@ public class LocalSimulator {
 		return scores;
 	}
 	
-	static long[] calcScore(int C, int N, int M, int K, int[][] es, int[] mines, int[][][] futures, int[] colors)
+	static long[] calcScore(int C, int N, int M, int K, int[][] es, int[] mines, int[][][] futures, int[][] colors)
 	{
 		int[][] g = packU(N, es[0], es[1]);
 		
@@ -298,7 +299,7 @@ public class LocalSimulator {
 		for(int i = 0;i < C;i++){
 			dss[i] = new DJSet(N);
 			for(int j = 0;j < M;j++){
-				if(colors[j] == i){
+				if(colors[j][0] == i || colors[j][1] == i){
 					dss[i].union(es[0][j], es[1][j]);
 				}
 			}
@@ -333,15 +334,23 @@ public class LocalSimulator {
 		return scores;
 	}
 	
-	static void print(int N, int M, int K, int[] mines, int[][] es, int[] colors)
+	static void print(int N, int M, int K, int[] mines, int[][] es, int[][] colors)
 	{
-		System.out.println(N + " " + M + " " + K);
+		int X = M;
+		for(int i = 0;i < M;i++){
+			if(colors[i][1] != -1)X++;
+		}
+		System.out.println(N + " " + X + " " + K);
 		for(int mine : mines){
 			System.out.print(mine + " ");
 		}
 		System.out.println();
 		for(int i = 0;i < M;i++){
-			System.out.println(es[0][i] + " " + es[1][i] + " " + colors[i]);
+			System.out.println(es[0][i] + " " + es[1][i] + " " + colors[i][0]);
+			if(colors[i][1] != -1){
+				// option
+				System.out.println(es[0][i] + " " + es[1][i] + " " + colors[i][1]);
+			}
 		}
 	}
 	

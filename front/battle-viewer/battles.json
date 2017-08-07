@@ -27,6 +27,13 @@
             "num_edges": 12,
             "num_nodes": 8,
             "num_punters": 2
+        },
+        {
+            "filename": "../battles/option.json",
+            "name": "option",
+            "num_edges": 12,
+            "num_nodes": 9,
+            "num_punters": 2
         }
     ]
 }

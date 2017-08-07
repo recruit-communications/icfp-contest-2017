@@ -41,10 +41,17 @@
           const vUrl = `http://13.112.208.142:8080/graph-viewer/index.html?log=${urlBase}${data.id}.json`;
           const thumb = `${urlBase}thumbs/${data.id}.png`;
           return $('<tr>')
-            .append($('<td>').append($('<a>', {
-              href: vUrl,
-              text: data.id
-            })))
+            .append($('<td>')
+              .append($('<a>', {
+                href: vUrl,
+                text: data.id
+              }))
+              .append($('<br>'))
+              .append($('<a>', {
+                href: `./matrix.html?map_id=${data.id}`,
+                text: 'このマップの対戦結果マトリクス'
+              }))
+            )
             .append($('<td>', { text: data.punter_num }))
             .append($('<td>', { text: info.sites }))
             .append($('<td>', { text: info.mines }))

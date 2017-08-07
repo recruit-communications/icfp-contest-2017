@@ -13,7 +13,7 @@
       <a href="punter.html">クライアント一覧</a> |
       <a href="map.html">マップ一覧</a> |
     </h1>
-    <h2>対戦一覧</h2>
+    <h2>対戦一覧 <a href="./game.html?count=10000">(全ての結果を見る)</a></h2>
     <div id="list">
       <table class="table table-bordered tablesorter">
         <thead>
@@ -31,6 +31,8 @@
     </div>
 
     <script src="http://code.jquery.com/jquery-3.2.1.min.js"></script>
+    <script src="https://cdn.rawgit.com/khalidsalomao/simple-query-string/22cc5bbe/src/simplequerystring.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.8.3/underscore-min.js"></script>
     <script src="./js/jquery.tablesorter.min.js"></script>
     <script>
       $(() => {
@@ -76,7 +78,10 @@
               href: `http://13.112.208.142:8080/battle-viewer/?log=https://s3-ap-northeast-1.amazonaws.com/icfp2017-kst3-jp/logs/app.${data.id}.log`,
               text: data.id.slice(0, 8)
             })))
-            .append($('<td>', { text: data.map_id }))
+            .append($('<td>').append($('<a>', {
+              href: `./game.html?map_id=${data.map_id}`,
+              text: data.map_id
+            })))
             .append($('<td>', { html: punters }))
             .append($('<td>')
               .append(dialog(job.status))
@@ -88,14 +93,13 @@
                 html: results
               })))
         }
-        $.getJSON('/game/list', (res) => {
-          res.forEach((d, i) => {
+        const query = decodeURIComponent(location.search);
+        $.getJSON(`/game/list${query}`, (res) => {
+          const count = simpleQueryString.parse(location.search).count || 100;
+          _.sortBy(res, (d) => d.created_at).reverse().slice(0, count).forEach((d, i) => {
             $('#list>table tbody').append(createRow(d, i));
           });
-          // for sort
           $("#list>table").tablesorter();
-          $("#list>table th:nth-child(1)").click();
-          $("#list>table th:nth-child(1)").click();
         });
       });
     </script>

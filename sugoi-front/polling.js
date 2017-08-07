@@ -36,6 +36,8 @@ db.maps().then((data) => {
           created_at: e.LastModified.getTime(),
           info: log.parseMap(obj.Body.utf8Slice()),
         });
+      }).catch((e) => {
+        console.log(e);
       });
     });
   });
@@ -62,7 +64,14 @@ db.games(params).then((data) => {
       
       game.job.status = res.length > 0 ? 'success' :'fail';
       game.results = sortBy(res, (r) => r.score).reverse();
-      db.addGame(game);
+      return db.addGame(game);
+    }).then(() => {
+      // ジョブURLの取得
+      return log.getBuildUrl(game.job.url).then((url) => {
+        game.job.url = url;
+        console.log(url);
+        return db.addGame(game);
+      });
     }).catch((e) => {
       // s3Getのエラーはスルー
       if (e.name === 'NoSuchKey') return;

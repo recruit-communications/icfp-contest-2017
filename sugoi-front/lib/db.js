@@ -120,6 +120,11 @@ module.exports = {
   },
   games: (params = {}) => {
     params.TableName = 'icfp-game';
+
+    if (params.map_id) {
+      params.ExpressionAttributeValues = {':m': params.map_id};
+      params.FilterExpression = 'map_id = :m';
+    }
     return dbScan(params);
   },
   addGame: ({id, league_id, created_at = (new Date).getTime(), punter_ids, map_id, job = {}, results = null}) => {

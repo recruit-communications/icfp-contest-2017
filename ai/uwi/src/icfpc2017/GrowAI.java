@@ -21,8 +21,6 @@ import java.util.Queue;
 import java.util.Random;
 import java.util.Set;
 
-import icfpc2017.PassOnlyAI2.Edge;
-
 class GrowAI {
 	public InputStream is;
 	public PrintWriter out;

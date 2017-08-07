@@ -23,7 +23,7 @@ class RandomSplurgeAI {
 	public PrintWriter out;
 	String INPUT = "";
 
-	SplittableRandom gen = new SplittableRandom();
+	SplittableRandom gen = new SplittableRandom(91919);
 	
 	public void solve() {
 		char phase = ns().charAt(0);
@@ -65,6 +65,7 @@ class RandomSplurgeAI {
 			state.M = M;
 			state.F = F;
 			state.S = S;
+			state.phase = 0;
 			state.mindistss = mindistss;
 			if(F == 1){
 				state.futures = new ArrayList<>();
@@ -107,7 +108,7 @@ class RandomSplurgeAI {
 			outer:
 			for(int i = 0;i < C;i++){
 				int L = ni();
-				if(state.S == 1 && L == 0){
+				if(state.S == 1 && L == 0 && (state.phase > 0 || state.phase == 0 && i < state.P)){
 					state.charges.set(i, state.charges.get(i)+1);
 				}
 				int[] a = new int[L];
@@ -125,13 +126,14 @@ class RandomSplurgeAI {
 				}
 			}
 			
-			out.println(toBase64(state));
-			out.print(state.P);
+			StringBuilder line2 = new StringBuilder();
+			line2.append(state.P);
 			if(state.S == 0 || gen.nextInt(10) < 5){
 				// pass
 			}else{
 //				int use = gen.nextInt(state.charges.get(state.P)+1);
 				int len = state.charges.get(state.P) + 1;
+				tr("charge", state.charges.get(state.P));
 				outer:
 				for(int grep = 0;grep < 10;grep++){
 					int id = gen.nextInt(state.M*2);
@@ -157,14 +159,14 @@ class RandomSplurgeAI {
 								}
 								break;
 							}
-							out.print(" " + e.x);
+							line2.append(" " + e.x);
 							ap = e.y;
 							for(Edge z : es){
 								z.owner = -1;
-								out.print(" " + ap);
+								line2.append(" " + ap);
 								ap ^= z.x ^ z.y;
 							}
-							state.charges.set(state.P, state.charges.get(state.P) - es.size());
+							state.charges.set(state.P, state.charges.get(state.P) - (es.size() - 1));
 							break outer;
 						}else{
 							id -= state.g.get(i).size();
@@ -172,7 +174,9 @@ class RandomSplurgeAI {
 					}
 				}
 			}
-			out.println();
+			state.phase++;
+			out.println(toBase64(state));
+			out.println(line2);
 		}else{
 			throw new RuntimeException();
 		}
@@ -230,6 +234,7 @@ class RandomSplurgeAI {
 		int P; // お前のID(0~N-1)
 		int N, M;
 		int F, S; // future splurge対応フラグ
+		int phase; // 何回目か
 		List<List<Edge>> g; // グラフ
 		List<Integer> charges; // splurgeチャージ量
 		BitSet mines; // mineかどうか

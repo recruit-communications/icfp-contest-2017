@@ -28,7 +28,7 @@ class PassOnlyAI2 {
 			out.flush();
 		}else if(phase == 'I'){
 			// 初回入力2
-			int C = ni(), P = ni(), F = ni(), S = ni();
+			int C = ni(), P = ni(), F = ni(), S = ni(), O = ni();
 			int N = ni(), M = ni(), K = ni();
 			List<List<Edge>> g = new ArrayList<>();
 			for(int i = 0;i < N;i++)g.add(new ArrayList<>());

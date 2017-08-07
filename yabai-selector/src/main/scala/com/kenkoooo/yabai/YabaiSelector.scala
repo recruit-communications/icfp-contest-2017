@@ -19,7 +19,6 @@ object YabaiSelector extends Logging {
   val mapper = new ObjectMapper()
   mapper.registerModule(DefaultScalaModule)
 
-  val MULTIPLY = 2
   val AFTER_TIME_UTC_STRING = "2017-08-07T03:30:00Z"
 
   def main(args: Array[String]): Unit = {
@@ -74,10 +73,10 @@ object YabaiSelector extends Logging {
         }
       })
 
-      val selectedPunters = punterScore.toList.sortBy { case (_, score) => score }.reverse.take(member * MULTIPLY)
-      for (_ <- 0 until MULTIPLY) {
-        val randomSelected = Random.shuffle(selectedPunters).take(member)
-        queue.append(Execute(Random.shuffle(mapIds.toList).head, for ((punterId, _) <- randomSelected) yield punterId))
+      val selectedPunters = punterScore.toList.sortBy { case (_, score) => score }.reverse.take(16)
+      for (_ <- 0 until (16 / member)) {
+        val shuffled = Random.shuffle(selectedPunters)
+        queue.append(Execute(Random.shuffle(mapIds.toList).head, (for (i <- 0 until member) yield shuffled(i % shuffled.length)._1).toList))
       }
     }
 

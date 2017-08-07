@@ -36,7 +36,7 @@ os.makedirs("./matrix")
 maplist = [tuple(line.split("\t")) for line in commands.getoutput("curl -s http://13.112.208.142:3000/map/list | jq -r '.[] | [.id, .punter_num] | @tsv'").split("\n")]
 puntlist = set(commands.getoutput("curl -s http://13.112.208.142:3000/punter/list | jq -r '.[].id'").split("\n"))
 
-def cumulate(count, win, tsv):
+def cumulate(c, w, tsv):
   for line in tsv:
     ary = line.split()
     t, id, punters = ary[0], ary[1], ary[2:]
@@ -44,11 +44,11 @@ def cumulate(count, win, tsv):
     for i in xrange(len(punters)):
       for j in xrange(i+1, len(punters)):
         if punters[i] not in puntlist or punters[j] not in puntlist: continue
-        count[(punters[i], punters[j])] += 1
-        win[punters[i]] += 1
-        win[punters[j]] += 0
+        c[(punters[i], punters[j])] += 1
+        w[punters[i]] += 1
+        w[punters[j]] += 0
 
-  return (count, win)
+  return (c, w)
 
 def output(count, win, name):
   rate = collections.defaultdict(float)
@@ -97,24 +97,21 @@ for i in [2,4,8,16]:
 for mapname, punter_num in maplist:
   tsv = commands.getoutput("cat /tmp/gamelist.txt | jq -r '.[] | if .job.status == \"success\" and .map_id == \"%s\" then . else empty end | (.created_at | tostring) + \"\t\" + .id + \"\t\" + (.results | sort_by(.score) | reverse | map(.punter) | @tsv)'" % mapname).split("\n")
 
+  punter_num = int(punter_num)
   if tsv[0] == '': continue
 
-  count = collections.defaultdict(int)
-  win = collections.defaultdict(int)
-
-  count, win = cumulate(count, win, tsv)
+  count, win = cumulate(collections.defaultdict(int), collections.defaultdict(int), tsv)
 
   if punter_num <= 2:
     subtotal[2]["count"], subtotal[2]["win"] = cumulate(subtotal[2]["count"], subtotal[2]["win"], tsv)
   elif punter_num <= 4:
-    subtotal[2]["count"], subtotal[2]["win"] = cumulate(subtotal[4]["count"], subtotal[4]["win"], tsv)
+    subtotal[4]["count"], subtotal[4]["win"] = cumulate(subtotal[4]["count"], subtotal[4]["win"], tsv)
   elif punter_num <= 8:
-    subtotal[2]["count"], subtotal[2]["win"] = cumulate(subtotal[8]["count"], subtotal[8]["win"], tsv)
+    subtotal[8]["count"], subtotal[8]["win"] = cumulate(subtotal[8]["count"], subtotal[8]["win"], tsv)
   else:
-    subtotal[2]["count"], subtotal[2]["win"] = cumulate(subtotal[16]["count"], subtotal[16]["win"], tsv) 
+    subtotal[16]["count"], subtotal[16]["win"] = cumulate(subtotal[16]["count"], subtotal[16]["win"], tsv) 
 
   output(count, win, mapname)
 
-print subtotal[2]
 for i in subtotal.keys():
-  output(subtotal[2]["count"], subtotal[2]["win"], "subtotal%d"%i)
+  output(subtotal[i]["count"], subtotal[i]["win"], "subtotal%d"%i)

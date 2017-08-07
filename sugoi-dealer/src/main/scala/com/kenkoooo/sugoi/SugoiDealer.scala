@@ -53,12 +53,14 @@ object SugoiDealer extends Logging with BattleLogging {
     programs.foreach(program => {
       val setupInput = mapper.writeValueAsString(SetupToPunter(program.punter, programs.size, map, LambdaSettings(futures = true, splurges = true, options = true)))
       val (setupOutput, code) = program.putCommand(setupInput, 10)
+      if (program.battler) battleLogger.info(s"RECV ${SugoiMapper.purify(setupInput)}")
       if (code != 0 || setupOutput == "") {
         program.penaltyCount += 1
         program.state = new ArrayBuffer[String]()
         futureBuffer.append(Array())
       } else {
         val output = mapper.readValue[SetupToServer](setupOutput, classOf[SetupToServer])
+        if (program.battler) battleLogger.info(s"SEND ${SugoiMapper.purify(setupOutput)}")
         program.state = output.state
         futureBuffer.append(output.futures)
       }
@@ -90,6 +92,14 @@ object SugoiDealer extends Logging with BattleLogging {
         }
       }
 
+      def logAndQ(move: Move): Unit = {
+        if (p.battler) {
+          battleLogger.info(s"RECV ${SugoiMapper.purify(playToPunterString)}")
+          battleLogger.info(s"SEND ${mapper.writeValueAsString(move)}")
+        }
+        deque.append(move)
+      }
+
       if (p.penaltyCount >= 10) {
         // dropout
         if (p.penaltyCount == 10) logger.error(s"punter ${p.punter} 10 times penalty")
@@ -110,7 +120,7 @@ object SugoiDealer extends Logging with BattleLogging {
 
       if (moveFromPunter.pass != null) {
         // pass
-        deque.append(PassMove(moveFromPunter.pass))
+        logAndQ(PassMove(moveFromPunter.pass))
         p.passCount += 1
       } else if (moveFromPunter.claim != null) {
         // claim
@@ -122,7 +132,7 @@ object SugoiDealer extends Logging with BattleLogging {
         } else {
           logger.info(s"$source -- $target")
           gameState.addEdge(source, target, p.punter)
-          deque.append(ClaimMove(moveFromPunter.claim))
+          logAndQ(ClaimMove(moveFromPunter.claim))
         }
       } else if (moveFromPunter.splurge != null) {
         // splurge
@@ -168,14 +178,14 @@ object SugoiDealer extends Logging with BattleLogging {
         }
 
         p.passCount -= route.length - 2
-        deque.append(SplurgeMove(moveFromPunter.splurge))
+        logAndQ(SplurgeMove(moveFromPunter.splurge))
       } else if (moveFromPunter.option != null) {
         //option
         val s = moveFromPunter.option.source
         val t = moveFromPunter.option.target
         if (gameState.canBuy(s, t, p.punter) && p.optionRemain > 0) {
           gameState.buyEdge(s, t, p.punter)
-          deque.append(OptionMove(moveFromPunter.option))
+          logAndQ(OptionMove(moveFromPunter.option))
           p.optionRemain -= 1
         } else {
           logger.error(s"${p.punter} can not option $s -- $t")
@@ -226,12 +236,6 @@ class PunterProgram(cmd: String, val punter: Int, val battler: Boolean = false, 
     }
   }
 
-  private def outputBattleLog(line: String): Unit = if (battler) battleLogger.info(line.trim)
-
-  private def logSend(line: String): Unit = outputBattleLog(s"SEND $line")
-
-  private def logRecv(line: String): Unit = outputBattleLog(s"RECV $line")
-
   /**
     * execute handshake and command
     *
@@ -265,11 +269,9 @@ class PunterProgram(cmd: String, val punter: Int, val battler: Boolean = false, 
       os.write(lastCommand.getBytes())
       os.flush()
 
-      logRecv(SugoiMapper.purify(commandFromServer))
       logger.debug(s"command to punter: ${commandFromServer.length}:$commandFromServer")
 
       val fromPunter = reader.next()
-      logSend(SugoiMapper.purify(fromPunter))
       logger.debug(s"command from punter: $fromPunter")
       (fromPunter, 0)
     } catch {

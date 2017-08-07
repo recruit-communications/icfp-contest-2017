@@ -22,6 +22,8 @@ object YabaiSelector extends Logging {
   val AFTER_TIME_UTC_STRING = "2017-08-07T03:30:00Z"
 
   def main(args: Array[String]): Unit = {
+    val maxSize = args(0).toInt * 16
+
     val punterEntries = mapper.readValue[List[PunterEntry]](YabaiUrl.get(YabaiUrl.punterList), new TypeReference[List[PunterEntry]] {})
     val mapEntries = mapper.readValue[List[MapEntry]](YabaiUrl.get(YabaiUrl.mapList), new TypeReference[List[MapEntry]] {})
     val gameList = mapper.readValue[List[GameResult]](YabaiUrl.get(YabaiUrl.gameLog), new TypeReference[List[GameResult]] {})
@@ -74,7 +76,7 @@ object YabaiSelector extends Logging {
       })
 
       val selectedPunters = punterScore.toList.sortBy { case (_, score) => score }.reverse.take(16)
-      for (_ <- 0 until (16 / member)) {
+      for (_ <- 0 until (maxSize / member)) {
         val shuffled = Random.shuffle(selectedPunters)
         queue.append(Execute(Random.shuffle(mapIds.toList).head, (for (i <- 0 until member) yield shuffled(i % shuffled.length)._1).toList))
       }
@@ -88,7 +90,7 @@ object YabaiSelector extends Logging {
       select(data, member)
     })
 
-    for (i <- 0 until math.min(queue.size, args(0).toInt)) YabaiUrl.get(YabaiUrl.gameExecute(queue(i).mapId, queue(i).punters))
+    Random.shuffle(queue).take(args(0).toInt).foreach(q => YabaiUrl.get(YabaiUrl.gameExecute(q.mapId, q.punters)))
   }
 
   case class Execute(mapId: LambdaMapId, punters: List[PunterId])

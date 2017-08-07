@@ -21,8 +21,8 @@ public class LocalSimulator {
 	static Logger logger = new Logger("/tmp/icfpclog", LocalDateTime.now());
 	
 	public static void main(String[] args) {
-//		onegame();
-		manygames();
+		onegame();
+//		manygames();
 		
 //		{
 ////			int N = 50, M = 80, K = 20;
@@ -77,10 +77,10 @@ public class LocalSimulator {
 //				new Instanciator(YoshikoAI.class)
 //				new Instanciator(YoshikoAI.class),
 //				new Instanciator(YoshikoAI.class)
-				new Instanciator(GrowAI.class, new Class[]{int.class}, new Object[]{2})
+//				new Instanciator(GrowAI.class, new Class[]{int.class}, new Object[]{2})
 //				new Instanciator(MeijinAI.class, new Class[]{int.class}, new Object[]{5})
 //				new Instanciator(MeijinAI.class, new Class[]{int.class}, new Object[]{8}),
-//				new Instanciator(MeijinIDAI.class, new Class[]{long.class}, new Object[]{900L})
+				new Instanciator(MeijinIDAI.class, new Class[]{long.class}, new Object[]{800L})
 //				new Instanciator(GrowAI.class, new Class[]{int.class}, new Object[]{0})
 				);
 		tr(scores);
@@ -101,13 +101,14 @@ public class LocalSimulator {
 			RandomSplurgeAI.gen = new SplittableRandom(i);
 			long[] scores = game(i, N, M, K, true, 
 //					new Instanciator(PassOnlyAI2.class),
-					new Instanciator(RandomSplurgeAI.class),
+//					new Instanciator(RandomSplurgeAI.class),
 //					new Instanciator(PassOnlyAI2.class),
-					new Instanciator(RandomSplurgeAI.class)
+					new Instanciator(RandomSplurgeAI.class),
 //					new Instanciator(YoshikoAI.class),
+//					new Instanciator(YoshikoAI.class)
 //					new Instanciator(RandomSplurgeAI.class),
 //					new Instanciator(GrowAI.class, new Class[]{int.class}, new Object[]{3})
-//					new Instanciator(MeijinIDAI.class, new Class[]{long.class}, new Object[]{800L})
+					new Instanciator(MeijinIDAI.class, new Class[]{long.class}, new Object[]{800L})
 //					new Instanciator(MeijinAI.class, new Class[]{int.class}, new Object[]{6})
 //					new Instanciator(GrowAI.class, new Class[]{int.class}, new Object[]{0})
 					);

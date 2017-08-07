@@ -11,7 +11,7 @@ let doPlay = false;
 let timeSpan = 500;
 let splurges = [];
 let canSplurge = false;
-let canFeature = false;
+let canFuture = false;
 let canOption = false;
 let options = [];
 
@@ -188,8 +188,8 @@ function start() {
       numPunters = battleEnv.punters;
 
       if (battleEnv.settings != undefined) {
-        if (battleEnv.settings.features != undefined)
-          canReature = battleEnv.settings.features;
+        if (battleEnv.settings.futures != undefined)
+          canFuture = battleEnv.settings.futures;
         if (battleEnv.settings.splurges != undefined)
           canSplurge = battleEnv.settings.splurges;
         if (battleEnv.settings.options != undefined)
@@ -212,7 +212,7 @@ function start() {
       logInfo("rendering game graph...");
       renderGraph(graph);
       logInfo("You are punter #" + punterId);
-      logInfo("Features: " + canFeature + ",   Splurges: " + canSplurge + ",   Options:" + canOption);
+      logInfo("Futures: " + canFuture + ",   Splurges: " + canSplurge + ",   Options:" + canOption);
       move_start = i + 1;
       break;
     }

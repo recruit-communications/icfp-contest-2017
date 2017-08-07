@@ -30,7 +30,7 @@ class PassOnlyAI2 {
 			out.flush();
 		}else if(phase == 'I'){
 			// 初回入力2
-			int C = ni(), P = ni(), F = ni(), S = ni();
+			int C = ni(), P = ni(), F = ni(), S = ni(), O = ni();
 			int N = ni(), M = ni(), K = ni();
 			List<List<Edge>> g = new ArrayList<>();
 			for(int i = 0;i < N;i++)g.add(new ArrayList<>());
@@ -60,6 +60,8 @@ class PassOnlyAI2 {
 			state.P = P;
 			state.F = F;
 			state.S = S;
+			state.O = O;
+			state.phase = 0;
 			state.mindistss = mindistss;
 			if(F == 1){
 				state.futures = new ArrayList<>();
@@ -69,35 +71,55 @@ class PassOnlyAI2 {
 				state.charges = new ArrayList<>();
 				for(int i = 0;i < C;i++)state.charges.add(0);
 			}
+			if(O == 1){
+				state.options = new ArrayList<>();
+				for(int i = 0;i < C;i++)state.options.add(mines.cardinality());
+			}
 			out.println(toBase64(state));
 			out.println(0);
 		}else if(phase == 'G'){
 			// ゲーム中入力
 			State state = (State)fromBase64(ns());
 			int C = state.C;
-			outer:
 			for(int i = 0;i < C;i++){
 				int L = ni();
+				if(state.S == 1 && L == 0 && (state.phase > 0 || state.phase == 0 && i < state.P)){
+					// 初回のダミーpassに注意してチャージ
+					inc(state.charges, i, 1);
+				}
 				int[] a = new int[L];
 				for(int j = 0;j < L;j++){
 					a[j] = ni();
 				}
+				inner:
 				for(int j = 0;j < L-1;j++){
 					int s = a[j], t = a[j+1];
 					for(Edge e : state.g.get(s)){
-						if((e.x^e.y^s) == t && e.owner == -1){
-							e.owner = i;
-							continue outer;
+						if((e.x^e.y^s) == t){
+							if(e.owner == -1){
+								e.owner = i;
+							}else if(state.O == 1 && state.options.get(i) >= 1){
+								inc(state.options, i, -1);
+								e.owner2 = i;
+							}
+							continue inner;
 						}
 					}
+					throw new RuntimeException("invalid input");
 				}
 			}
 			
+			state.phase++;
 			out.println(toBase64(state));
 			out.println(state.P);
 		}else{
 			throw new RuntimeException();
 		}
+	}
+	
+	public static void inc(List<Integer> list, int id, int x)
+	{
+		list.set(id, list.get(id) + x);
 	}
 	
 	public static List<Integer> mindists(List<List<Edge>> g, int start)
@@ -150,9 +172,11 @@ class PassOnlyAI2 {
 		private static final long serialVersionUID = -4623606164150300132L;
 		int C; // プレー人数
 		int P; // お前のID(0~N-1)
-		int F, S; // future splurge対応フラグ
+		int F, S, O; // future splurge option対応フラグ
+		int phase; // 何回目か
 		List<List<Edge>> g; // グラフ
 		List<Integer> charges; // splurgeチャージ量
+		List<Integer> options; // option残り回数
 		BitSet mines; // mineかどうか
 		List<List<Integer>> mindistss; // 最短経路長
 		List<Integer> futures;
@@ -173,11 +197,13 @@ class PassOnlyAI2 {
 		private static final long serialVersionUID = 5180071263476967427L;
 		int x, y;
 		int owner; // 辺の所有者。いないときは-1
+		int owner2;
 		
 		public Edge(int x, int y) {
 			this.x = x;
 			this.y = y;
 			this.owner = -1;
+			this.owner2 = -1;
 		}
 	}
 

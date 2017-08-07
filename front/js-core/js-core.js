@@ -57,8 +57,7 @@ const graphStyle = [
       "line-color": "#009",
       "width": edgeWidth,
       "z-index" : 1,
-      "curve-style": "haystack",
-      "haystack-radius": 0
+      "curve-style": "bezier"
       }
   },
 

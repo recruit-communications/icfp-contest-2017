@@ -24,6 +24,13 @@
 }
 
 .c3 {
+  width: 30px;
+  text-align: right;
+  padding-right: 3px;
+}
+
+.c4 {
+  width: 30px;
   text-align: right;
   padding-right: 3px;
 }

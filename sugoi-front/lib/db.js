@@ -9,7 +9,8 @@ const bucket = 'icfp2017-kst3-jp';
 const clientPrefix = 'clients/';
 const mapPrefix = 'maps/';
 
-function dbScan(params) {
+// allFlg: true時は全件取得
+function dbScan(params, allFlg) {
   // ページング対応
   function scan(fulfill, reject, params, items) {
     db.scan(params, (err, data) => {
@@ -18,7 +19,7 @@ function dbScan(params) {
         return
       }
       Array.prototype.push.apply(items, data.Items);
-      if (data.LastEvaluatedKey) {
+      if (allFlg && data.LastEvaluatedKey) {
         params.ExclusiveStartKey = data.LastEvaluatedKey;
         scan(fulfill, reject, params, items);
       } else {
@@ -139,7 +140,7 @@ module.exports = {
       params.ExpressionAttributeValues = {':m': params.map_id};
       params.FilterExpression = 'map_id = :m';
     }
-    return dbScan(params);
+    return dbScan(params, params.all);
   },
   addGame: ({id, league_id, created_at = (new Date).getTime(), punter_ids, map_id, job = {}, results = null}) => {
     const params = {

@@ -81,13 +81,19 @@ object SugoiDealer extends Logging with BattleLogging {
       val playToPunterString = mapper.writeValueAsString(PlayToPunter(PreviousMoves(deque.toArray), p.state))
       deque.remove(0)
 
+      def penalty(): Unit = if (p.battler) {
+        p.penaltyCount += 1
+        deque.append(PassMove(Pass(p.punter)))
+        battleLogger.info(s"RECV ${SugoiMapper.purify(playToPunterString)}")
+        battleLogger.info(s"SEND ${mapper.writeValueAsString(PassMove(Pass(p.punter)))}")
+      }
+
       if (p.penaltyCount >= 10) {
         // dropout
         if (p.penaltyCount == 10) {
           logger.error(s"punter ${p.punter} 10 times penalty")
         }
-        p.penaltyCount += 1
-        deque.append(PassMove(Pass(p.punter)))
+        penalty()
         return
       }
 
@@ -96,8 +102,7 @@ object SugoiDealer extends Logging with BattleLogging {
 
       if (code != 0) {
         // failed
-        p.penaltyCount += 1
-        deque.append(PassMove(Pass(p.punter)))
+        penalty()
         return
       }
       val moveFromPunter = mapper.readValue[MoveFromPunter](playOutput, classOf[MoveFromPunter])
@@ -113,8 +118,7 @@ object SugoiDealer extends Logging with BattleLogging {
         val target = moveFromPunter.claim.target
         if (gameState.isUsed(source, target)) {
           logger.error(s"punter ${p.punter}: $source -- $target is already used!!!")
-          p.penaltyCount += 1
-          deque.append(PassMove(Pass(p.punter)))
+          penalty()
         } else {
           logger.info(s"$source -- $target")
           gameState.addEdge(source, target, p.punter)
@@ -127,8 +131,7 @@ object SugoiDealer extends Logging with BattleLogging {
         // when pass n times, you can choose n+1 edges, the maximum splurge size will be n+2
         if (route.length > p.passCount + 2) {
           logger.error(s"punter ${p.punter}: too many splurge! pass: ${p.passCount}, splurge:${mapper.writeValueAsString(route)}")
-          p.penaltyCount += 1
-          deque.append(PassMove(Pass(p.punter)))
+          penalty()
           return
         }
         for (i <- 1 until route.length) {
@@ -136,8 +139,7 @@ object SugoiDealer extends Logging with BattleLogging {
           val target = route(i)
           if (gameState.isUsed(source, target)) {
             logger.error(s"punter ${p.punter}: $source -- $target is already used!!!")
-            p.penaltyCount += 1
-            deque.append(PassMove(Pass(p.punter)))
+            penalty()
             return
           }
         }
@@ -155,8 +157,7 @@ object SugoiDealer extends Logging with BattleLogging {
       } else {
         // empty move
         logger.error(s"punter ${p.punter}: please specify claim, pass or splurge")
-        p.penaltyCount += 1
-        deque.append(PassMove(Pass(p.punter)))
+        penalty()
       }
     }
 
@@ -171,7 +172,7 @@ object SugoiDealer extends Logging with BattleLogging {
   }
 }
 
-class PunterProgram(cmd: String, val punter: Int, battler: Boolean = false) extends Logging with BattleLogging {
+class PunterProgram(cmd: String, val punter: Int, val battler: Boolean = false) extends Logging with BattleLogging {
   var state: Object = _
   var penaltyCount = 0
   var passCount = 0

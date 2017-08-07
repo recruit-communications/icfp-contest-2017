@@ -175,16 +175,14 @@ struct Game {
 		}
 
 		vi reachable(N); // i-th bit of reachable[j] := vertex j is reachable from mine i
-		vector<bool> candidate_to(N);
 		vi approach_node_score(N);
 		for (int i = 0; i < K; ++i) {
 			vector<int> q = {mines[i]};
 			reachable[q[0]] |= (1 << i);
 			for (int j = 0; j < q.size(); ++j) {
 				for (const Edge& e : edges[q[j]]) {
-					if (e.owner == NOT_OWNED && (reachable[e.to] & (1 << i)) == 0) {
-						candidate_to[q[j]] = true;
-					} else if (e.owner == I && (reachable[e.to] & (1 << i)) == 0) {
+					if (reachable[e.to] & (1 << i)) continue;
+					if (e.owner == I || e.option_owner == I) {
 						q.push_back(e.to);
 						reachable[e.to] |= (1 << i);
 					}
@@ -215,16 +213,19 @@ struct Game {
 		vector<i64> approach_score;
 
 		for (int i = 0; i < N; ++i) {
-			if (!candidate_to[i]) continue;
 			for (const Edge& e : edges[i]) {
-				if (O && option_counts[I] > 0) {
+				if (option_counts[I] > 0) {
 					if (e.option_owner != NOT_OWNED) continue;
 				} else {
 					if (e.owner != NOT_OWNED) continue;
 				}
 				if (reachable[i] == reachable[e.to]) continue;
 				cand_edges.push_back(make_pair(i, &e));
-				connect_score.push_back(__builtin_popcount(~reachable[i] & reachable[e.to]) * SCORE_SCALE);
+				if (reachable[i] != 0 && reachable[e.to] != 0) {
+					connect_score.push_back(__builtin_popcount(reachable[i] ^ reachable[e.to]) * SCORE_SCALE);
+				} else {
+					connect_score.push_back(0);
+				}
 				order_score.push_back(SCORE_SCALE * orders[e.to]);
 				expand_score.push_back(0);
 				approach_score.push_back(0);

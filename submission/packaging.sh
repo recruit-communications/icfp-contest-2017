@@ -14,8 +14,6 @@ for dir in ../*/; do
     cp -R ${dir%/} src
 done
 
-# TODO installとpunter作成
-
 # アーカイブの都合上installとpunterの存在を保証しておく
 touch install punter
 
@@ -27,5 +25,5 @@ else
 	TOKEN=57c8be97-ef1c-4730-bf15-5da1d039fab3
 	ARCHIVE=icfp-$TOKEN.tar.gz
 fi
-tar cvz install punter PACKAGES src README > $ARCHIVE
+tar cvz punter PACKAGES src README install* > $ARCHIVE
 md5 $ARCHIVE

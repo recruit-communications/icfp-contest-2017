@@ -5,4 +5,4 @@ cd `dirname $0`
 # 2 ehafib_fix
 # 3 jUdon
 # 4 Yoshiko
-python3 src/bridges/junction.py 'Udon' 'java MeijinIDAI' ''./tomerun_greedy' './ehafib' 'python3 src/ai/iehn/jUdon4.py' 'java YoshikoAI'
+python3 src/bridges/junction.py 'Udon' 'java MeijinIDAI' './tomerun_greedy' './ehafib' 'python3 src/ai/iehn/jUdon4.py' 'java YoshikoAI'

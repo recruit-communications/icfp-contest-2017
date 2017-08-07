@@ -396,6 +396,6 @@ class RandomSplurgeAI {
 	}
 
 	private static void tr(Object... o) {
-		System.out.println(Arrays.deepToString(o));
+		System.err.println(Arrays.deepToString(o));
 	}
 }

@@ -137,6 +137,7 @@ class YoshikoAI {
 			state.N = N;
 			state.F = F;
 			state.S = S;
+			state.phase = 0;
 			if(F == 1){
 				state.futures = new ArrayList<>();
 				for(int i = 0;i < N;i++)state.futures.add(null);
@@ -239,6 +240,7 @@ class YoshikoAI {
 		int P; // お前のID(0~N-1)
 		int N; // 頂点数
 		int F, S;
+		int phase; // 何回目か
 		List<Edge> es; // 辺集合
 		BitSet mines; // mineかどうか
 		List<Integer> futures;
@@ -397,6 +399,6 @@ class YoshikoAI {
 	}
 
 	private static void tr(Object... o) {
-		System.out.println(Arrays.deepToString(o));
+		System.err.println(Arrays.deepToString(o));
 	}
 }

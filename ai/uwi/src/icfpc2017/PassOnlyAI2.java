@@ -60,6 +60,7 @@ class PassOnlyAI2 {
 			state.P = P;
 			state.F = F;
 			state.S = S;
+			state.phase = 0;
 			state.mindistss = mindistss;
 			if(F == 1){
 				state.futures = new ArrayList<>();
@@ -75,21 +76,25 @@ class PassOnlyAI2 {
 			// ゲーム中入力
 			State state = (State)fromBase64(ns());
 			int C = state.C;
-			outer:
 			for(int i = 0;i < C;i++){
 				int L = ni();
+				if(state.S == 1 && L == 0 && (state.phase > 0 || state.phase == 0 && i < state.P)){
+					state.charges.set(i, state.charges.get(i)+1);
+				}
 				int[] a = new int[L];
 				for(int j = 0;j < L;j++){
 					a[j] = ni();
 				}
+				inner:
 				for(int j = 0;j < L-1;j++){
 					int s = a[j], t = a[j+1];
 					for(Edge e : state.g.get(s)){
 						if((e.x^e.y^s) == t && e.owner == -1){
 							e.owner = i;
-							continue outer;
+							continue inner;
 						}
 					}
+					throw new RuntimeException("invalid input");
 				}
 			}
 			
@@ -151,6 +156,7 @@ class PassOnlyAI2 {
 		int C; // プレー人数
 		int P; // お前のID(0~N-1)
 		int F, S; // future splurge対応フラグ
+		int phase; // 何回目か
 		List<List<Edge>> g; // グラフ
 		List<Integer> charges; // splurgeチャージ量
 		BitSet mines; // mineかどうか

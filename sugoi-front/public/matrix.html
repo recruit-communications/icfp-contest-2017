@@ -1,0 +1,48 @@
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width">
+    <title>マトリクス</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <style>
+table {
+  table-layout: fixed;
+}
+.csv2table-table-th {
+  word-wrap: break-word;
+  text-wrap: unrestricted;
+  width: 100px;
+}
+    </style>
+  </head>
+  <body>
+    <h1>
+      <a href="top.html">トップ</a> | 
+      <a href="game.html">対戦一覧</a> | 
+      <a href="registry.html">対戦登録</a> | 
+      クライアント一覧 |
+      <a href="map.html">マップ一覧</a> |
+    </h1>
+    <h2>対戦マトリクス</h2>
+    <div id="matrix"></div>
+
+    <script src="./js/jquery-1.7.2.min.js"></script>
+    <script src="https://cdn.rawgit.com/khalidsalomao/simple-query-string/22cc5bbe/src/simplequerystring.min.js"></script>
+    <script src="./js/jquery.jqchart.js"></script>
+    <script src="./js/jquery.csv2table.js"></script>
+    <script>
+      $(() => {
+        const map_id = simpleQueryString.parse(location.search).map_id;
+        $('#matrix').csv2table(`./matrix/${map_id}.csv`, {
+          onload: (id) => {
+            $('#matrix')
+              .find('td:_csv2table_myComp(>=0)').css('background','#808080').end()
+              .find('td:_csv2table_myComp(>0.25)').css('background','#c0c0c0').end()
+              .find('td:_csv2table_myComp(>0.5)').css('background','#ffd700').end()
+              .find('td:_csv2table_myComp(>0.75)').css('background','#ff6347').end();
+          }
+        });
+      });
+    </script>
+  </body>
+</html>

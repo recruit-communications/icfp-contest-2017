@@ -18,9 +18,7 @@
       <table class="table table-bordered tablesorter">
         <thead>
           <tr>
-            <th>rank</th>
             <th>id</th>
-            <th>score</th>
             <th>history</th>
             <th></th>
           </tr>
@@ -36,10 +34,7 @@
       $(() => {
         function createRow(data, idx) {
           return $('<tr>')
-            //.append($('<td>', { text: idx }))
-            .append($('<td>', { text: '-' }))
             .append($('<td>', { text: data.id }))
-            .append($('<td>', { text: '' }))
             .append($('<td>').append($('<a>', {
               href: `/public/punter.html?cid=${data.id}`,
               text: '対戦履歴'

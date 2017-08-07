@@ -23,7 +23,7 @@ class RandomSplurgeAI {
 	public PrintWriter out;
 	String INPUT = "";
 
-	SplittableRandom gen = new SplittableRandom(91919);
+	static SplittableRandom gen = new SplittableRandom();
 	
 	public void solve() {
 		char phase = ns().charAt(0);
@@ -105,7 +105,6 @@ class RandomSplurgeAI {
 			// ゲーム中入力
 			State state = (State)fromBase64(ns());
 			int C = state.C;
-			outer:
 			for(int i = 0;i < C;i++){
 				int L = ni();
 				if(state.S == 1 && L == 0 && (state.phase > 0 || state.phase == 0 && i < state.P)){
@@ -115,25 +114,27 @@ class RandomSplurgeAI {
 				for(int j = 0;j < L;j++){
 					a[j] = ni();
 				}
+				inner:
 				for(int j = 0;j < L-1;j++){
 					int s = a[j], t = a[j+1];
 					for(Edge e : state.g.get(s)){
 						if((e.x^e.y^s) == t && e.owner == -1){
 							e.owner = i;
-							continue outer;
+							continue inner;
 						}
 					}
+					throw new RuntimeException("invalid input");
 				}
 			}
 			
 			StringBuilder line2 = new StringBuilder();
 			line2.append(state.P);
-			if(state.S == 0 || gen.nextInt(10) < 5){
+			if(state.S == 0 || gen.nextInt(10) < 7){
 				// pass
 			}else{
 //				int use = gen.nextInt(state.charges.get(state.P)+1);
 				int len = state.charges.get(state.P) + 1;
-				tr("charge", state.charges.get(state.P));
+//				tr("charge", state.charges.get(state.P));
 				outer:
 				for(int grep = 0;grep < 10;grep++){
 					int id = gen.nextInt(state.M*2);
@@ -159,12 +160,12 @@ class RandomSplurgeAI {
 								}
 								break;
 							}
-							line2.append(" " + e.x);
-							ap = e.y;
+							line2.append(" " + es.get(0).x);
+							ap = es.get(0).x;
 							for(Edge z : es){
+								ap ^= z.x ^ z.y;
 								z.owner = -1;
 								line2.append(" " + ap);
-								ap ^= z.x ^ z.y;
 							}
 							state.charges.set(state.P, state.charges.get(state.P) - (es.size() - 1));
 							break outer;

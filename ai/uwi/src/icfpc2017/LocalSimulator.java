@@ -69,12 +69,15 @@ public class LocalSimulator {
 //		int N = 5, M = 10, K = 3;
 		long[] scores = game(-1, N, M, K, true, 
 //				new Instanciator(PassOnlyAI2.class),
-//				new Instanciator(PassOnlyAI2.class)
-				new Instanciator(RandomSplurgeAI.class),
-				new Instanciator(YoshikoAI.class)
+				new Instanciator(PassOnlyAI2.class),
+//				new Instanciator(YoshikoAI.class),
+				new Instanciator(RandomSplurgeAI.class)
+//				new Instanciator(PassOnlyAI2.class),
+//				new Instanciator(RandomSplurgeAI.class),
+//				new Instanciator(YoshikoAI.class)
 //				new Instanciator(YoshikoAI.class),
 //				new Instanciator(YoshikoAI.class)
-//				new Instanciator(GrowAI.class, new Class[]{int.class}, new Object[]{2}),
+//				new Instanciator(GrowAI.class, new Class[]{int.class}, new Object[]{2})
 //				new Instanciator(MeijinAI.class, new Class[]{int.class}, new Object[]{5})
 //				new Instanciator(MeijinAI.class, new Class[]{int.class}, new Object[]{8}),
 //				new Instanciator(MeijinIDAI.class, new Class[]{long.class}, new Object[]{900L})
@@ -95,9 +98,10 @@ public class LocalSimulator {
 //			int N = 10, M = 20, K = 3;
 //			int N = 5, M = 8, K = 2;
 //			int N = 8, M = 12, K = 3;
+			RandomSplurgeAI.gen = new SplittableRandom(i);
 			long[] scores = game(i, N, M, K, true, 
-//					new Instanciator(PassOnlyAI2.class),
-					new Instanciator(YoshikoAI.class),
+					new Instanciator(PassOnlyAI2.class),
+//					new Instanciator(YoshikoAI.class),
 					new Instanciator(RandomSplurgeAI.class)
 //					new Instanciator(MeijinAI2.class, new Class[]{int.class}, new Object[]{6}),
 //					new Instanciator(GrowAI.class, new Class[]{int.class}, new Object[]{3})

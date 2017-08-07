@@ -35,7 +35,6 @@ class MeijinIDAI {
 		this.TL = tl;
 	}
 	
-	final int PASS_WHEN_CHECKMATE = 1;
 	long START;
 	
 	public String guess(State s)
@@ -91,7 +90,6 @@ class MeijinIDAI {
 				ec = go(level, level, s.P, s, cans, ops, rdss, Long.MIN_VALUE/2, Long.MAX_VALUE/2);
 				tr("LEVEL: " + level +" " + (System.currentTimeMillis() - lstart) + "ms");
 			}catch(TimeoutException tle){
-				break;
 			}
 		}
 		s.remturn--;
@@ -408,8 +406,17 @@ class MeijinIDAI {
 			state.remturn = (M-P+C-1)/C;
 			state.futures = new ArrayList<>();
 			for(int i = 0;i < N;i++)state.futures.add(null);
+			if(S == 1){
+				state.charges = new ArrayList<>();
+				for(int i = 0;i < C;i++)state.charges.add(0);
+			}
+			if(O == 1){
+				state.options = new ArrayList<>();
+				int z = mines.cardinality();
+				for(int i = 0;i < C;i++)state.options.add(z);
+			}
 			if(F == 1){
-				if(N <= 100 && check4EC(g)){ // 調子乗りすぎ
+				if(N <= 400 && check4EC(g)){ // 調子乗りすぎ
 					for(int i = 0;i < N;i++){
 						if(mines.get(i)){
 							int maxd = 0;
@@ -427,16 +434,23 @@ class MeijinIDAI {
 							}
 						}
 					}
+				}else if(state.P == 0){
+//					String res = guess(state);
+//					String[] sp = res.split(" ");
+//					tr("RES", res);
+//					if(sp.length == 2){
+//						int x = Integer.parseInt(sp[0]);
+//						int y = Integer.parseInt(sp[1]);
+//						if(state.mines.get(x) && !state.mines.get(y)){
+//							state.sealed = res;
+//							state.futures.set(x, y);
+//						}
+//						if(state.mines.get(y) && !state.mines.get(x)){
+//							state.sealed = res;
+//							state.futures.set(y, x);
+//						}
+//					}
 				}
-			}
-			if(S == 1){
-				state.charges = new ArrayList<>();
-				for(int i = 0;i < C;i++)state.charges.add(0);
-			}
-			if(O == 1){
-				state.options = new ArrayList<>();
-				int z = mines.cardinality();
-				for(int i = 0;i < C;i++)state.options.add(z);
 			}
 			out.println(toBase64(state));
 			if(F == 0){
@@ -503,7 +517,8 @@ class MeijinIDAI {
 //				}
 //			}
 			
-			String output = guess(state);
+			String output = state.sealed != null ? state.sealed : guess(state);
+			state.sealed = null;
 			state.phase++;
 			out.println(toBase64(state));
 //			tr("MY OUTPUT:" + output);
@@ -548,6 +563,7 @@ class MeijinIDAI {
 			if(row.size() < 4)return false; // すべての点が次数4以上
 		}
 		long mincut = minCut(toDense(g));
+		tr(mincut);
 		return mincut >= 4;
 	}
 	
@@ -631,6 +647,7 @@ class MeijinIDAI {
 		int F, S, O; // future splurge option対応フラグ
 		int remturn; // 残りターン
 		int phase; // 何回目か
+		String sealed; // 初手封じ手
 		List<List<Edge>> g; // グラフ
 		List<Integer> charges; // splurgeチャージ量
 		List<Integer> options; // option残り回数
@@ -694,7 +711,7 @@ class MeijinIDAI {
 	}
 
 	public static void main(String[] args) throws Exception {
-		new MeijinIDAI(800L).run();
+		new MeijinIDAI2(800L).run();
 	}
 
 	private byte[] inbuf = new byte[1024];

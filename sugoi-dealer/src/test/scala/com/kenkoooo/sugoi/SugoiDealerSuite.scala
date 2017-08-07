@@ -94,7 +94,7 @@ class SugoiDealerSuite extends FunSuite with Matchers with MockitoSugar {
 
     when(gameState.edgeCount).thenReturn(1)
     when(gameState.canBuy(5, 7, 1)).thenReturn(true)
-    
+
     val deque = SugoiDealer.play(Seq(program), gameState)
     deque(0) shouldBe a[OptionMove]
     deque(0).asInstanceOf[OptionMove].option.punter shouldBe 1
@@ -102,5 +102,107 @@ class SugoiDealerSuite extends FunSuite with Matchers with MockitoSugar {
     deque(0).asInstanceOf[OptionMove].option.target shouldBe 7
 
     verify(gameState, times(1)).buyEdge(5, 7, 1)
+  }
+
+  test("splurge option") {
+    val program = mock[PunterProgram]
+    val gameState = mock[GameState]
+
+    when(program.punter).thenReturn(1)
+    when(program.penaltyCount).thenReturn(9)
+    when(program.putCommand(any(), any())).thenReturn(("{\"splurge\":{\"punter\":1,\"route\":[0, 1, 2, 3]},\"state\":[\"test\"]}", 0L))
+    when(program.optionRemain).thenReturn(1)
+    when(program.passCount).thenReturn(2)
+
+    when(gameState.edgeCount).thenReturn(1)
+    when(gameState.canBuy(0, 1, 1)).thenReturn(false)
+    when(gameState.canBuy(1, 2, 1)).thenReturn(true)
+    when(gameState.canBuy(2, 3, 1)).thenReturn(false)
+    when(gameState.isUsed(0, 1)).thenReturn(false)
+    when(gameState.isUsed(1, 2)).thenReturn(true)
+    when(gameState.isUsed(2, 3)).thenReturn(false)
+
+    val deque = SugoiDealer.play(Seq(program), gameState)
+    deque(0) shouldBe a[SplurgeMove]
+    deque(0).asInstanceOf[SplurgeMove].splurge.route.length shouldBe 4
+
+    verify(gameState, times(1)).addEdge(0, 1, 1)
+    verify(gameState, times(1)).buyEdge(1, 2, 1)
+    verify(gameState, times(1)).addEdge(2, 3, 1)
+  }
+
+  test("failed splurge option (lack of option)") {
+    val program = mock[PunterProgram]
+    val gameState = mock[GameState]
+
+    when(program.punter).thenReturn(1)
+    when(program.penaltyCount).thenReturn(9)
+    when(program.putCommand(any(), any())).thenReturn(("{\"splurge\":{\"punter\":1,\"route\":[0, 1, 2, 3]},\"state\":[\"test\"]}", 0L))
+    when(program.optionRemain).thenReturn(0)
+    when(program.passCount).thenReturn(2)
+
+    when(gameState.edgeCount).thenReturn(1)
+    when(gameState.canBuy(0, 1, 1)).thenReturn(false)
+    when(gameState.canBuy(1, 2, 1)).thenReturn(true)
+    when(gameState.canBuy(2, 3, 1)).thenReturn(false)
+    when(gameState.isUsed(0, 1)).thenReturn(false)
+    when(gameState.isUsed(1, 2)).thenReturn(true)
+    when(gameState.isUsed(2, 3)).thenReturn(false)
+
+    val deque = SugoiDealer.play(Seq(program), gameState)
+    deque(0) shouldBe a[PassMove]
+
+    verify(gameState, times(0)).addEdge(anyInt(), anyInt(), anyInt())
+    verify(gameState, times(0)).buyEdge(anyInt(), anyInt(), anyInt())
+  }
+
+  test("splurge option (lack of pass)") {
+    val program = mock[PunterProgram]
+    val gameState = mock[GameState]
+
+    when(program.punter).thenReturn(1)
+    when(program.penaltyCount).thenReturn(9)
+    when(program.putCommand(any(), any())).thenReturn(("{\"splurge\":{\"punter\":1,\"route\":[0, 1, 2, 3]},\"state\":[\"test\"]}", 0L))
+    when(program.optionRemain).thenReturn(1)
+    when(program.passCount).thenReturn(1)
+
+    when(gameState.edgeCount).thenReturn(1)
+    when(gameState.canBuy(0, 1, 1)).thenReturn(false)
+    when(gameState.canBuy(1, 2, 1)).thenReturn(true)
+    when(gameState.canBuy(2, 3, 1)).thenReturn(false)
+    when(gameState.isUsed(0, 1)).thenReturn(false)
+    when(gameState.isUsed(1, 2)).thenReturn(true)
+    when(gameState.isUsed(2, 3)).thenReturn(false)
+
+    val deque = SugoiDealer.play(Seq(program), gameState)
+    deque(0) shouldBe a[PassMove]
+
+    verify(gameState, times(0)).addEdge(anyInt(), anyInt(), anyInt())
+    verify(gameState, times(0)).buyEdge(anyInt(), anyInt(), anyInt())
+  }
+
+  test("splurge option (can not buy)") {
+    val program = mock[PunterProgram]
+    val gameState = mock[GameState]
+
+    when(program.punter).thenReturn(1)
+    when(program.penaltyCount).thenReturn(9)
+    when(program.putCommand(any(), any())).thenReturn(("{\"splurge\":{\"punter\":1,\"route\":[0, 1, 2, 3]},\"state\":[\"test\"]}", 0L))
+    when(program.optionRemain).thenReturn(1)
+    when(program.passCount).thenReturn(2)
+
+    when(gameState.edgeCount).thenReturn(1)
+    when(gameState.canBuy(0, 1, 1)).thenReturn(false)
+    when(gameState.canBuy(1, 2, 1)).thenReturn(false)
+    when(gameState.canBuy(2, 3, 1)).thenReturn(false)
+    when(gameState.isUsed(0, 1)).thenReturn(false)
+    when(gameState.isUsed(1, 2)).thenReturn(true)
+    when(gameState.isUsed(2, 3)).thenReturn(false)
+
+    val deque = SugoiDealer.play(Seq(program), gameState)
+    deque(0) shouldBe a[PassMove]
+
+    verify(gameState, times(0)).addEdge(anyInt(), anyInt(), anyInt())
+    verify(gameState, times(0)).buyEdge(anyInt(), anyInt(), anyInt())
   }
 }

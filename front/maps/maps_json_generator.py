@@ -34,6 +34,7 @@ for file_name in os.listdir("./"):
             num_edges = len(jsn["rivers"])
         except:
             # 形式不正なのでスルー
+            print(file_name + " is invalid format", file = sys.stderr)
             continue
             
         if file_name in official_data:

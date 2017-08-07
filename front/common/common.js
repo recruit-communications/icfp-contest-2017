@@ -44,3 +44,24 @@ function changeLineWidth() {
   $("#cy .edge").css("width", width);
   console.log("updateWidth with" + width);
 }
+
+function getPngNameFromUrl() {
+  let pngName = "image.png";
+  var logUrl = decodeURIComponent(location.search).substr(5);
+  if (logUrl.length > 0) {
+    let paths = logUrl.split("/");
+    let jsonName = paths[paths.length - 1];
+    pngName = jsonName.substr(0, jsonName.length - 5) + ".png";
+  }
+  return pngName;
+}
+
+function handleDownloadPng() {
+  let pngName = getPngNameFromUrl();
+  let png = cy.png({bg:"black"});
+
+  console.log(png);
+
+  $("#download").attr("download", pngName);
+  $("#download").attr("href", png);
+}

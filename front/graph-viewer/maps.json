@@ -1,16 +1,76 @@
 {
     "maps": [
         {
+            "filename": "../maps/aoj2_5_5_1.json",
+            "name": "aoj2_5_5_1.",
+            "num_edges": 5,
+            "num_nodes": 5
+        },
+        {
             "filename": "../maps/sample.json",
             "name": "O: Sample from the Task Description",
             "num_edges": 12,
             "num_nodes": 8
         },
         {
+            "filename": "../maps/aoj2_14_20_1.json",
+            "name": "aoj2_14_20_1.",
+            "num_edges": 20,
+            "num_nodes": 14
+        },
+        {
+            "filename": "../maps/aoj2_23_36_2.json",
+            "name": "aoj2_23_36_2.",
+            "num_edges": 36,
+            "num_nodes": 23
+        },
+        {
+            "filename": "../maps/aoj2_24_33_2.json",
+            "name": "aoj2_24_33_2.",
+            "num_edges": 33,
+            "num_nodes": 24
+        },
+        {
             "filename": "../maps/circle.json",
             "name": "O: Circle",
             "num_edges": 65,
             "num_nodes": 27
+        },
+        {
+            "filename": "../maps/aoj2_30_37_2.json",
+            "name": "aoj2_30_37_2.",
+            "num_edges": 37,
+            "num_nodes": 30
+        },
+        {
+            "filename": "../maps/aoj2_30_49_2.json",
+            "name": "aoj2_30_49_2.",
+            "num_edges": 49,
+            "num_nodes": 30
+        },
+        {
+            "filename": "../maps/randomPlane_N30_M3_S50.json",
+            "name": "randomPlane_N30_M3_S50.",
+            "num_edges": 56,
+            "num_nodes": 30
+        },
+        {
+            "filename": "../maps/aoj2_35_58_2.json",
+            "name": "aoj2_35_58_2.",
+            "num_edges": 58,
+            "num_nodes": 35
+        },
+        {
+            "filename": "../maps/aoj2_35_80_2.json",
+            "name": "aoj2_35_80_2.",
+            "num_edges": 80,
+            "num_nodes": 35
+        },
+        {
+            "filename": "../maps/shirakata.json",
+            "name": "shirakata.",
+            "num_edges": 34,
+            "num_nodes": 37
         },
         {
             "filename": "../maps/lambda.json",
@@ -25,10 +85,52 @@
             "num_nodes": 42
         },
         {
+            "filename": "../maps/aoj2_50_79_3.json",
+            "name": "aoj2_50_79_3.",
+            "num_edges": 79,
+            "num_nodes": 50
+        },
+        {
+            "filename": "../maps/aoj2_50_99_3.json",
+            "name": "aoj2_50_99_3.",
+            "num_edges": 99,
+            "num_nodes": 50
+        },
+        {
+            "filename": "../maps/randomPlane_N50_M3_S50.json",
+            "name": "randomPlane_N50_M3_S50.",
+            "num_edges": 91,
+            "num_nodes": 50
+        },
+        {
+            "filename": "../maps/randomPlane_N50_M5_S70.json",
+            "name": "randomPlane_N50_M5_S70.",
+            "num_edges": 56,
+            "num_nodes": 50
+        },
+        {
+            "filename": "../maps/68_462_2.json",
+            "name": "68_462_2.",
+            "num_edges": 462,
+            "num_nodes": 68
+        },
+        {
             "filename": "../maps/randomSparse.json",
             "name": "O: Random2",
             "num_edges": 123,
             "num_nodes": 86
+        },
+        {
+            "filename": "../maps/96_152_2 (1).json",
+            "name": "96_152_2 (1).",
+            "num_edges": 152,
+            "num_nodes": 96
+        },
+        {
+            "filename": "../maps/96_152_2.json",
+            "name": "96_152_2.",
+            "num_edges": 152,
+            "num_nodes": 96
         },
         {
             "filename": "../maps/randomMedium.json",
@@ -37,10 +139,94 @@
             "num_nodes": 97
         },
         {
+            "filename": "../maps/100_150_5.json",
+            "name": "100_150_5.",
+            "num_edges": 150,
+            "num_nodes": 100
+        },
+        {
+            "filename": "../maps/100_292_5.json",
+            "name": "100_292_5.",
+            "num_edges": 292,
+            "num_nodes": 100
+        },
+        {
+            "filename": "../maps/aoj2_100_200_5.json",
+            "name": "aoj2_100_200_5.",
+            "num_edges": 200,
+            "num_nodes": 100
+        },
+        {
+            "filename": "../maps/aoj2_100_298_5.json",
+            "name": "aoj2_100_298_5.",
+            "num_edges": 298,
+            "num_nodes": 100
+        },
+        {
+            "filename": "../maps/randomPlane_N100_M10_S70.json",
+            "name": "randomPlane_N100_M10_S70.",
+            "num_edges": 134,
+            "num_nodes": 100
+        },
+        {
+            "filename": "../maps/randomPlane_N100_M5_S70.json",
+            "name": "randomPlane_N100_M5_S70.",
+            "num_edges": 142,
+            "num_nodes": 100
+        },
+        {
+            "filename": "../maps/randomPlane_N150_M20_S40.json",
+            "name": "randomPlane_N150_M20_S40.",
+            "num_edges": 301,
+            "num_nodes": 150
+        },
+        {
+            "filename": "../maps/randomPlane_N150_M20_S70.json",
+            "name": "randomPlane_N150_M20_S70.",
+            "num_edges": 183,
+            "num_nodes": 150
+        },
+        {
+            "filename": "../maps/randomPlane_N200_M10_S70.json",
+            "name": "randomPlane_N200_M10_S70.",
+            "num_edges": 178,
+            "num_nodes": 200
+        },
+        {
+            "filename": "../maps/298_928_6.json",
+            "name": "298_928_6.",
+            "num_edges": 928,
+            "num_nodes": 298
+        },
+        {
+            "filename": "../maps/randomPlane_N300_M10_S50.json",
+            "name": "randomPlane_N300_M10_S50.",
+            "num_edges": 560,
+            "num_nodes": 300
+        },
+        {
             "filename": "../maps/tube.json",
             "name": "O: London Tube",
             "num_edges": 386,
             "num_nodes": 301
+        },
+        {
+            "filename": "../maps/randomPlane_N400_M20_S70.json",
+            "name": "randomPlane_N400_M20_S70.",
+            "num_edges": 538,
+            "num_nodes": 400
+        },
+        {
+            "filename": "../maps/402_2162_9.json",
+            "name": "402_2162_9.",
+            "num_edges": 2162,
+            "num_nodes": 402
+        },
+        {
+            "filename": "../maps/448_1080_9.json",
+            "name": "448_1080_9.",
+            "num_edges": 1080,
+            "num_nodes": 448
         },
         {
             "filename": "../maps/boston-sparse.json",
@@ -49,10 +235,124 @@
             "num_nodes": 488
         },
         {
+            "filename": "../maps/aoj2_500_1195_13.json",
+            "name": "aoj2_500_1195_13.",
+            "num_edges": 1195,
+            "num_nodes": 500
+        },
+        {
+            "filename": "../maps/aoj2_500_1195_25.json",
+            "name": "aoj2_500_1195_25.",
+            "num_edges": 1195,
+            "num_nodes": 500
+        },
+        {
+            "filename": "../maps/aoj2_500_3566_13.json",
+            "name": "aoj2_500_3566_13.",
+            "num_edges": 3566,
+            "num_nodes": 500
+        },
+        {
+            "filename": "../maps/aoj2_500_3566_25.json",
+            "name": "aoj2_500_3566_25.",
+            "num_edges": 3566,
+            "num_nodes": 500
+        },
+        {
+            "filename": "../maps/aoj2_500_798_13.json",
+            "name": "aoj2_500_798_13.",
+            "num_edges": 798,
+            "num_nodes": 500
+        },
+        {
+            "filename": "../maps/aoj2_500_798_25.json",
+            "name": "aoj2_500_798_25.",
+            "num_edges": 798,
+            "num_nodes": 500
+        },
+        {
+            "filename": "../maps/randomPlane_N500_M25_S70.json",
+            "name": "randomPlane_N500_M25_S70.",
+            "num_edges": 679,
+            "num_nodes": 500
+        },
+        {
+            "filename": "../maps/randomPlane_N500_M50_S100.json",
+            "name": "randomPlane_N500_M50_S100.",
+            "num_edges": 1,
+            "num_nodes": 500
+        },
+        {
+            "filename": "../maps/randomPlane_N500_M50_S70.json",
+            "name": "randomPlane_N500_M50_S70.",
+            "num_edges": 692,
+            "num_nodes": 500
+        },
+        {
+            "filename": "../maps/randomPlane_N500_M50_S90.json",
+            "name": "randomPlane_N500_M50_S90.",
+            "num_edges": 331,
+            "num_nodes": 500
+        },
+        {
+            "filename": "../maps/randomPlane_N500_M5_S50.json",
+            "name": "randomPlane_N500_M5_S50.",
+            "num_edges": 898,
+            "num_nodes": 500
+        },
+        {
+            "filename": "../maps/randomPlane_N500_M5_S70.json",
+            "name": "randomPlane_N500_M5_S70.",
+            "num_edges": 688,
+            "num_nodes": 500
+        },
+        {
+            "filename": "../maps/randomPlane_N500_M80_S70.json",
+            "name": "randomPlane_N500_M80_S70.",
+            "num_edges": 757,
+            "num_nodes": 500
+        },
+        {
+            "filename": "../maps/566_1404_12.json",
+            "name": "566_1404_12.",
+            "num_edges": 1404,
+            "num_nodes": 566
+        },
+        {
+            "filename": "../maps/randomPlane_N700_M80_S70.json",
+            "name": "randomPlane_N700_M80_S70.",
+            "num_edges": 1064,
+            "num_nodes": 700
+        },
+        {
             "filename": "../maps/edinburgh-sparse.json",
             "name": "O: Edinburgh",
             "num_edges": 1751,
             "num_nodes": 961
+        },
+        {
+            "filename": "../maps/randomPlane_N1000_M20_S10.json",
+            "name": "randomPlane_N1000_M20_S10.",
+            "num_edges": 2725,
+            "num_nodes": 1000
+        },
+        {
+            "filename": "../maps/randomPlane_N1000_M20_S40.json",
+            "name": "randomPlane_N1000_M20_S40.",
+            "num_edges": 2105,
+            "num_nodes": 1000
+        },
+        {
+            "filename": "../maps/randomPlane_N1000_M20_S70.json",
+            "name": "randomPlane_N1000_M20_S70.",
+            "num_edges": 1392,
+            "num_nodes": 1000
+        },
+        {
+            "filename": "../maps/randomPlane_N1000_M50_S50.json",
+            "name": "randomPlane_N1000_M50_S50.",
+            "num_edges": 1866,
+            "num_nodes": 1000
         },
         {
             "filename": "../maps/gothenburg-sparse.json",
@@ -79,8 +379,32 @@
             "num_nodes": 1986
         },
         {
+            "filename": "../maps/randomPlane_N2000_M100_S50.json",
+            "name": "randomPlane_N2000_M100_S50.",
+            "num_edges": 3862,
+            "num_nodes": 2000
+        },
+        {
+            "filename": "../maps/2310_22744_47.json",
+            "name": "2310_22744_47.",
+            "num_edges": 22744,
+            "num_nodes": 2310
+        },
+        {
             "filename": "../maps/oxford2-sparse-2.json",
             "name": "O: Oxford",
+            "num_edges": 3632,
+            "num_nodes": 2389
+        },
+        {
+            "filename": "../maps/oxford500.json",
+            "name": "oxford500.",
+            "num_edges": 3632,
+            "num_nodes": 2389
+        },
+        {
+            "filename": "../maps/oxford60.json",
+            "name": "oxford60.",
             "num_edges": 3632,
             "num_nodes": 2389
         }

@@ -118,7 +118,7 @@ struct Game {
 	}
 
 	void use(int player_id, int s, int t, int owner) {
-		if (s == -1) return;
+		bool option = false;
 		for (int flip = 0; flip < 2; ++flip) {
 			vector<Edge>& es = edges[s];
 			for (int i = 0; i < es.size(); ++i) {
@@ -128,13 +128,14 @@ struct Game {
 						break;
 					} else if (es[i].option_owner == NOT_OWNED) {
 						es[i].option_owner = owner;
-						option_counts[player_id]--;
+						option = true;
 						break;
 					}
 				}
 			}
 			swap(s, t);
 		}
+		if (option) option_counts[player_id]--;
 	}
 
 	void calc_mine_dists() {
@@ -216,7 +217,11 @@ struct Game {
 		for (int i = 0; i < N; ++i) {
 			if (!candidate_to[i]) continue;
 			for (const Edge& e : edges[i]) {
-				if (e.owner != NOT_OWNED) continue;
+				if (O && option_counts[I] > 0) {
+					if (e.option_owner != NOT_OWNED) continue;
+				} else {
+					if (e.owner != NOT_OWNED) continue;
+				}
 				if (reachable[i] == reachable[e.to]) continue;
 				cand_edges.push_back(make_pair(i, &e));
 				connect_score.push_back(__builtin_popcount(~reachable[i] & reachable[e.to]) * SCORE_SCALE);
@@ -258,7 +263,13 @@ struct Game {
 			scores[i].second = i;
 		}
 		int idx = max_element(scores.begin(), scores.end())->second;
-		return make_pair(cand_edges[idx].first, cand_edges[idx].second->to);
+		const Edge* selected_edge = cand_edges[idx].second;
+		bool is_option = selected_edge->owner != NOT_OWNED;
+		if (is_option) {
+			return make_pair(-cand_edges[idx].first - 1, -selected_edge->to - 1);
+		} else {
+			return make_pair(cand_edges[idx].first, selected_edge->to);
+		}
 	}
 };
 
@@ -289,7 +300,8 @@ void move() {
 			if (j > 0) game.use(i, path[j - 1], path[j], i);
 		}
 	}
-	cout << game.serialize() << "\n";
+	string ser = game.serialize();
+	cout << ser << "\n";
 	pair<int, int> res = game.create_move();
 	cout << game.I << " ";
 	cout << res.first << " " << res.second << endl;

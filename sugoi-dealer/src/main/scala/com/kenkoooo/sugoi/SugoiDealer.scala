@@ -271,16 +271,17 @@ class PunterProgram(cmd: String, val punter: Int, val battler: Boolean = false, 
 
       logger.debug(s"command to punter: ${commandFromServer.length}:$commandFromServer")
 
+      val err = new BufferedReader(new InputStreamReader(proc.getErrorStream))
+      logger.error(err.lines().collect(Collectors.joining("\n")))
+      err.close()
+
       val fromPunter = reader.next()
       logger.debug(s"command from punter: $fromPunter")
       (fromPunter, 0)
     } catch {
       case e: Throwable =>
         logger.catching(e)
-        val err = new BufferedReader(new InputStreamReader(proc.getErrorStream))
-        logger.error(err.lines().collect(Collectors.joining("\n")))
         logger.error(s"Last input from server: $lastCommand")
-        err.close()
         ("", 1)
     } finally {
       reader.close()

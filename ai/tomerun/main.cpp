@@ -254,8 +254,10 @@ struct Game {
 		vi weights;
 		if (turn < M / C / 3) {
 			weights = {50, 1, 0, 5}; // in early phase, prior connecting mines
-		} else {
+		} else if (turn < M / C * 4 / 5) {
 			weights = {5, 2, 1, 3};
+		} else {
+			weights = {5, 2, 5, 1};
 		}
 		for (int i = 0; i < cand_edges.size(); ++i) {
 			// cerr << "(" << cand_edges[i].first << " " << cand_edges[i].second->to << ") ";

@@ -1,0 +1,48 @@
+# Team Members
+Hiroaki Asano
+Hironao Tsutsumida
+Hisashi Shirakata
+Kenko Nakamura
+Uwi Tenpen
+Nobuaki Tanaka
+Shiro Torii
+Shogo Ehara
+Takumi Uchida
+Tetsuo Yamamoto
+Tomohiko Nakamura
+
+# Algorithms
+Our submission contains multiple punters. Each punter is optimized for specific situations.
+The following situations are assumed:
+- 2 punters and sites < 500
+- mines * sites < 1000
+- mines ^ 2 * rivers < 10 ^ 7
+- other (fiendish maps)
+
+# How did we tackle the problem
+We developed the following components in order to efficiently solve the problem.
+
+## Game server simulator (sugoi-dealer) (Scala)
+Our offline server that output logs for the game viewer.
+
+## Bridge (Python 3)
+Our bridge hides the differences between online servers and offline servers from our punters.
+And it does coordinate compression and uses an internal protocol that are optimzed for time and space efficiency.
+In the final submission, this bridge choose an appropriate punter with specified game conditions.
+
+## Game coordinator (yabai-selector) (Scala)
+The Game coordinator periodically launches games with picking punters and maps.
+And it collects game results to determine punters for our final submission.
+
+## Game viewer (front) (Javascript)
+Our game viewer implemented with extending the official map viewer.
+The following functions are added:
+- Step by step execution (includes step back)
+- Visualize futures, splurges and options
+
+## Portal site (sugoi-front) (Node.js)
+Our portal site contains punters, maps and game results viewers.
+
+## Game runner (Jenkins)
+We use Jenkins and AWS Auto Scaling for executing as many games as possible.
+As a result, over one hundred m4.large EC2 instances are launched.
